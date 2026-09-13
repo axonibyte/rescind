@@ -11,7 +11,22 @@
 #                                    installed by ghcup into a cache on first
 #                                    use -- the versions the FreeBSD
 #                                    workstation has from pkg, so a failure
-#                                    here is the code's, not a version's.
+#                                    in GHC OR CABAL here is the code's, not
+#                                    a version's. THAT CLAIM COVERS GHC AND
+#                                    CABAL AND NOTHING ELSE. shellcheck in
+#                                    particular is NOT matched: this guest
+#                                    has trixie's 0.10.0 (pinned above), the
+#                                    pipeline's gate step has bookworm's
+#                                    0.9.0, and the workstation has pkg's
+#                                    0.11.0. They disagree -- 0.11 suppresses
+#                                    SC2015 where the older two do not -- so
+#                                    LOCAL GREEN IS NOT EVIDENCE FOR THE
+#                                    shellcheck PHASE. The oldest is the
+#                                    strictest and the pipeline is the
+#                                    authority; this guest is the earlier
+#                                    warning. Found on 2026-09-12 when the
+#                                    workstation passed a construct the guest
+#                                    refused, costing a cycle.
 #                 run:   host        the tier 5 and 6 harness (tenants/e2e)
 #                                    against the guest itself: sshd, nftables
 #                                    and cron are the VM's, which the container
@@ -75,7 +90,7 @@ find . -name '*.rs' -not -path './target/*' -exec touch {} + && \
 find . -name '*.toml' -not -path './target/*' -exec touch {} + && \
 export GHCUP_INSTALL_BASE_PREFIX=$REAPER_CACHE_GHCUP PATH=$REAPER_CACHE_GHCUP/.ghcup/bin:$PATH && \
 apt-get -qq update && \
-apt-get -qq install -y --no-install-recommends git shellcheck patch libgmp-dev libffi-dev libncurses-dev libtinfo6 gcc-mingw-w64-x86-64 wine python3-pip && \
+apt-get -qq install -y --no-install-recommends git shellcheck=0.10.0-1 patch libgmp-dev libffi-dev libncurses-dev libtinfo6 gcc-mingw-w64-x86-64 wine python3-pip && \
 { test -x $REAPER_CACHE_GHCUP/.ghcup/bin/ghc || { \
     mkdir -p $REAPER_CACHE_GHCUP && \
     curl -sSf https://downloads.haskell.org/~ghcup/x86_64-linux-ghcup -o $REAPER_CACHE_GHCUP/ghcup && \

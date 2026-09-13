@@ -22,10 +22,19 @@
 # shellcheck disable=SC2329,SC2317
 #   Every p_* function is invoked indirectly, through `phase <name> <cmd>`,
 #   which shellcheck cannot follow; the functions are not dead. shellcheck
-#   0.10 and later say this as SC2329 (function never invoked); 0.9, which
-#   Debian bookworm and so the CI image and the Ubuntu reaper guest carry,
-#   says the same thing per line as SC2317 (command unreachable). Both are
-#   the one fact stated here, and nothing else in this file is silenced.
+#   0.10 and later say this as SC2329 (function never invoked); 0.9 says the
+#   same thing per line as SC2317 (command unreachable). Both are the one
+#   fact stated here, and nothing else in this file is silenced.
+#
+#   THREE VERSIONS RUN THIS PHASE and they disagree about more than the code
+#   number: the pipeline's gate step has bookworm's 0.9.0, the Ubuntu reaper
+#   guest has trixie's 0.10.0, and a FreeBSD workstation has pkg's 0.11.0,
+#   which SUPPRESSES SC2015 where the older two report it. The oldest is the
+#   strictest, so the pipeline is the authority and a green workstation is
+#   not evidence for this phase. Both installs are pinned where they happen
+#   (.reaper.toml, bitbucket-pipelines.yml). An earlier version of this note
+#   said the reaper guest carried 0.9 from bookworm; the guest's image is
+#   trixie and always was.
 set -u
 
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd) || exit 2

@@ -58,8 +58,15 @@ definitions:
           # The stock GHC image carries neither shellcheck nor patch; both are
           # real dependencies of the gate, and so is git, which the provenance
           # phase reads the recorded commits out of.
+          #
+          # shellcheck is PINNED, and this image is bookworm, so it is 0.9.0 --
+          # the OLDEST of the three the project runs and therefore the
+          # STRICTEST. The reaper guest has trixie's 0.10.0 and the FreeBSD
+          # workstation pkg's 0.11.0, which suppresses SC2015 where these do
+          # not. This step is the authority for that phase; a green
+          # workstation is not evidence for it.
           - apt-get -qq update
-          - apt-get -qq install -y --no-install-recommends shellcheck patch git
+          - apt-get -qq install -y --no-install-recommends shellcheck=0.9.0-1 patch git
           # This image has no cargo. The four cargo phases and the darwin
           # dependency guard are declared skipped here because doFetchAndTest
           # performs exactly those in the Rust image; the pipeline as a whole
