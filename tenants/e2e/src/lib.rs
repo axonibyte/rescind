@@ -2,8 +2,8 @@
 //!
 //! Everything here runs on a disposable guest that `tenants/e2e/provision.sh`
 //! prepared: a loopback alias the target is addressed by, sshd accepting
-//! rue's own key through a drop-in `AuthorizedKeysFile`, a firewall baseline
-//! that skips the management interface, the `rue` group and a `rue_root`
+//! rescind's own key through a drop-in `AuthorizedKeysFile`, a firewall baseline
+//! that skips the management interface, the `rescind` group and a `rescind_root`
 //! under reaper's state dataset. The material of the harness -- its key,
 //! its `known_hosts` -- lives beside the working tree, never inside it and
 //! never under `~/.ssh`.
@@ -18,10 +18,10 @@ pub const TARGET_ADDRESS: &str = "127.0.0.2";
 pub const TARGET_USER: &str = "root";
 
 /// The directory holding the harness's key and `known_hosts`:
-/// `RUE_E2E_ROOT`, else `rue-e2e` beside the working tree reaper names in
+/// `RESCIND_E2E_ROOT`, else `rescind-e2e` beside the working tree reaper names in
 /// `REAPER_WORK`.
 pub fn e2e_root() -> Result<PathBuf, String> {
-    if let Ok(r) = env::var("RUE_E2E_ROOT") {
+    if let Ok(r) = env::var("RESCIND_E2E_ROOT") {
         if !r.is_empty() {
             return Ok(PathBuf::from(r));
         }
@@ -32,10 +32,11 @@ pub fn e2e_root() -> Result<PathBuf, String> {
             let parent = work
                 .parent()
                 .ok_or_else(|| format!("REAPER_WORK {} has no parent", work.display()))?;
-            Ok(parent.join("rue-e2e"))
+            Ok(parent.join("rescind-e2e"))
         }
         _ => Err(
-            "neither RUE_E2E_ROOT nor REAPER_WORK is set; the harness has no key material".into(),
+            "neither RESCIND_E2E_ROOT nor REAPER_WORK is set; the harness has no key material"
+                .into(),
         ),
     }
 }
@@ -44,10 +45,10 @@ pub fn e2e_root() -> Result<PathBuf, String> {
 /// provisioned. Anywhere else they refuse loudly rather than pass having
 /// touched nothing.
 pub fn require_provisioned_host() {
-    match env::var("RUE_E2E").as_deref() {
+    match env::var("RESCIND_E2E").as_deref() {
         Ok("1") => {}
         _ => panic!(
-            "tier 5 needs a provisioned disposable host: run `sh tenants/e2e/run.sh` on a reaper guest (RUE_E2E=1 is set by it, never by hand on a workstation)"
+            "tier 5 needs a provisioned disposable host: run `sh tenants/e2e/run.sh` on a reaper guest (RESCIND_E2E=1 is set by it, never by hand on a workstation)"
         ),
     }
 }
@@ -109,15 +110,15 @@ pub fn bin(name: &str) -> PathBuf {
     p
 }
 
-/// The `rue_root` the guest was provisioned with (7.7).
-pub fn rue_root() -> PathBuf {
-    if let Ok(r) = env::var("RUE_E2E_RUE_ROOT") {
+/// The `rescind_root` the guest was provisioned with (7.7).
+pub fn rescind_root() -> PathBuf {
+    if let Ok(r) = env::var("RESCIND_E2E_RUE_ROOT") {
         if !r.is_empty() {
             return PathBuf::from(r);
         }
     }
     let state = env::var("REAPER_STATE").expect("REAPER_STATE on a reaper guest");
-    PathBuf::from(state).join("rue")
+    PathBuf::from(state).join("rescind")
 }
 
 /// `freebsd` or `linux`: what the inventory calls this guest.
@@ -197,7 +198,7 @@ impl Site {
     ///
     /// T4 is the case: its inventory, journal and executor are all hooks,
     /// so there is no file inventory to write and no ssh executor to name.
-    /// `inventory` is written beside the site file for `rue check
+    /// `inventory` is written beside the site file for `rescind check
     /// --inventory` to read, because a hook inventory has no hosts until
     /// the hook is asked and checking needs them now (E0607).
     pub fn raw(name: &str, text: &str, inventory: &str) -> Site {
@@ -209,11 +210,11 @@ impl Site {
         // A raw text may reach the guest over ssh as T2's node-b does, so
         // it gets the harness's key material under the names `with` uses.
         copy_keys(&root, &dir);
-        let file = dir.join("site.rue");
+        let file = dir.join("site.scind");
         fs::write(&file, text).expect("the site file");
         Site {
             store: dir.join("store"),
-            socket: dir.join("rued.sock"),
+            socket: dir.join("rescindd.sock"),
             dir,
             file,
         }
@@ -242,22 +243,22 @@ impl Site {
                  reach = [\"ssh\"]\n\
                  filesystem = true\n\
                  scheduler = \"cron\"\n\
-                 rue_root = \"{}\"\n\
+                 rescind_root = \"{}\"\n\
                  \n\
                  {hosts}\n\
                  [authenticators]\n\
                  oncall = {{ human = true }}\n\
                  second = {{ human = true }}\n",
                 os_family(),
-                rue_root().display()
+                rescind_root().display()
             ),
         )
         .expect("the inventory");
-        let file = dir.join("site.rue");
+        let file = dir.join("site.scind");
         fs::write(
             &file,
             format!(
-                "rue 0\n\
+                "rescind 0\n\
                  site do\n  \
                  inventory from: file(\"inventory.toml\")\n  \
                  journal to: file(\"journal.ndjson\")\n  \
@@ -276,14 +277,14 @@ impl Site {
         .expect("the site file");
         Site {
             store: dir.join("store"),
-            socket: dir.join("rued.sock"),
+            socket: dir.join("rescindd.sock"),
             dir,
             file,
         }
     }
 }
 
-/// A running `rued` over one site.
+/// A running `rescindd` over one site.
 pub struct Daemon {
     child: Child,
     pub socket: PathBuf,
@@ -300,7 +301,7 @@ impl Daemon {
         // removes it when it binds, and waiting for the file to appear
         // again is how the harness knows which daemon it is talking to.
         let _ = fs::remove_file(&site.socket);
-        let child = Command::new(bin("rued"))
+        let child = Command::new(bin("rescindd"))
             .arg("run")
             .arg("--site")
             .arg(&site.file)
@@ -309,14 +310,14 @@ impl Daemon {
             .arg("--socket")
             .arg(&site.socket)
             .arg("--group")
-            .arg("rue")
+            .arg("rescind")
             .arg("--reap-every")
             .arg("1")
             .args(extra)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
-            .expect("rued");
+            .expect("rescindd");
         let mut d = Daemon {
             child,
             socket: site.socket.clone(),
@@ -326,11 +327,11 @@ impl Daemon {
             // A daemon that refused to start says why and stops; waiting
             // for its socket would only waste the timeout.
             if let Ok(Some(status)) = d.child.try_wait() {
-                panic!("rued exited {status} before serving:\n{}", d.said());
+                panic!("rescindd exited {status} before serving:\n{}", d.said());
             }
             if start.elapsed() >= std::time::Duration::from_secs(30) {
                 let where_ = d.socket.display().to_string();
-                panic!("rued never served {where_}:\n{}", d.said());
+                panic!("rescindd never served {where_}:\n{}", d.said());
             }
             std::thread::sleep(std::time::Duration::from_millis(100));
         }
@@ -390,23 +391,23 @@ impl Drop for Daemon {
     }
 }
 
-/// `rue` against a daemon's socket. The verdict line is the last line of
+/// `rescind` against a daemon's socket. The verdict line is the last line of
 /// stdout, and the exit code is the outcome's (section 6.8).
-pub fn rue(socket: &Path, args: &[&str]) -> std::process::Output {
-    Command::new(bin("rue"))
+pub fn rescind(socket: &Path, args: &[&str]) -> std::process::Output {
+    Command::new(bin("rescind"))
         .args(args)
         .arg("--socket")
         .arg(socket)
         .output()
-        .expect("rue")
+        .expect("rescind")
 }
 
-/// `rue` with text on its standard input: a proof for `approve` or `ack`,
+/// `rescind` with text on its standard input: a proof for `approve` or `ack`,
 /// which read the token from stdin so it never appears in an argv.
-pub fn rue_with_stdin(socket: &Path, args: &[&str], stdin: &str) -> std::process::Output {
+pub fn rescind_with_stdin(socket: &Path, args: &[&str], stdin: &str) -> std::process::Output {
     use std::io::Write;
     use std::process::Stdio;
-    let mut child = Command::new(bin("rue"))
+    let mut child = Command::new(bin("rescind"))
         .args(args)
         .arg("--socket")
         .arg(socket)
@@ -414,11 +415,11 @@ pub fn rue_with_stdin(socket: &Path, args: &[&str], stdin: &str) -> std::process
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .expect("rue");
+        .expect("rescind");
     if let Some(mut w) = child.stdin.take() {
         let _ = w.write_all(stdin.as_bytes());
     }
-    child.wait_with_output().expect("rue")
+    child.wait_with_output().expect("rescind")
 }
 
 /// The token an approval stub accepts: the digest prefix a challenge
@@ -557,7 +558,7 @@ pub fn elixir() -> String {
 /// `elixir -pa <the SDK's ebin>`, compiled if it is not already.
 pub fn elixir_with_sdk() -> Vec<String> {
     let sdk = repo_root().join("sdk/elixir");
-    let ebin = sdk.join("_build/dev/lib/rue_hook/ebin");
+    let ebin = sdk.join("_build/dev/lib/rescind_hook/ebin");
     if !ebin.is_dir() {
         // Compiling on the first request would leave the hook Silent while
         // it ran, and Silent is a refusal with nothing to say.
@@ -609,8 +610,8 @@ pub fn target_exists(path: &str) -> bool {
 /// first draft of this lost its chain mid-run on the Linux guest.
 ///
 /// Neither touches the file a plan under test holds a region in.
-pub const PARTITION_ANCHOR: &str = "rue-e2e-partition";
-const PARTITION_TABLE: &str = "rue_e2e_partition";
+pub const PARTITION_ANCHOR: &str = "rescind-e2e-partition";
+const PARTITION_TABLE: &str = "rescind_e2e_partition";
 
 /// What to print when severing fails: a failure that cannot say what the
 /// firewall held has to be reproduced by hand.
@@ -724,13 +725,13 @@ mod tests {
 
     #[test]
     fn the_ssh_command_reads_nothing_of_the_user_s_own() {
-        let c = ssh_command(Path::new("/x/rue-e2e"), TARGET_ADDRESS, TARGET_USER);
+        let c = ssh_command(Path::new("/x/rescind-e2e"), TARGET_ADDRESS, TARGET_USER);
         assert_eq!(c.get_program(), "ssh");
         let a = args_of(&c);
         let joined = a.join(" ");
         assert!(joined.starts_with("-F none "), "{joined}");
-        assert!(joined.contains("-o IdentitiesOnly=yes -i /x/rue-e2e/keys/id_ed25519"));
-        assert!(joined.contains("-o UserKnownHostsFile=/x/rue-e2e/known_hosts"));
+        assert!(joined.contains("-o IdentitiesOnly=yes -i /x/rescind-e2e/keys/id_ed25519"));
+        assert!(joined.contains("-o UserKnownHostsFile=/x/rescind-e2e/known_hosts"));
         assert!(joined.contains("-o GlobalKnownHostsFile=/dev/null"));
         assert!(joined.contains("-o StrictHostKeyChecking=yes"));
         assert!(joined.contains("-o BatchMode=yes"));
@@ -744,11 +745,11 @@ mod tests {
     #[test]
     fn the_root_is_the_declared_one_else_beside_the_reaper_work_tree_else_refused() {
         // Environment is process-wide; the three cases run in one test.
-        env::set_var("RUE_E2E_ROOT", "/declared");
-        env::set_var("REAPER_WORK", "/tank/work/rue");
+        env::set_var("RESCIND_E2E_ROOT", "/declared");
+        env::set_var("REAPER_WORK", "/tank/work/rescind");
         assert_eq!(e2e_root().unwrap(), PathBuf::from("/declared"));
-        env::remove_var("RUE_E2E_ROOT");
-        assert_eq!(e2e_root().unwrap(), PathBuf::from("/tank/work/rue-e2e"));
+        env::remove_var("RESCIND_E2E_ROOT");
+        assert_eq!(e2e_root().unwrap(), PathBuf::from("/tank/work/rescind-e2e"));
         env::remove_var("REAPER_WORK");
         assert!(e2e_root().unwrap_err().contains("no key material"));
     }

@@ -1,7 +1,7 @@
 # Reverts: a handler answering neither {:ok, value} nor {:refuse, reason} is refused by name; a CaseClauseError ended the serve loop, or the embedding host's connection
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/sdk/elixir/lib/rue_hook/hooks.ex
-+++ b/sdk/elixir/lib/rue_hook/hooks.ex
+--- a/sdk/elixir/lib/rescind_hook/hooks.ex
++++ b/sdk/elixir/lib/rescind_hook/hooks.ex
 @@ -48,17 +48,8 @@
  
        row ->

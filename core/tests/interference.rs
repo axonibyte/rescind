@@ -4,8 +4,8 @@
 mod common;
 
 use common::*;
-use rue_core::interference::*;
-use rue_core::model::*;
+use rescind_core::interference::*;
+use rescind_core::model::*;
 
 fn other_host(o: Op, h: &str) -> Op {
     Op {
@@ -147,13 +147,13 @@ fn distinct_anchors_on_one_fact_are_disjoint_and_a_repeated_anchor_is_found() {
     };
     assert!(conflict("db-01", &[r("r1", "a"), r("r2", "b")]).is_empty());
     assert!(anchor_duplicates("db-01", &[r("r1", "a"), r("r2", "b")]).is_empty());
-    let dup = vec![r("r1", "rue"), r("r2", "rue")];
+    let dup = vec![r("r1", "rescind"), r("r2", "rescind")];
     assert_eq!(
         anchor_duplicates("db-01", &dup),
         vec![Conflict {
             earlier: 1,
             later: 2,
-            fact: Fact::new("file:/etc/keys", Some("rue"))
+            fact: Fact::new("file:/etc/keys", Some("rescind"))
         }]
     );
     // The repeated anchor is also, formally, a conflict; the checker prefers E0305.

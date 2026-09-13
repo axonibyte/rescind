@@ -1,5 +1,5 @@
 //! Tier 4 through the driver: every applicable row of the transition table
-//! `rue_core::states::transition_table()` generates is seeded as an
+//! `rescind_core::states::transition_table()` generates is seeded as an
 //! instance in the store and its event fired through the engine's public
 //! surface (a verb, `advance`, the reap pass, or boot). The transition the
 //! engine records must be the row's outcome. Rows this unit cannot reach
@@ -11,13 +11,13 @@ mod common;
 use std::collections::{BTreeMap, BTreeSet};
 
 use common::world::{self, World, FAR, OWNER, T0};
-use rue_core::intent::Intent;
-use rue_core::model::{
+use rescind_core::intent::Intent;
+use rescind_core::model::{
     Duration, FootprintEntry, ForceName, Instant, Item, Kind, Mode, OnLapse, StepI, Tri,
 };
-use rue_core::states::{transition_table, Ctx, Event as E, Outcome, RCode, State, ALL_EVENTS};
-use rue_engine::executor::{Observation, Output, Scripted};
-use rue_engine::lifecycle::{
+use rescind_core::states::{transition_table, Ctx, Event as E, Outcome, RCode, State, ALL_EVENTS};
+use rescind_engine::executor::{Observation, Output, Scripted};
+use rescind_engine::lifecycle::{
     AppliedStep, ApplyOptions, DeferredAt, EngineError, InstanceRecord, Wait,
 };
 
@@ -28,7 +28,7 @@ const UNDRIVEN: &[(E, &str)] = &[(
     "unit E: the host contract re-derived at request, approval and apply",
 )];
 
-fn plan_for(ctx: Ctx, ev: E) -> rue_core::model::Plan {
+fn plan_for(ctx: Ctx, ev: E) -> rescind_core::model::Plan {
     let mut a = world::op("a");
     if ctx.earlier_hold {
         a = world::hold(a);
@@ -50,7 +50,7 @@ fn plan_for(ctx: Ctx, ev: E) -> rue_core::model::Plan {
         E::DriftOnDefer => {
             // Step 2's file drifted under :defer: its marker names a digest
             // the fake's world does not hold.
-            b.drift = Some(rue_core::model::Drift::Defer);
+            b.drift = Some(rescind_core::model::Drift::Defer);
         }
         _ => {}
     }
@@ -68,8 +68,8 @@ fn plan_for(ctx: Ctx, ev: E) -> rue_core::model::Plan {
     };
     p.mode = ctx.mode;
     if matches!(ev, E::ApprovalWindowLapses) || matches!(ev, E::Cancel) {
-        p.gate = Some(rue_core::model::PlanGate {
-            expr: rue_core::model::GateExpr::Single(rue_core::model::Factor::Auth {
+        p.gate = Some(rescind_core::model::PlanGate {
+            expr: rescind_core::model::GateExpr::Single(rescind_core::model::Factor::Auth {
                 id: "oncall".into(),
                 weight: 1,
             }),
@@ -168,7 +168,7 @@ fn seed(ctx: Ctx, state: State, ev: E) -> InstanceRecord {
             if ev == E::DriftOnDefer {
                 rec.markers.insert(
                     "2".into(),
-                    vec![rue_engine::footprint::Marker {
+                    vec![rescind_engine::footprint::Marker {
                         kind: Kind::Owned,
                         path: "/b".into(),
                         digest: "stale".into(),

@@ -9,7 +9,7 @@
 //! the directory goes; `abandon` saying what it left armed; the heartbeat
 //! written at its interval; the `fired` marker read on the next contact
 //! (R0402); boot reconciliation leaving an armed orphan and reclaiming a
-//! fired one; and `rue reclaim` refused while armed (R0405) until it is
+//! fired one; and `rescind reclaim` refused while armed (R0405) until it is
 //! forced with a reason.
 
 mod common;
@@ -17,9 +17,9 @@ mod common;
 use std::collections::BTreeMap;
 
 use common::world::{self, World, OWNER, T0};
-use rue_core::model::{Backstop, Duration, Instant, Item, Plan, Trigger};
-use rue_core::states::State;
-use rue_engine::lifecycle::ApplyOptions;
+use rescind_core::model::{Backstop, Duration, Instant, Item, Plan, Trigger};
+use rescind_core::states::State;
+use rescind_engine::lifecycle::ApplyOptions;
 
 fn opts() -> ApplyOptions {
     ApplyOptions {
@@ -503,7 +503,7 @@ fn a_backstop_left_armed_by_an_abandon_is_journaled_when_it_fires() {
     let id = out.id.clone();
     w.ssh.with(|f| {
         f.script
-            .push_back(rue_engine::executor::Scripted::Fail("no".into()))
+            .push_back(rescind_engine::executor::Scripted::Fail("no".into()))
     });
     w.engine.recant(&id, &[]).unwrap();
     w.sched.fail("disarm");
@@ -570,7 +570,7 @@ fn abandon_disarms_where_it_can_and_says_what_it_left_armed() {
     // The instance must be abandonable: a stuck undo puts it there.
     w.ssh.with(|f| {
         f.script
-            .push_back(rue_engine::executor::Scripted::Fail("no".into()))
+            .push_back(rescind_engine::executor::Scripted::Fail("no".into()))
     });
     w.engine
         .recant(&id, &[])
@@ -634,7 +634,7 @@ fn boot_leaves_another_controllers_directory_exactly_as_it_is() {
             .any(|e| e.contains("InstanceDirForeign") && e.contains("i-theirs")),
         "{events:?}"
     );
-    // And `rue doctor` says the same thing, apart from the orphans.
+    // And `rescind doctor` says the same thing, apart from the orphans.
     let r = w.engine.doctor().unwrap();
     assert_eq!(
         r.foreign,

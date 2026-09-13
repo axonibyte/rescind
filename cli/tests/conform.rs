@@ -1,12 +1,12 @@
-//! `rue sdk-conform` as an operator meets it: what it exits, and what it
+//! `rescind sdk-conform` as an operator meets it: what it exits, and what it
 //! says. The suite's own judgements are tested where the suite lives
 //! (sdk/rust/tests/conform.rs); this is the verb around it.
 //!
 //! Unix only, like cli/tests/daemon.rs beside it: the hook these cases
 //! judge is `tests/fixtures/stub-hook.sh`, a POSIX shell script, and there
 //! is no `sh` to run it on Windows. What is scoped here is the fixture,
-//! not the verb -- `rue sdk-conform` runs a hook through whatever shell
-//! the host has (`rue_engine::hook::host_shell`).
+//! not the verb -- `rescind sdk-conform` runs a hook through whatever shell
+//! the host has (`rescind_engine::hook::host_shell`).
 
 #![cfg(unix)]
 
@@ -17,13 +17,13 @@ use std::time::{Duration, Instant};
 /// The exit code and stdout, with stderr folded into the text so a failed
 /// assertion on the code says what went wrong. An unexpected exit is
 /// exactly when the reason matters, and the reason is on stderr:
-/// `rue sdk-conform` exits 2 without judging anything when it cannot start
+/// `rescind sdk-conform` exits 2 without judging anything when it cannot start
 /// the hook, and says why there.
-fn rue(args: &[&str]) -> (i32, String) {
-    let out = Command::new(env!("CARGO_BIN_EXE_rue"))
+fn rescind(args: &[&str]) -> (i32, String) {
+    let out = Command::new(env!("CARGO_BIN_EXE_rescind"))
         .args(args)
         .output()
-        .expect("rue runs");
+        .expect("rescind runs");
     let mut text = String::from_utf8_lossy(&out.stdout).into_owned();
     let err = String::from_utf8_lossy(&out.stderr);
     if !err.trim().is_empty() {
@@ -40,7 +40,7 @@ fn a_hook_that_answers_ok_to_everything_fails_the_suite_and_says_which_cases() {
     // be an SDK: it cannot say it does not serve something, and it
     // promises fields it does not send.
     let stub = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/stub-hook.sh");
-    let (code, out) = rue(&["sdk-conform", "--name", "act", &format!("sh {stub} act")]);
+    let (code, out) = rescind(&["sdk-conform", "--name", "act", &format!("sh {stub} act")]);
     assert_eq!(code, 1, "a hook with failures exits 1:\n{out}");
     assert!(
         out.contains("not ok  execute.clock"),
@@ -57,16 +57,16 @@ fn a_hook_that_answers_ok_to_everything_fails_the_suite_and_says_which_cases() {
 fn a_hook_that_never_registers_is_exit_two_because_nothing_was_judged() {
     // Distinct from exit 1: a hook that ran and failed cases has been
     // judged, and one that never started has not.
-    let (code, _) = rue(&["sdk-conform", "--name", "nothing", "exit 0"]);
+    let (code, _) = rescind(&["sdk-conform", "--name", "nothing", "exit 0"]);
     assert_eq!(code, 2);
-    let (code, _) = rue(&["sdk-conform", "--name", "nothing", "echo not-a-frame"]);
+    let (code, _) = rescind(&["sdk-conform", "--name", "nothing", "echo not-a-frame"]);
     assert_eq!(code, 2);
 }
 
 #[test]
 fn the_json_report_carries_every_case_and_the_registration() {
     let stub = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/stub-hook.sh");
-    let (code, out) = rue(&[
+    let (code, out) = rescind(&[
         "sdk-conform",
         "--json",
         "--name",
@@ -91,17 +91,17 @@ fn the_json_report_carries_every_case_and_the_registration() {
     );
 }
 
-/// Run `rue` and refuse to wait forever: a hang is reported as a failure
+/// Run `rescind` and refuse to wait forever: a hang is reported as a failure
 /// with something to read, not as a wedged suite.
-fn rue_bounded(args: &[&str], bound: Duration) -> Option<(i32, String)> {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_rue"))
+fn rescind_bounded(args: &[&str], bound: Duration) -> Option<(i32, String)> {
+    let mut child = Command::new(env!("CARGO_BIN_EXE_rescind"))
         .args(args)
         // Both are some four kilobytes, well inside a pipe buffer, so they
         // are read after the exit rather than concurrently.
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .expect("rue runs");
+        .expect("rescind runs");
     let until = Instant::now() + bound;
     loop {
         if let Some(status) = child.try_wait().expect("wait") {
@@ -139,7 +139,7 @@ fn a_hook_the_shell_did_not_exec_still_ends_when_the_suite_does() {
     // so the worst way for this to go wrong. Closing the hook's stdin ends
     // whichever process is really serving.
     let stub = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/stub-hook.sh");
-    let answered = rue_bounded(
+    let answered = rescind_bounded(
         &["sdk-conform", "--name", "act", &format!("sh {stub} act; :")],
         Duration::from_secs(30),
     );

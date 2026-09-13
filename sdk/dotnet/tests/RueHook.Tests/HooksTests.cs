@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using Xunit;
 
-namespace Rue.Hook.Tests;
+namespace Rescind.Hook.Tests;
 
 /// Dispatch: every request gets a reply carrying its id, and every refusal says why.
 public class HooksTests

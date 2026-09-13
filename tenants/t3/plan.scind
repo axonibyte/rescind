@@ -1,0 +1,92 @@
+rescind 0
+# T3 -- commit-confirmed firewall change (docs/ROADMAP.md section 8.3).
+# Permanent. A FreeBSD pf anchor (region), a Linux packet-filter file
+# (region) and a Windows Firewall rule (owned), dispatched by clause on the
+# host's os; macOS takes the pf clause. The
+# inventory carries the same two firewalls a second time with `artifact =
+# "python"`, so the backstop is rendered for both families on both OSes.
+#
+# Damaged-marker cost (the region step's fallback): if the rescind-mgmt anchor's
+# markers are damaged, the whole of /etc/pf.conf is restored from the do-time
+# snapshot and a stranger's edits outside the anchor are lost -- unless another
+# instance holds a region on the file, in which case the revert is deferred.
+#
+# Phase 1 carries this text unparsed; the checked form is the Rust term in
+# tenants/harness/src/tenants/t3.rs, and expected/ holds its verdicts.
+
+site do
+  inventory from: file("inventory.toml")
+  journal to: local()
+  approval via: hook(:authority)
+  backstop scheduler: cron()
+  operators do
+    identity :netops_requester, user: "netops", operator_for: :all, admin: true
+  end
+  hooks do
+    registrar :authority, user: "approvald", may_register: [:authority]
+  end
+end
+
+defprobe :verify_reach do
+  run "true"
+  locus :controller
+  produces reach
+end
+
+# The Windows Firewall rule is a fact no filesystem holds, and ssh() reads
+# files alone: this is how the engine reads it, so the rule's undo -- by
+# name -- can tell a rule the plan made from one it did not (E0609). Exit 0
+# is present, exit 1 absent.
+defprobe :winfw_rule do
+  run "if (Get-NetFirewallRule -Name #{rule} -ErrorAction SilentlyContinue) { 'present' } else { exit 1 }"
+  reads winfw.rule(rule)
+end
+
+defop :pf_allow, %{os: [:freebsd, :macos]} do
+  footprint region: file("/etc/pf.conf", anchor: "rescind-mgmt")
+  reach ssh(host)
+  do: [region_set(file("/etc/pf.conf", anchor: "rescind-mgmt"), content: "pass in proto tcp to port #{port}"), run("pfctl -f /etc/pf.conf")]
+  undo: :restore
+  undo_locus: :target
+end
+
+defop :nft_allow, %{os: :linux} do
+  footprint region: file("/etc/nftables.conf", anchor: "rescind-mgmt")
+  reach ssh(host)
+  do: [region_set(file("/etc/nftables.conf", anchor: "rescind-mgmt"), content: "tcp dport #{port} accept"), run("nft -f /etc/nftables.conf")]
+  undo: :restore
+  undo_locus: :target
+end
+
+defop :winfw_allow, %{os: :windows} do
+  footprint owned: winfw.rule("rescind-mgmt")
+  reach ssh(host)
+  do: run("New-NetFirewallRule -Name rescind-mgmt -Direction Inbound -Protocol TCP -LocalPort #{port} -Action Allow")
+  undo: run("Remove-NetFirewallRule -Name rescind-mgmt", idempotent: true)
+  undo_pre winfw.rule("rescind-mgmt")
+  undo_locus: :target
+end
+
+defplan :open_mgmt_port, %{os: [:freebsd, :macos]} do
+  backstop trigger: [unless_confirmed: 10m], locus: :target, arm_before: 1
+  pf_allow(port: 8443)
+  observe verify_reach() as reach
+  confirm()
+  commit()
+end
+
+defplan :open_mgmt_port, %{os: :linux} do
+  backstop trigger: [unless_confirmed: 10m], locus: :target, arm_before: 1
+  nft_allow(port: 8443)
+  observe verify_reach() as reach
+  confirm()
+  commit()
+end
+
+defplan :open_mgmt_port, %{os: :windows} do
+  backstop trigger: [unless_confirmed: 10m], locus: :target, arm_before: 1
+  winfw_allow(port: 8443)
+  observe verify_reach() as reach
+  confirm()
+  commit()
+end

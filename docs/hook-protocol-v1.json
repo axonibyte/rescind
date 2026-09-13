@@ -1,5 +1,5 @@
 {
-  "frozen": "hook protocol v1, generated from rue-hook-proto by rue-goldens. Never edited: any change to an op, a field or a kind is a new protocol version, with a new document beside this one (docs/ROADMAP.md, Phase 4).",
+  "frozen": "hook protocol v1, generated from rescind-hook-proto by rescind-goldens. Never edited: any change to an op, a field or a kind is a new protocol version, with a new document beside this one (docs/ROADMAP.md, Phase 4).",
   "kinds": [
     "journal",
     "inventory",

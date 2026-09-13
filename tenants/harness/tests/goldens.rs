@@ -7,8 +7,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use rue_tenants::golden::{actual_path, compare_bytes, render_mismatch, repo_root};
-use rue_tenants::{artifacts, hook_protocol_path, STATE_TABLE};
+use rescind_tenants::golden::{actual_path, compare_bytes, render_mismatch, repo_root};
+use rescind_tenants::{artifacts, hook_protocol_path, STATE_TABLE};
 
 #[test]
 fn every_artifact_matches_its_expected_file() {
@@ -89,7 +89,7 @@ fn expected_files(root: &Path) -> Vec<String> {
         out.push(STATE_TABLE.to_string());
     }
     // Only the CURRENT protocol version's document is this walk's business.
-    // rue-goldens writes it from the tables as they stand, so it is declared
+    // rescind-goldens writes it from the tables as they stand, so it is declared
     // and found like any golden. A released earlier version is not generated
     // from anything any more -- that is what it means to be frozen -- and is
     // guarded by tools/lint-hook-proto-frozen.sh instead. Walking every
@@ -133,13 +133,13 @@ fn the_writer_refuses_without_the_variable_and_touches_nothing() {
             (p, t)
         })
         .collect();
-    let out = std::process::Command::new(env!("CARGO_BIN_EXE_rue-goldens"))
-        .env_remove("RUE_UPDATE_GOLDENS")
+    let out = std::process::Command::new(env!("CARGO_BIN_EXE_rescind-goldens"))
+        .env_remove("RESCIND_UPDATE_GOLDENS")
         .output()
         .unwrap();
     assert_eq!(out.status.code(), Some(2));
     assert!(out.stdout.is_empty());
-    assert!(String::from_utf8_lossy(&out.stderr).contains("RUE_UPDATE_GOLDENS=1"));
+    assert!(String::from_utf8_lossy(&out.stderr).contains("RESCIND_UPDATE_GOLDENS=1"));
     for (p, t) in before {
         assert_eq!(
             fs::metadata(&p).unwrap().modified().unwrap(),

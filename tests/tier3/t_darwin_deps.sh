@@ -7,7 +7,7 @@ set -u
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd) || exit 2
 guard=$root/tools/lint-darwin-deps.sh
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-t-darwin.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-t-darwin.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 rc=0
@@ -25,8 +25,8 @@ expect() { # expect <status> <label> <guard args...>
     fi
 }
 
-printf 'rue v0.0.1 (/x/cli)\nserde v1.0.0\nlibc v0.2.0\n' > "$tmp/clean"
-printf 'rue v0.0.1 (/x/cli)\nsecurity-framework-sys v2.0.0\nlibc v0.2.0\n' > "$tmp/dirty"
+printf 'rescind v0.0.1 (/x/cli)\nserde v1.0.0\nlibc v0.2.0\n' > "$tmp/clean"
+printf 'rescind v0.0.1 (/x/cli)\nsecurity-framework-sys v2.0.0\nlibc v0.2.0\n' > "$tmp/dirty"
 
 expect 0 "a std-only graph passes" --from "$tmp/clean"
 expect 1 "a framework-linking crate is caught" --from "$tmp/dirty"

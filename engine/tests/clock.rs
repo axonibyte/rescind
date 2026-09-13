@@ -5,8 +5,8 @@
 use std::sync::Arc;
 use std::thread;
 
-use rue_core::model::{Duration, Instant};
-use rue_engine::clock::{Clock, FakeClock, SystemClock};
+use rescind_core::model::{Duration, Instant};
+use rescind_engine::clock::{Clock, FakeClock, SystemClock};
 
 #[test]
 fn the_fake_clock_holds_still_advances_by_a_duration_and_can_be_set_back() {

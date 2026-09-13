@@ -4,14 +4,14 @@
 One file, three hooks, chosen by the first argument:
 
   authority   the approval binding: two human authenticators, a challenge
-              over the digest rue supplies, and a verdict on a proof
+              over the digest rescind supplies, and a verdict on a proof
   escrow      a secrets acceptor: it takes the credential and keeps a
               receipt, and never writes the value anywhere
   bmc_api     the management controller: an `execute` and `probe` hook for
               a host with no filesystem, standing in for the appliance T1
               enables an account on
 
-No state outside the directory given by RUE_T1_STATE (a temporary
+No state outside the directory given by RESCIND_T1_STATE (a temporary
 directory the harness makes). What it simulates is a real appliance's API:
 an account that is enabled, disabled, and readable as a fact.
 
@@ -29,7 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "sdk" / "python"))
 
-from rue_hook import (  # noqa: E402
+from rescind_hook import (  # noqa: E402
     Approval,
     Authenticator,
     ChallengeRequest,
@@ -44,7 +44,7 @@ from rue_hook import (  # noqa: E402
     serve_stdio,
 )
 
-STATE = os.environ.get("RUE_T1_STATE", "/tmp/rue-t1-state")
+STATE = os.environ.get("RESCIND_T1_STATE", "/tmp/rescind-t1-state")
 
 
 def state_path(name):
@@ -75,7 +75,7 @@ class Authority(Approval):
         return AUTHENTICATORS
 
     def challenge(self, r: ChallengeRequest):
-        # Rue supplies the digest; what a human is shown is the binding's
+        # Rescind supplies the digest; what a human is shown is the binding's
         # business, and this one shows the digest's first bytes.
         return f"approve {r.instance} scope {r.scope} [{r.digest[:16]}]"
 
@@ -137,7 +137,7 @@ class Bmc(Execute, Probe):
         # No filesystem: nothing to bootstrap, and the engine never asks
         # this host for an instance directory.
         return {
-            "rue_root": False,
+            "rescind_root": False,
             "group": False,
             "instances_dir": False,
             "lock": False,

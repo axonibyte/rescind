@@ -1,17 +1,17 @@
 using System.Text.Json.Nodes;
-using Rue.Hook;
+using Rescind.Hook;
 
-namespace Rue.Hook.Example;
+namespace Rescind.Hook.Example;
 
 /// <summary>
 /// An audit hook: a journal sink that keeps every entry, and a notifier.
 ///
 /// Bind it in a site with <c>journal to: local(), hook(:audit)</c> and
-/// <c>notify via: hook(:audit)</c>, and have rued spawn it:
+/// <c>notify via: hook(:audit)</c>, and have rescindd spawn it:
 ///
-///     rued run --spawn audit="dotnet /opt/rue/AuditHook.dll" ...
+///     rescindd run --spawn audit="dotnet /opt/rescind/AuditHook.dll" ...
 ///
-/// Each journal entry is appended to $RUE_AUDIT_LOG (default audit.ndjson)
+/// Each journal entry is appended to $RESCIND_AUDIT_LOG (default audit.ndjson)
 /// as one line of JSON. A sink that cannot record an entry must say so: the
 /// engine then refuses to proceed (R0304) rather than run a step nobody
 /// recorded. Notifications go to stderr, because stdout carries the protocol.
@@ -42,5 +42,5 @@ public static class AuditHook
     public static Hooks Build(string path) => new() { Journal = new AuditLog(path), Notify = new Stderr() };
 
     public static int Main() =>
-        Serve.Stdio("audit", Build(Environment.GetEnvironmentVariable("RUE_AUDIT_LOG") ?? "audit.ndjson"));
+        Serve.Stdio("audit", Build(Environment.GetEnvironmentVariable("RESCIND_AUDIT_LOG") ?? "audit.ndjson"));
 }

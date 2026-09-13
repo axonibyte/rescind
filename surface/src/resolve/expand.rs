@@ -1,5 +1,5 @@
 //! Expansion (docs/ROADMAP.md 6.4 "Modules" and "Clauses"): a plan clause
-//! for one host into `rue_core::model::Plan`, every step's op template
+//! for one host into `rescind_core::model::Plan`, every step's op template
 //! expanded at its call with its parameters bound, bodies lowered to
 //! primitives with every reference classified by its origin, footprints
 //! to shapes by the one rule, gates to their tree. What the text leaves
@@ -7,10 +7,10 @@
 
 use std::collections::BTreeMap;
 
+use rescind_core::body::{self as b, Body, FactRef, Part, Prim, Ref, Template, Value};
+use rescind_core::diagnostics::{nearest, Code, Diagnostic};
+use rescind_core::model::*;
 use rowan::TextRange;
-use rue_core::body::{self as b, Body, FactRef, Part, Prim, Ref, Template, Value};
-use rue_core::diagnostics::{nearest, Code, Diagnostic};
-use rue_core::model::*;
 
 use super::site::{self, Contract};
 use super::value::{self, Val};

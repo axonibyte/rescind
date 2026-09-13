@@ -1,5 +1,5 @@
 //! The request digest and its scoped forms, docs/ROADMAP.md section 5.11.
-//! Rue supplies a digest, not a challenge: the approval binding renders
+//! Rescind supplies a digest, not a challenge: the approval binding renders
 //! whatever human-facing challenge it likes over the digest and verifies
 //! proofs against it. The nonce and the time are the caller's: core has
 //! neither randomness nor a clock.
@@ -11,6 +11,9 @@ use crate::journal::{Hash, Scope};
 use crate::json::canonical::{encode, CanonicalError};
 use crate::model::{Duration, Instant};
 
+// The old name, kept on purpose; see the note on `journal::DOMAIN`. A
+// requester's signature is taken over this separator, so moving it would
+// invalidate every request already signed.
 pub const DOMAIN: &str = "rue-request";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -49,7 +52,7 @@ impl Canon for Request {
 
 /// `H(canonical(nonce, plan_id, instance, owner_host, params_hash,
 /// host_contract_hash, wane, requested_at, gate_hash, plan_content_hash))`,
-/// domain-separated `rue-request`.
+/// domain-separated `rescind-request`.
 pub fn request_digest(r: &Request) -> Hash {
     Hash::sha256(&message(DOMAIN, r))
 }

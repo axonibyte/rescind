@@ -37,7 +37,7 @@
 
 [store-v0.1.0]
 kind = committed
-repo = bitbucket.org/axonibyte/rue
+repo = bitbucket.org/axonibyte/rescind
 commit = 2d59bcfeb56b243694a86b9e7970af82545e6e34
 made = 2026-09-11
 written_by = v0.1.0
@@ -45,7 +45,7 @@ schema = 1
 
 [store-v0.2.0]
 kind = committed
-repo = bitbucket.org/axonibyte/rue
+repo = bitbucket.org/axonibyte/rescind
 commit = e2e01e01046adb405149014d1f033bbc979ecfef
 made = 2026-09-11
 written_by = v0.2.0

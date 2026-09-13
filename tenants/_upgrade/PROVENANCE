@@ -22,7 +22,11 @@
 #   kind    `tag` -- the files are <prefix>/<path> at <commit>.
 #   repo    the repository, as <host>/<owner>/<name>. Recorded because a
 #           commit means nothing without saying whose it is (coop, 2026-09-12:
-#           cite refs, not repositories).
+#           cite refs, not repositories). THE PATH HERE IS THE CURRENT ONE:
+#           this repository was `axonibyte/rue` when these vectors were cut
+#           and was renamed to `axonibyte/rescind` on 2026-09-13, history and
+#           tags intact. The commits below are the same objects they always
+#           were; only the name in front of them moved.
 #   ref     the tag the vector was cut from. Checked when this clone has it:
 #           if refs/tags/<ref> resolves to any other commit, the tag moved
 #           after the vector was made, which is louder than a byte mismatch.
@@ -33,7 +37,7 @@
 
 [v0.1.0]
 kind = tag
-repo = bitbucket.org/axonibyte/rue
+repo = bitbucket.org/axonibyte/rescind
 ref = v0.1.0
 commit = f2477717ee1e8a52f4c2d1b84240c00e29d96f9b
 prefix = tenants
@@ -41,7 +45,7 @@ made = 2026-09-11
 
 [v0.2.0]
 kind = tag
-repo = bitbucket.org/axonibyte/rue
+repo = bitbucket.org/axonibyte/rescind
 ref = v0.2.0
 commit = e08fe1e1e73db62888764d92ef9c89ddb1519ecf
 prefix = tenants

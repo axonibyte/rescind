@@ -16,7 +16,7 @@
 //!    the verb; commit, renew and confirm on a plan whose intent does not
 //!    admit them are R0102.
 //!
-//! The table `rue states` prints and the tier-4 truth-table test are both
+//! The table `rescind states` prints and the tier-4 truth-table test are both
 //! generated from [`transition`].
 
 use std::fmt;

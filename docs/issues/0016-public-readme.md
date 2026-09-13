@@ -27,3 +27,11 @@ who arrives from one of them knows immediately which project this is.
 **Closed.** Closed on a wrong premise, 2026-09-12: the README existed already -- 251 lines with the prior-art section 1.2 asks for -- and what it needed was Phase 5's status, not writing from nothing. The correction is mine: the note closing `docs/issues/0008` said the README was 'not written and deliberately left', which was not true of the repository it was written in.
 
 The README now carries Phase 5 (the grammar, the language server, `explain --html`, drills, the partition stage and the controller stamp), an 'About the name' section that points at the sweep and says the name is undecided and that nothing here depends on the decision, the four new rows its 'what is NOT proven' table earned, and the two new crates and two new guards in 'what is here'. Going public remains the owner's decision; what this issue asked for exists.
+
+**The name question this issue waited on is settled, 2026-09-13.** The owner
+renamed the project from `rue` to `rescind` at v0.4.0, for the reason this
+issue names: `rue` was taken by two other programming languages, one of them
+holding fourteen crates of its own toolchain. The text above is left naming
+`rue` because it is the record of a decision made while that was the name.
+The README it asks for now describes `rescind`, and the third of its three
+options -- rename -- is the one that was taken.

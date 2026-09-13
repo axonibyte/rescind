@@ -1,6 +1,6 @@
 [package]
-name = "rued"
-description = "rue's standalone engine daemon (docs/ROADMAP.md section 7); this unit brings `rued migrate`"
+name = "rescindd"
+description = "rescind's standalone engine daemon (docs/ROADMAP.md section 7); this unit brings `rescindd migrate`"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,14 +8,14 @@ license.workspace = true
 repository.workspace = true
 
 [[bin]]
-name = "rued"
+name = "rescindd"
 path = "src/main.rs"
 
 [dependencies]
-rue-core = { path = "../core" }
-rue-engine = { path = "../engine" }
-rue-surface = { path = "../surface" }
-rue-bindings = { path = "../bindings" }
+rescind-core = { path = "../core" }
+rescind-engine = { path = "../engine" }
+rescind-surface = { path = "../surface" }
+rescind-bindings = { path = "../bindings" }
 clap.workspace = true
 anyhow.workspace = true
 serde_json.workspace = true
@@ -24,7 +24,7 @@ serde_json.workspace = true
 libc = "0.2"
 
 [target.'cfg(windows)'.dependencies]
-# rued as a Windows service: the service-control dispatcher and its stop
+# rescindd as a Windows service: the service-control dispatcher and its stop
 # handler (docs/ROADMAP.md 7.9, 12). Built on the gnu target; run as a
 # service on no machine this phase (docs/TESTING.md).
 windows-service = "0.8"

@@ -1,7 +1,7 @@
 # Reverts: a line nested deeper than MAX_DEPTH is refused; unbounded, the recursive reader overflows the stack, and a StackOverflowError is an Error the serve loop does not catch
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/sdk/java/src/main/java/dev/rue/hook/Json.java
-+++ b/sdk/java/src/main/java/dev/rue/hook/Json.java
+--- a/sdk/java/src/main/java/dev/rescind/hook/Json.java
++++ b/sdk/java/src/main/java/dev/rescind/hook/Json.java
 @@ -156,7 +156,8 @@
              }
              char c = s.charAt(i);

@@ -5,10 +5,10 @@
 //! writes anything anywhere. And the source: `file()` reads a TOML table
 //! and refuses one anyone else on the host can read.
 
-use rue_core::model::Instant;
-use rue_engine::secrets::{Acceptor, Mailbox};
+use rescind_core::model::Instant;
+use rescind_engine::secrets::{Acceptor, Mailbox};
 
-use rue_bindings::secrets::{Hold, Requester};
+use rescind_bindings::secrets::{Hold, Requester};
 
 #[test]
 fn requester_takes_a_secret_only_while_a_client_is_attached() {
@@ -71,7 +71,7 @@ fn hold_keeps_one_secret_in_memory_gives_it_up_once_and_drops_it_at_its_bound() 
     assert!(!h.holds("i-3") && !h.holds("i-4"));
 
     // A bound of its own is honored where it is the earlier of the two.
-    let mut h = Hold::new(Some(rue_core::model::Duration::new(60)));
+    let mut h = Hold::new(Some(rescind_core::model::Duration::new(60)));
     assert!(h
         .deliver("i-5", "e.token", "v", now, Some(Instant::new(3_600)))
         .unwrap());
@@ -88,14 +88,14 @@ mod file_source {
     // Windows equivalent is an ACL check that waits for Phase 3W. So the
     // import lives here rather than at file scope, where it would be
     // unused on the Windows target and `-D warnings` would say so.
-    use rue_bindings::secrets::FileSource;
-    use rue_engine::secrets::Source;
+    use rescind_bindings::secrets::FileSource;
+    use rescind_engine::secrets::Source;
     use std::fs;
     use std::os::unix::fs::PermissionsExt;
 
     fn write(name: &str, body: &str, mode: u32) -> std::path::PathBuf {
         let p = std::env::temp_dir().join(format!(
-            "rue-secrets-{name}-{}-{}",
+            "rescind-secrets-{name}-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -145,8 +145,8 @@ mod file_source {
 
     #[test]
     fn a_file_that_is_not_there_is_a_refusal_naming_it() {
-        let mut src = FileSource::new("/nonexistent/rue-secrets.toml");
+        let mut src = FileSource::new("/nonexistent/rescind-secrets.toml");
         let e = src.resolve("db_pw").unwrap_err().to_string();
-        assert!(e.contains("rue-secrets.toml"), "{e}");
+        assert!(e.contains("rescind-secrets.toml"), "{e}");
     }
 }

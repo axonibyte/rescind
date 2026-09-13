@@ -6,10 +6,10 @@ module Test.Check (tests, emittedCodes) where
 
 import Data.List (nub, sort)
 import Data.Text (Text)
-import Rue.Proto.Check
-import Rue.Proto.Diagnostics (Code (..))
-import Rue.Proto.Model
-import Rue.Proto.Verdict
+import Rescind.Proto.Check
+import Rescind.Proto.Diagnostics (Code (..))
+import Rescind.Proto.Model
+import Rescind.Proto.Verdict
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (assertBool, testCase, (@?=))
 
@@ -106,10 +106,10 @@ tests =
         , pair E0304 ((temp [Par [s reachOp, s (owned "b")]]) {planBackstop = Just backstopAfter1h}) ((temp [Par [s (owned "a"), s (owned "b")]]))
         , pair
             E0305
-            (temp [s (op "r1" [anchored "file:/etc/keys" "rue"]), s (op "r2" [anchored "file:/etc/keys" "rue"])])
-            (temp [s (op "r1" [anchored "file:/etc/keys" "rue-a"]), s (op "r2" [anchored "file:/etc/keys" "rue-b"])])
+            (temp [s (op "r1" [anchored "file:/etc/keys" "rescind"]), s (op "r2" [anchored "file:/etc/keys" "rescind"])])
+            (temp [s (op "r1" [anchored "file:/etc/keys" "rescind-a"]), s (op "r2" [anchored "file:/etc/keys" "rescind-b"])])
         , testCase "a repeated anchor is E0305 alone, not also E0301" $
-            codesOf (temp [s (op "r1" [anchored "file:/etc/keys" "rue"]), s (op "r2" [anchored "file:/etc/keys" "rue"])]) @?= [E0305]
+            codesOf (temp [s (op "r1" [anchored "file:/etc/keys" "rescind"]), s (op "r2" [anchored "file:/etc/keys" "rescind"])]) @?= [E0305]
         , testCase "distinct anchors on one fact are disjoint (no E0301)" $
             assertBool "unexpected conflict" (not (raises E0301 (temp [s (op "r1" [anchored "file:/etc/keys" "a"]), s (op "r2" [anchored "file:/etc/keys" "b"])])))
         , testCase "the same shape on two static hosts is two facts (no E0301)" $

@@ -2,8 +2,8 @@
 
 import unittest
 
-from rue_hook import Execute, Hooks, Notify, Probe, Observation, Refusal
-from rue_hook.serve import registration
+from rescind_hook import Execute, Hooks, Notify, Probe, Observation, Refusal
+from rescind_hook.serve import registration
 
 
 def req(kind, op, **kw):

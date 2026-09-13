@@ -1,9 +1,9 @@
 //! The request digest and its scoped forms: every input matters, every scope
 //! and step differs, and a fixed request has fixed hex.
 
-use rue_core::journal::{Hash, Scope};
-use rue_core::model::{Duration, Instant};
-use rue_core::request::*;
+use rescind_core::journal::{Hash, Scope};
+use rescind_core::model::{Duration, Instant};
+use rescind_core::request::*;
 
 fn fixed() -> Request {
     Request {

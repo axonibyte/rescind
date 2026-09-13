@@ -1,13 +1,13 @@
-//! `rue sdk-conform`: the daemon's side of docs/sdk-conformance.md.
+//! `rescind sdk-conform`: the daemon's side of docs/sdk-conformance.md.
 //!
 //! One hook, spawned and driven through every op of 7.5 it registered for,
 //! judged against the fixed world that document spells out. It needs no
 //! daemon, no store and no plan: a [`LineLink`] over the child's stdio is
 //! the whole apparatus, which is also what makes this a fair test -- the
-//! frames a hook sees here are the frames `rued` sends.
+//! frames a hook sees here are the frames `rescindd` sends.
 //!
 //! Every reply is judged twice: once against the case's own expected
-//! answer, and once against the op's row in `rue-hook-proto` -- the id
+//! answer, and once against the op's row in `rescind-hook-proto` -- the id
 //! comes back, `ok` is a boolean, an `ok: true` carries every field the op
 //! requires, and it all arrives inside the deadline. The second judgement
 //! is what an SDK is really for: a hook written on one cannot answer
@@ -17,7 +17,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-use rue_hook_proto::{Op, Registration};
+use rescind_hook_proto::{Op, Registration};
 use serde_json::{json, Value};
 
 use crate::hook::{spawn_stdio_hook, HookError, HookLink, LineLink};
@@ -144,18 +144,18 @@ fn registration_case(name: &str, r: &Registration) -> Outcome {
     if r.name != name {
         why.push(format!("registers as `{}`, not `{name}`", r.name));
     }
-    if r.protocol != rue_hook_proto::HOOK_PROTOCOL {
+    if r.protocol != rescind_hook_proto::HOOK_PROTOCOL {
         why.push(format!(
             "names protocol {}, not {}",
             r.protocol,
-            rue_hook_proto::HOOK_PROTOCOL
+            rescind_hook_proto::HOOK_PROTOCOL
         ));
     }
     if r.kinds.is_empty() {
         why.push("registers for no kind at all".to_string());
     }
     for k in &r.kinds {
-        if !rue_hook_proto::KINDS.contains(&k.as_str()) {
+        if !rescind_hook_proto::KINDS.contains(&k.as_str()) {
             why.push(format!("`{k}` is not a kind of this protocol"));
         }
     }
@@ -277,7 +277,7 @@ fn journal_cases(d: &mut Driver) {
     d.case(
         "an entry is acknowledged",
         {
-            let mut v = rue_hook_proto::request::req("journal", "append");
+            let mut v = rescind_hook_proto::request::req("journal", "append");
             v["entry"] = entry;
             v
         },
@@ -288,9 +288,9 @@ fn journal_cases(d: &mut Driver) {
 fn inventory_cases(d: &mut Driver) {
     d.case(
         "two hosts, and an omitted field takes its default rather than failing",
-        rue_hook_proto::request::inventory_list(),
+        rescind_hook_proto::request::inventory_list(),
         |reply| {
-            let hosts: Vec<rue_hook_proto::InventoryHost> =
+            let hosts: Vec<rescind_hook_proto::InventoryHost> =
                 serde_json::from_value(reply["hosts"].clone())
                     .map_err(|e| format!("hosts do not parse as Appendix C records: {e}"))?;
             if hosts.len() != 2 {
@@ -304,14 +304,14 @@ fn inventory_cases(d: &mut Driver) {
                     full.name, bare.name
                 ));
             }
-            if full.rue_root.as_deref() != Some("/var/db/rue") {
+            if full.rescind_root.as_deref() != Some("/var/db/rescind") {
                 return Err(
-                    "conform-full lost its rue_root: a host with none can hold no \
+                    "conform-full lost its rescind_root: a host with none can hold no \
                             instance directory"
                         .into(),
                 );
             }
-            if full.artifact != Some(rue_core::model::ArtifactLanguage::Python) {
+            if full.artifact != Some(rescind_core::model::ArtifactLanguage::Python) {
                 return Err("conform-full lost its artifact language".into());
             }
             if full.stdin_preamble != Some(false) {
@@ -323,7 +323,7 @@ fn inventory_cases(d: &mut Driver) {
             if full.roles != vec!["a".to_string(), "b".to_string()] {
                 return Err("conform-full lost its roles".into());
             }
-            if bare.rue_root.is_some() || bare.artifact.is_some() || bare.filesystem {
+            if bare.rescind_root.is_some() || bare.artifact.is_some() || bare.filesystem {
                 return Err("conform-bare invented a field it did not declare".into());
             }
             Ok("both hosts, every field carried".into())
@@ -332,7 +332,7 @@ fn inventory_cases(d: &mut Driver) {
 }
 
 fn execute_cases(d: &mut Driver) {
-    use rue_hook_proto::{request, RPrim, Resolved};
+    use rescind_hook_proto::{request, RPrim, Resolved};
 
     let body = vec![RPrim::Run {
         cmd: Resolved::plain("conformance"),
@@ -383,8 +383,9 @@ fn execute_cases(d: &mut Driver) {
         "the bootstrap state is the five flags of 7.7",
         request::execute_op("bootstrap_state", "conform-full", None),
         |reply| {
-            let st: rue_hook_proto::BootstrapState = serde_json::from_value(reply["state"].clone())
-                .map_err(|e| format!("state does not parse: {e}"))?;
+            let st: rescind_hook_proto::BootstrapState =
+                serde_json::from_value(reply["state"].clone())
+                    .map_err(|e| format!("state does not parse: {e}"))?;
             if st.ready() {
                 Ok("ready".into())
             } else {
@@ -398,7 +399,7 @@ fn execute_cases(d: &mut Driver) {
         "an instance directory listing",
         request::execute_op("instance_dir_list", "conform-full", None),
         |reply| {
-            let dirs: Vec<rue_hook_proto::InstanceDirState> =
+            let dirs: Vec<rescind_hook_proto::InstanceDirState> =
                 serde_json::from_value(reply["dirs"].clone())
                     .map_err(|e| format!("dirs do not parse: {e}"))?;
             match dirs.first() {
@@ -466,7 +467,7 @@ fn execute_cases(d: &mut Driver) {
 }
 
 fn probe_cases(d: &mut Driver) {
-    use rue_hook_proto::request::probe_observe;
+    use rescind_hook_proto::request::probe_observe;
     for (probe, text, tri) in [
         ("conform-yes", "yes", "yes"),
         ("conform-no", "no", "no"),
@@ -530,7 +531,9 @@ fn probe_cases(d: &mut Driver) {
 }
 
 fn approval_cases(d: &mut Driver) {
-    use rue_hook_proto::request::{approval_authenticators, approval_challenge, approval_verify};
+    use rescind_hook_proto::request::{
+        approval_authenticators, approval_challenge, approval_verify,
+    };
     const DIGEST: &str = "00112233445566778899aabbccddeeff";
     const OTHER: &str = "ffeeddccbbaa99887766554433221100";
 
@@ -615,7 +618,7 @@ fn approval_cases(d: &mut Driver) {
 }
 
 fn secrets_cases(d: &mut Driver) {
-    use rue_hook_proto::request::{secrets_deliver, secrets_resolve};
+    use rescind_hook_proto::request::{secrets_deliver, secrets_resolve};
     d.case(
         "a reference resolves to its value",
         secrets_resolve("conform"),
@@ -651,13 +654,13 @@ fn secrets_cases(d: &mut Driver) {
 fn notify_cases(d: &mut Driver) {
     d.case(
         "a notification is acknowledged",
-        rue_hook_proto::request::notify_deliver("waiting", "conform", "a plan is waiting"),
+        rescind_hook_proto::request::notify_deliver("waiting", "conform", "a plan is waiting"),
         |_| Ok("acknowledged".into()),
     );
 }
 
 fn scheduler_cases(d: &mut Driver) {
-    use rue_hook_proto::request::scheduler_op;
+    use rescind_hook_proto::request::scheduler_op;
     for op in ["install", "arm", "rearm", "disarm"] {
         d.case(
             &format!("{op} is acknowledged"),

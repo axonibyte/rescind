@@ -9,7 +9,7 @@
   "diagnostics": [
     {
       "code": "E0305",
-      "message": "anchor declared twice on file:/etc/keys (anchor rue) (steps 1, 2)",
+      "message": "anchor declared twice on file:/etc/keys (anchor rescind) (steps 1, 2)",
       "step": 2
     }
   ],
@@ -51,7 +51,7 @@
       "conditional": "foreign region in file:/etc/keys",
       "drift": "clobber",
       "footprint": [
-        "region: file:/etc/keys anchor rue"
+        "region: file:/etc/keys anchor rescind"
       ],
       "gate": null,
       "knell": null,
@@ -59,14 +59,14 @@
       "n": 1,
       "op": "r1",
       "refusal": "revert",
-      "undo": "strip anchor rue from file:/etc/keys",
+      "undo": "strip anchor rescind from file:/etc/keys",
       "undo_locus": "controller"
     },
     {
       "conditional": "foreign region in file:/etc/keys",
       "drift": "clobber",
       "footprint": [
-        "region: file:/etc/keys anchor rue"
+        "region: file:/etc/keys anchor rescind"
       ],
       "gate": null,
       "knell": null,
@@ -74,7 +74,7 @@
       "n": 2,
       "op": "r2",
       "refusal": "revert",
-      "undo": "strip anchor rue from file:/etc/keys",
+      "undo": "strip anchor rescind from file:/etc/keys",
       "undo_locus": "controller"
     }
   ],

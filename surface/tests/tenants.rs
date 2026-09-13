@@ -1,5 +1,5 @@
-//! The tenant corpus (docs/ROADMAP.md Phase 2 acceptance): every `.rue`
-//! text under `tenants/` parses with no diagnostics, `rue fmt` is the
+//! The tenant corpus (docs/ROADMAP.md Phase 2 acceptance): every `.scind`
+//! text under `tenants/` parses with no diagnostics, `rescind fmt` is the
 //! identity on it, and `fmt` is idempotent. The two negatives that are
 //! parse-level refusals by design (E0101, E0105) must produce exactly that
 //! diagnostic, and `fmt` must refuse them.
@@ -7,17 +7,17 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use rue_core::diagnostics::Code;
-use rue_surface::{format, parse};
+use rescind_core::diagnostics::Code;
+use rescind_surface::{format, parse};
 
 fn corpus() -> Vec<PathBuf> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..");
     let mut files = Vec::new();
     for t in ["t1", "t2", "t3", "t4"] {
-        files.push(root.join("tenants").join(t).join("plan.rue"));
+        files.push(root.join("tenants").join(t).join("plan.scind"));
     }
     for e in fs::read_dir(root.join("tenants/_negative")).unwrap() {
-        let p = e.unwrap().path().join("plan.rue");
+        let p = e.unwrap().path().join("plan.scind");
         if p.is_file() {
             files.push(p);
         }
@@ -33,7 +33,11 @@ fn corpus() -> Vec<PathBuf> {
 /// A negative whose refusal is the parser's own.
 fn parse_level(f: &Path) -> bool {
     let dir = f.parent().unwrap().file_name().unwrap().to_str().unwrap();
-    dir.starts_with(&format!("{}-", Code::E0101)) || dir.starts_with(&format!("{}-", Code::E0105))
+    dir.starts_with(&format!("{}-", Code::E0101))
+        || dir.starts_with(&format!("{}-", Code::E0105))
+        // E0610 is raised on the version line itself, so a text carrying it
+        // never reaches the resolver either.
+        || dir.starts_with(&format!("{}-", Code::E0610))
 }
 
 #[test]

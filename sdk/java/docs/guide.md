@@ -24,7 +24,7 @@ unreachable:
   `RuntimeException` a handler throws (`SimpleName: message`), because a
   refusal with a reason is better than a hook that died. An `Error` -- a
   `StackOverflowError`, an `OutOfMemoryError` -- still ends the hook.
-- **Silence.** No reply before the engine's deadline (`rued run
+- **Silence.** No reply before the engine's deadline (`rescindd run
   --hook-deadline`, 30 seconds by default). The engine refuses the step
   and can say nothing about why. The budget below turns a slow handler
   into a refusal instead.
@@ -89,7 +89,7 @@ environment or stdin, a mode-0600 file -- never onto a command line, where
 every user of the host can read it.
 
 ```java
-import dev.rue.hook.Hooks;
+import dev.rescind.hook.Hooks;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -131,7 +131,7 @@ rather than a silence. Set the budget below `--hook-deadline`;
 
 ## Transports
 
-This library serves over stdio, as a child `rued` spawns (`--spawn`). It
+This library serves over stdio, as a child `rescindd` spawns (`--spawn`). It
 has no socket client: a Java process that must connect to a daemon already
 running, rather than be spawned by it, speaks docs/control-protocol.md
 itself, or runs its handlers behind a spawned child. `Serve.serve(in, out,

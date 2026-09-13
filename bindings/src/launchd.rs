@@ -4,17 +4,17 @@
 //! artifact in the instance directory and which runs it every minute; the
 //! artifact compares its own deadline, as under `cron()`.
 //!
-//! Shipped install-only and unexecuted: rue has no macOS controller and no
+//! Shipped install-only and unexecuted: rescind has no macOS controller and no
 //! macOS target this phase (section 12 and the roadmap's later item for a
 //! Mac to execute, sign and notarize). The commands are the ones a Mac
 //! would run, tested against the fake transport, and `docs/TESTING.md`
 //! records that nothing here has been executed.
 
-use rue_core::model::{Instant, Tri};
-use rue_engine::executor::{ExecError, Executor, ProbeRun, RPrim, Resolved};
-use rue_engine::host::Host;
-use rue_engine::scheduler::{Job, Presence, Scheduler};
-use rue_render::quote;
+use rescind_core::model::{Instant, Tri};
+use rescind_engine::executor::{ExecError, Executor, ProbeRun, RPrim, Resolved};
+use rescind_engine::host::Host;
+use rescind_engine::scheduler::{Job, Presence, Scheduler};
+use rescind_render::quote;
 
 #[derive(Debug, Default)]
 pub struct Launchd;
@@ -24,7 +24,7 @@ fn q(s: &str) -> Result<String, ExecError> {
 }
 
 fn label(instance: &str) -> String {
-    format!("rue.{instance}")
+    format!("rescind.{instance}")
 }
 
 fn plist(instance: &str, command: &str) -> String {

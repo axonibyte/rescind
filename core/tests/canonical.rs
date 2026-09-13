@@ -3,7 +3,7 @@
 //! the original value). A port of the prototype's Test.Canonical, with the
 //! same expected bytes written out rather than computed.
 
-use rue_core::json::canonical::{encode, CanonicalError};
+use rescind_core::json::canonical::{encode, CanonicalError};
 use serde_json::{json, Value};
 
 #[test]

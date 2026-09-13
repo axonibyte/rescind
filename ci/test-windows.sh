@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ci/test-windows.sh  run rue's whole test suite built for Windows, under wine.
+# ci/test-windows.sh  run rescind's whole test suite built for Windows, under wine.
 # Usage: bash ci/test-windows.sh
 #
 # The Windows proof this phase has, wherever a Debian-family host with cargo
@@ -51,7 +51,7 @@ export CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER="$runner"
 # golden tests need no ancestor walk under wine's paths.
 export WINEDEBUG=fixme-all
 export WINEPREFIX="${WINEPREFIX:-${CARGO_TARGET_DIR:-$root/target}/wine}"
-export RUE_REPO_ROOT="$root"
+export RESCIND_REPO_ROOT="$root"
 mkdir -p "$WINEPREFIX"
 # Debian's wine 10 (trixie, 10.0~repack-6) aborts with "free(): invalid
 # pointer" at startup when TMPDIR is set and /run/user/<uid> is not writable
@@ -80,12 +80,12 @@ cargo clippy --workspace --all-targets --locked --target x86_64-pc-windows-gnu -
 
 # The windows-gnu target links the C runtime statically (.cargo/config.toml),
 # so the test binaries need no mingw DLLs under wine.
-# rue-e2e is the tier 5 harness; it runs on a reaper guest only (tools/check.sh).
+# rescind-e2e is the tier 5 harness; it runs on a reaper guest only (tools/check.sh).
 # --no-fail-fast so one run reports every failing test binary, not only the
 # first: a cycle under wine is long, and a platform difference tends to have
 # siblings. The status is still the suite's.
 status=0
-cargo test --workspace --exclude rue-e2e --release --locked --target x86_64-pc-windows-gnu --no-fail-fast || status=$?
+cargo test --workspace --exclude rescind-e2e --release --locked --target x86_64-pc-windows-gnu --no-fail-fast || status=$?
 # The suite's status is the script's; the server's shutdown is not.
 wineserver -k || echo "wineserver: nothing left to stop"
 exit "$status"

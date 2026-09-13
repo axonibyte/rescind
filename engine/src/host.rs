@@ -5,7 +5,7 @@
 
 use std::collections::BTreeMap;
 
-use rue_core::model::HostRecord;
+use rescind_core::model::HostRecord;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -17,8 +17,8 @@ pub struct Host {
     /// The scheduler binding's name on this host (`cron`, `task-scheduler`,
     /// `launchd`), when one is present.
     pub scheduler: Option<String>,
-    /// The target's `rue_root`; `None` is the OS family's default.
-    pub rue_root: Option<String>,
+    /// The target's `rescind_root`; `None` is the OS family's default.
+    pub rescind_root: Option<String>,
     /// Contract facts beyond name and os (roles, and whatever the record
     /// carried) that a `host.<field>` reference or a clause may read.
     #[serde(default)]

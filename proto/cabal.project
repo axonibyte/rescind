@@ -15,5 +15,5 @@ optimization: 1
 
 -- -Werror lives here rather than in the .cabal file so someone probing with
 -- a newer GHC can drop it via cabal.project.local without touching the package.
-package rue-proto
+package rescind-proto
   ghc-options: -Werror

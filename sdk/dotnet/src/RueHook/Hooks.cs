@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace Rue.Hook;
+namespace Rescind.Hook;
 
 /// <summary>Why a hook will not answer: the text the engine journals and
 /// the operator reads. Throwing it is a hook saying no, on the record, and

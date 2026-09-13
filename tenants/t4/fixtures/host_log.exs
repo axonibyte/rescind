@@ -3,7 +3,7 @@
 # It is a child and not part of the reactive host's own connection for the
 # same reason host_world is: boot recovery writes to the journal before the
 # daemon serves its socket, so a sink that means to connect over that
-# socket has not registered yet and R0304 refuses the entry. `rued` now
+# socket has not registered yet and R0304 refuses the entry. `rescindd` now
 # says so at startup rather than failing on entry 1.
 #
 # The reactive host still sees every entry -- through its subscription,
@@ -11,7 +11,7 @@
 # durably kept; a subscription is how a host watches them.
 
 defmodule HostLog do
-  def state_dir, do: System.get_env("RUE_T4_STATE") || "/tmp/rue-t4-state"
+  def state_dir, do: System.get_env("RESCIND_T4_STATE") || "/tmp/rescind-t4-state"
 
   def append(entry) do
     File.mkdir_p!(state_dir())

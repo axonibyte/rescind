@@ -16,11 +16,11 @@
 //! the deadline file itself, so `arm` and `rearm` have nothing of their
 //! own to do. A scheduler that holds the time itself, like Task Scheduler,
 //! sets its trigger there instead. Both shapes are honest under this
-//! trait, and `rue explain` says which one a host has.
+//! trait, and `rescind explain` says which one a host has.
 
 use std::fmt;
 
-use rue_core::model::{ArtifactLanguage, Instant};
+use rescind_core::model::{ArtifactLanguage, Instant};
 
 use crate::executor::{ExecError, Executor};
 use crate::host::Host;

@@ -9,7 +9,7 @@
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use rue_core::model::{Duration, Instant};
+use rescind_core::model::{Duration, Instant};
 
 /// A source of `now`. Shared between threads, so it is `Send + Sync`.
 pub trait Clock: Send + Sync {

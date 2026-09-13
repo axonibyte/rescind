@@ -1,4 +1,4 @@
-# rue-proto
+# rescind-proto
 
 The Phase 0 prototype, kept as the record of what Phase 0 proved: a Haskell
 encoding of the core model (docs/ROADMAP.md section 5) with a checker over it
@@ -13,24 +13,24 @@ and its tier-1 and tier-4 tests, which still run in the gate.
 
 | Path | What |
 |---|---|
-| `src/Rue/Proto/Model.hs` | Facts, footprints, ops, items, plans, sites (sections 5.1 to 5.4) |
-| `src/Rue/Proto/Algebra.hs` | `seq`, `par`, `reverse`, `reverse_from` and the reversal laws (5.5) |
-| `src/Rue/Proto/Interference.hs` | The interference query as list comprehensions (5.7) |
-| `src/Rue/Proto/Backstop.hs` | Coverage, arming order, the reach rule, trigger rules (5.6) |
-| `src/Rue/Proto/Intent.hs` | Intent inference and the commit rules (5.4) |
-| `src/Rue/Proto/Gates.hs` | Weighted-threshold gates: satisfiability, humans, requester, wait-alone (5.11) |
-| `src/Rue/Proto/Check.hs` | `check :: Site -> Requester -> Plan -> Verdict` |
-| `src/Rue/Proto/Verdict.hs`, `Prose.hs`, `Explain.hs` | The structured verdict (5.8), its prose (Appendix A), `explain` (Appendix B) |
-| `src/Rue/Proto/States.hs` | The runtime state machine from its five rules (5.9); generates `docs/state-transitions.tsv` |
-| `src/Rue/Proto/Ledger.hs` | The cross-plan ledger: reservation at Pending, exclusivity classes (5.12) |
-| `src/Rue/Proto/Diagnostics.hs` | Every code of section 6.7 as a constructor; the only place a code is text |
-| `src/Rue/Proto/Json/Canonical.hs` | The canonical encoder (docs/TESTING.md) |
-| `app/` | `rue-proto-states`, the state table printer |
+| `src/Rescind/Proto/Model.hs` | Facts, footprints, ops, items, plans, sites (sections 5.1 to 5.4) |
+| `src/Rescind/Proto/Algebra.hs` | `seq`, `par`, `reverse`, `reverse_from` and the reversal laws (5.5) |
+| `src/Rescind/Proto/Interference.hs` | The interference query as list comprehensions (5.7) |
+| `src/Rescind/Proto/Backstop.hs` | Coverage, arming order, the reach rule, trigger rules (5.6) |
+| `src/Rescind/Proto/Intent.hs` | Intent inference and the commit rules (5.4) |
+| `src/Rescind/Proto/Gates.hs` | Weighted-threshold gates: satisfiability, humans, requester, wait-alone (5.11) |
+| `src/Rescind/Proto/Check.hs` | `check :: Site -> Requester -> Plan -> Verdict` |
+| `src/Rescind/Proto/Verdict.hs`, `Prose.hs`, `Explain.hs` | The structured verdict (5.8), its prose (Appendix A), `explain` (Appendix B) |
+| `src/Rescind/Proto/States.hs` | The runtime state machine from its five rules (5.9); generates `docs/state-transitions.tsv` |
+| `src/Rescind/Proto/Ledger.hs` | The cross-plan ledger: reservation at Pending, exclusivity classes (5.12) |
+| `src/Rescind/Proto/Diagnostics.hs` | Every code of section 6.7 as a constructor; the only place a code is text |
+| `src/Rescind/Proto/Json/Canonical.hs` | The canonical encoder (docs/TESTING.md) |
+| `app/` | `rescind-proto-states`, the state table printer |
 | `test/` | Tier 1 and tier 4; see docs/TESTING.md |
 
 ```sh
 cabal build all && cabal test all --test-show-details=direct
-cabal run -v0 rue-proto-states                          # the transition table
+cabal run -v0 rescind-proto-states                          # the transition table
 ```
 
 ## What encoding the tenants taught
@@ -92,5 +92,5 @@ silent, or where its text could not be followed as written. Each is a test.
 Thirty of the fifty-six codes: the surface's E01xx (parsing, names, kinds,
 totality), the secret rules (E0206, E0209 to E0211, E0411), the engine-shaped
 E0204, E0402, E0406, E0408 and E0409, and the binding rules E0601 to E0606.
-No executor, no artifact, no engine, no parser. The `.rue` text under
+No executor, no artifact, no engine, no parser. The `.scind` text under
 `tenants/` is what Phase 2 must accept; nothing here reads it.

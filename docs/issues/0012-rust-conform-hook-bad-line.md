@@ -8,7 +8,7 @@
 
 `sdk/rust/src/bin/conform_hook.rs` reads with `read_frame(...)?`, so a
 line that is not JSON ends it -- the defect the SDK's serve loop and the
-shim had until the docs unit fixed them. It is a fixture only `rue
+shim had until the docs unit fixed them. It is a fixture only `rescind
 sdk-conform` drives, and the runner never sends such a line, so nothing is
 broken today; but the file is the worked example the other SDKs'
 conformance hooks copy. Low.

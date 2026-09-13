@@ -9,7 +9,7 @@
 # Grows by one line every time a tenant is onboarded. Never shrinks to make a
 # hit go away: a hit means the layering slipped (ROADMAP.md section 4.4).
 
-# The projects rue was distilled from (T1, T2, T4; T3 has no source project).
+# The projects rescind was distilled from (T1, T2, T4; T3 has no source project).
 lychgate
 seance
 merlin

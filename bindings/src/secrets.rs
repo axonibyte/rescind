@@ -6,15 +6,15 @@
 //! Neither writes anything to the store or to disk. `requester()` hands
 //! the value to the client attached to the verb that produced it, and
 //! accepts only while one is attached; `hold()` keeps it in the daemon's
-//! memory until its bound, gives it up once to `rue reveal`, and is
+//! memory until its bound, gives it up once to `rescind reveal`, and is
 //! emptied by a restart.
 
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 
-use rue_core::model::Instant;
-use rue_engine::executor::ExecError;
-use rue_engine::secrets::{Acceptor, Mailbox, Source};
+use rescind_core::model::Instant;
+use rescind_engine::executor::ExecError;
+use rescind_engine::secrets::{Acceptor, Mailbox, Source};
 
 /// `requester()`: the client attached to the verb that produced the
 /// secret. It accepts only while one is attached, and what it takes is
@@ -90,12 +90,12 @@ struct Kept {
 pub struct Hold {
     /// A declared duration; `None` is `until: :wane`, whose bound the
     /// engine computes per instance (R0104 when it cannot).
-    pub duration: Option<rue_core::model::Duration>,
+    pub duration: Option<rescind_core::model::Duration>,
     kept: Arc<Mutex<BTreeMap<String, Kept>>>,
 }
 
 impl Hold {
-    pub fn new(duration: Option<rue_core::model::Duration>) -> Hold {
+    pub fn new(duration: Option<rescind_core::model::Duration>) -> Hold {
         Hold {
             duration,
             kept: Arc::new(Mutex::new(BTreeMap::new())),
@@ -104,7 +104,7 @@ impl Hold {
     fn with<T>(&self, f: impl FnOnce(&mut BTreeMap<String, Kept>) -> T) -> T {
         f(&mut self.kept.lock().unwrap_or_else(|e| e.into_inner()))
     }
-    /// Whether anything is held for an instance, for a test or `rue
+    /// Whether anything is held for an instance, for a test or `rescind
     /// doctor`; never the value.
     pub fn holds(&self, instance: &str) -> bool {
         self.with(|k| k.contains_key(instance))

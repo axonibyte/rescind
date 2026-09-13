@@ -2,17 +2,17 @@
 //! for, what it answers, what it refuses, and the two ways a hook is
 //! reached. A reply this crate builds must carry the fields its op declares
 //! (R0303 at the far end otherwise), so every op is driven here and its
-//! reply checked against `rue-hook-proto`'s own table rather than against a
+//! reply checked against `rescind-hook-proto`'s own table rather than against a
 //! list written out a second time.
 
 use std::io::BufReader;
 use std::time::Duration;
 
-use rue_hook_proto::{
+use rescind_hook_proto::{
     BootstrapState, InstanceDirState, InventoryHost, Observation, Op, Output, RPrim, Resolved,
     HOOK_PROTOCOL, OPS,
 };
-use rue_hook_sdk::{
+use rescind_hook_sdk::{
     serve_socket, Answer, Approval, Authenticator, ChallengeRequest, Delivery, Execute, Hooks,
     Inventory, Journal, Notify, Presence, Probe, Scheduler, Secrets, ServeOptions, Verdict,
     VerifyRequest,
@@ -66,7 +66,7 @@ impl Execute for Everything {
     }
     fn bootstrap_state(&mut self, _host: &str) -> Answer<BootstrapState> {
         Ok(BootstrapState {
-            rue_root: true,
+            rescind_root: true,
             group: true,
             instances_dir: true,
             lock: true,
@@ -202,8 +202,8 @@ fn every_request() -> Vec<Value> {
     let scope = json!({ "step": 1 });
     let mut v = vec![
         json!({ "kind": "journal", "op": "append", "entry": { "event": "Checked" } }),
-        rue_hook_proto::request::inventory_list(),
-        rue_hook_proto::request::execute_run(
+        rescind_hook_proto::request::inventory_list(),
+        rescind_hook_proto::request::execute_run(
             "h",
             "i",
             &[RPrim::Run {
@@ -218,27 +218,27 @@ fn every_request() -> Vec<Value> {
                 stdin: None,
             }],
         ),
-        rue_hook_proto::request::execute_read_fact("h", "file:/etc/present"),
-        rue_hook_proto::request::execute_put_file("h", "i", "markers/1", "owned", 0o640),
-        rue_hook_proto::request::execute_replace_file("h", "i", "deadline", "9"),
-        rue_hook_proto::request::execute_get_file("h", "i", "deadline"),
-        rue_hook_proto::request::execute_remove_file("h", "i", "markers/1"),
-        rue_hook_proto::request::probe_observe("h", "up"),
-        rue_hook_proto::request::approval_authenticators(),
-        rue_hook_proto::request::approval_challenge("i", "abc", scope.clone(), Value::Null),
-        rue_hook_proto::request::approval_verify("i", "abc", scope, "operator", "no"),
-        rue_hook_proto::request::secrets_resolve("db_pw"),
-        rue_hook_proto::request::secrets_deliver("i", "pw", "s3cr3t"),
-        rue_hook_proto::request::notify_deliver("waiting", "s", "b"),
+        rescind_hook_proto::request::execute_read_fact("h", "file:/etc/present"),
+        rescind_hook_proto::request::execute_put_file("h", "i", "markers/1", "owned", 0o640),
+        rescind_hook_proto::request::execute_replace_file("h", "i", "deadline", "9"),
+        rescind_hook_proto::request::execute_get_file("h", "i", "deadline"),
+        rescind_hook_proto::request::execute_remove_file("h", "i", "markers/1"),
+        rescind_hook_proto::request::probe_observe("h", "up"),
+        rescind_hook_proto::request::approval_authenticators(),
+        rescind_hook_proto::request::approval_challenge("i", "abc", scope.clone(), Value::Null),
+        rescind_hook_proto::request::approval_verify("i", "abc", scope, "operator", "no"),
+        rescind_hook_proto::request::secrets_resolve("db_pw"),
+        rescind_hook_proto::request::secrets_deliver("i", "pw", "s3cr3t"),
+        rescind_hook_proto::request::notify_deliver("waiting", "s", "b"),
     ];
     for op in ["clock", "bootstrap_state", "host_lock", "instance_dir_list"] {
-        v.push(rue_hook_proto::request::execute_op(op, "h", None));
+        v.push(rescind_hook_proto::request::execute_op(op, "h", None));
     }
     for op in ["instance_dir_create", "instance_dir_remove"] {
-        v.push(rue_hook_proto::request::execute_op(op, "h", Some("i")));
+        v.push(rescind_hook_proto::request::execute_op(op, "h", Some("i")));
     }
     for op in ["install", "arm", "rearm", "disarm", "present"] {
-        v.push(rue_hook_proto::request::scheduler_op(
+        v.push(rescind_hook_proto::request::scheduler_op(
             op, "h", "there.sh", None,
         ));
     }
@@ -317,7 +317,7 @@ fn a_kind_that_is_not_served_is_a_refusal_that_names_itself_and_never_a_silence(
 #[test]
 fn an_execute_run_receives_its_secrets_and_a_read_fact_may_answer_nothing() {
     let mut hooks = everything();
-    let mut request = rue_hook_proto::request::execute_run(
+    let mut request = rescind_hook_proto::request::execute_run(
         "h",
         "i",
         &[RPrim::Run {
@@ -343,15 +343,15 @@ fn an_execute_run_receives_its_secrets_and_a_read_fact_may_answer_nothing() {
     let body: Vec<RPrim> = serde_json::from_value(request["body"].clone()).unwrap();
     let shown = format!("{body:?}");
     assert!(!shown.contains("s3cr3t"), "{shown}");
-    assert!(rue_hook_sdk::carries_secret(&body));
+    assert!(rescind_hook_sdk::carries_secret(&body));
     let RPrim::Run { env, .. } = &body[0] else {
         panic!("the body did not survive the round trip")
     };
-    assert_eq!(rue_hook_sdk::expose(&env[0].1), "s3cr3t");
+    assert_eq!(rescind_hook_sdk::expose(&env[0].1), "s3cr3t");
 
     // "No such file" is an absent `content`, which the engine reads as
     // None; an empty string would be a file that exists and is empty.
-    let mut miss = rue_hook_proto::request::execute_read_fact("h", "file:/etc/absent");
+    let mut miss = rescind_hook_proto::request::execute_read_fact("h", "file:/etc/absent");
     miss["id"] = json!(2);
     let reply = hooks.answer(&miss);
     assert_eq!(reply["ok"], json!(true));
@@ -365,8 +365,13 @@ fn a_proof_verifies_only_against_the_digest_and_the_scope_it_was_made_for() {
     let step = json!({ "step": 1 });
     let good = format!("abc:{plan}");
     let ask = |h: &mut Hooks, digest: &str, scope: &Value, proof: &str| -> Value {
-        let mut r =
-            rue_hook_proto::request::approval_verify("i", digest, scope.clone(), "operator", proof);
+        let mut r = rescind_hook_proto::request::approval_verify(
+            "i",
+            digest,
+            scope.clone(),
+            "operator",
+            proof,
+        );
         r["id"] = json!(9);
         h.answer(&r)
     };

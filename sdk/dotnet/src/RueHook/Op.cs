@@ -1,4 +1,4 @@
-namespace Rue.Hook;
+namespace Rescind.Hook;
 
 /// <summary>
 /// The hook protocol's wire, as data (docs/hook-protocol.md v1).

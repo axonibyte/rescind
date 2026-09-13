@@ -1,6 +1,6 @@
-//! rue-surface: the `.rue` front end (docs/ROADMAP.md section 6). Unit A
+//! rescind-surface: the `.scind` front end (docs/ROADMAP.md section 6). Unit A
 //! of Phase 2: the lexer, the parser with recovery over a lossless rowan
-//! tree, and the formatter. The resolver to `rue_core::ir::PlanIr` is unit
+//! tree, and the formatter. The resolver to `rescind_core::ir::PlanIr` is unit
 //! B. Depends on core only; no I/O.
 
 pub mod ast;
@@ -10,7 +10,7 @@ pub mod parser;
 pub mod resolve;
 pub mod syntax;
 
-use rue_core::diagnostics::Diagnostic;
+use rescind_core::diagnostics::Diagnostic;
 use syntax::{SyntaxKind, SyntaxNode};
 
 pub use parser::LANGUAGE_VERSION;

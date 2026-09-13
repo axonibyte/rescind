@@ -1,9 +1,9 @@
 //! The hook protocol's wire, docs/hook-protocol.md v1.
 //!
-//! One definition of what crosses the boundary between `rued` and a hook,
-//! shared by the engine, the SDKs of docs/ROADMAP.md 7.11, the `rue-hook`
-//! shim and `rue sdk-conform`. Nothing here does I/O, holds a connection or
-//! knows what a hook is *for*: the engine's adapters (`rue_engine::hook`)
+//! One definition of what crosses the boundary between `rescindd` and a hook,
+//! shared by the engine, the SDKs of docs/ROADMAP.md 7.11, the `rescind-hook`
+//! shim and `rescind sdk-conform`. Nothing here does I/O, holds a connection or
+//! knows what a hook is *for*: the engine's adapters (`rescind_engine::hook`)
 //! present a hook of a kind as the engine's trait for that kind, and this
 //! crate says only what the frames look like.
 //!

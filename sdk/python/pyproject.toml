@@ -1,4 +1,4 @@
-# The Python embedding SDK for rue's hook protocol (docs/ROADMAP.md 7.11):
+# The Python embedding SDK for rescind's hook protocol (docs/ROADMAP.md 7.11):
 # standard library only, so no dependencies, and none at build time beyond
 # the backend.
 [build-system]
@@ -6,12 +6,12 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rue-hook"
+name = "rescind-hook"
 version = "0.3.0"
-description = "A conformance-tested client of rue's hook protocol (docs/hook-protocol.md v1)."
+description = "A conformance-tested client of rescind's hook protocol (docs/hook-protocol.md v1)."
 requires-python = ">=3.11"
 license = "BSD-2-Clause"
 dependencies = []
 
 [tool.setuptools]
-packages = ["rue_hook"]
+packages = ["rescind_hook"]

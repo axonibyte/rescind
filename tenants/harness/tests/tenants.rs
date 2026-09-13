@@ -1,21 +1,21 @@
 //! Tier 2, the acceptance (docs/ROADMAP.md section 9) held by the Rust
-//! crates over the `.rue` texts: every case resolves from its text; every
+//! crates over the `.scind` texts: every case resolves from its text; every
 //! tenant checks clean; every negative refuses with exactly its code; the
 //! negative goldens cover exactly the codes the checker emits; and the
 //! claims section 8 makes about each verdict hold as fields. Also the
-//! source-as-data half: every case directory carries its `.rue` text and
+//! source-as-data half: every case directory carries its `.scind` text and
 //! every tenant an inventory.
 
 use std::collections::BTreeSet;
 use std::fs;
 
-use rue_core::diagnostics::Code;
-use rue_core::intent::Intent;
-use rue_core::ir::PlanIr;
-use rue_core::model::{Duration, Strictness};
-use rue_core::verdict::{HostTouched, Status, Verdict};
-use rue_tenants::golden::repo_root;
-use rue_tenants::{
+use rescind_core::diagnostics::Code;
+use rescind_core::intent::Intent;
+use rescind_core::ir::PlanIr;
+use rescind_core::model::{Duration, Strictness};
+use rescind_core::verdict::{HostTouched, Status, Verdict};
+use rescind_tenants::golden::repo_root;
+use rescind_tenants::{
     artifact_of, cases, load, verdict_of, Case, TenantCase, EMITTED_CODES, NEGATIVES, TENANT_CASES,
 };
 
@@ -97,11 +97,11 @@ fn case_directories_are_distinct() {
 }
 
 #[test]
-fn the_rue_text_and_inventory_exist_for_every_case() {
+fn the_rescind_text_and_inventory_exist_for_every_case() {
     let root = repo_root().unwrap();
     let tenants: BTreeSet<&str> = TENANT_CASES.iter().map(|c| c.tenant).collect();
     for t in tenants {
-        for f in ["plan.rue", "inventory.toml"] {
+        for f in ["plan.scind", "inventory.toml"] {
             let p = root.join("tenants").join(t).join(f);
             assert!(p.is_file(), "missing {}", p.display());
         }
@@ -111,7 +111,7 @@ fn the_rue_text_and_inventory_exist_for_every_case() {
             .join("tenants")
             .join("_negative")
             .join(n.name())
-            .join("plan.rue");
+            .join("plan.scind");
         assert!(p.is_file(), "missing {}", p.display());
     }
 }
@@ -288,7 +288,7 @@ fn every_artifact_holds_exactly_the_covered_steps_in_reverse() {
         };
         let a = a.unwrap_or_else(|e| panic!("{}: {e}", c.dir));
         let text = fs::read_to_string(root.join(&c.dir).join(a.file_name)).unwrap();
-        let cov = rue_core::backstop::coverage(&c.ir.plan).unwrap();
+        let cov = rescind_core::backstop::coverage(&c.ir.plan).unwrap();
         let mut expected = cov.covered.clone();
         expected.reverse();
         let listed: Vec<u32> = text
@@ -297,8 +297,8 @@ fn every_artifact_holds_exactly_the_covered_steps_in_reverse() {
             .map(|l| l.split(':').next().unwrap().parse().unwrap())
             .collect();
         assert_eq!(listed, expected, "{}", c.dir);
-        for (n, it) in rue_core::algebra::numbered(&c.ir.plan.body) {
-            if let Some(o) = rue_core::algebra::op_of(it) {
+        for (n, it) in rescind_core::algebra::numbered(&c.ir.plan.body) {
+            if let Some(o) = rescind_core::algebra::op_of(it) {
                 let covered = cov.covered.contains(&n);
                 assert_eq!(
                     text.contains(&format!(": {}\n", o.id)),
@@ -318,7 +318,7 @@ fn every_artifact_holds_exactly_the_covered_steps_in_reverse() {
 /// renderer's, and the unmodeled with a reason each.
 #[test]
 fn the_codes_partition_and_every_surface_negative_refuses_with_exactly_its_code() {
-    use rue_tenants::{
+    use rescind_tenants::{
         surface_diagnostics, RENDER_CODES, SURFACE_CODES, SURFACE_NEGATIVES, UNMODELED_CODES,
     };
     let root = repo_root().unwrap();

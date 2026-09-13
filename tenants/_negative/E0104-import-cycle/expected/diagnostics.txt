@@ -1,1 +1,1 @@
-tenants/_negative/E0104-import-cycle/cycle.rue:3:1: E0104: import cycle: tenants/_negative/E0104-import-cycle/plan.rue imports tenants/_negative/E0104-import-cycle/cycle.rue imports tenants/_negative/E0104-import-cycle/plan.rue
+tenants/_negative/E0104-import-cycle/cycle.scind:3:1: E0104: import cycle: tenants/_negative/E0104-import-cycle/plan.scind imports tenants/_negative/E0104-import-cycle/cycle.scind imports tenants/_negative/E0104-import-cycle/plan.scind

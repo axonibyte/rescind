@@ -1,17 +1,17 @@
 # The control protocol, version 1
 
-The channel between `rue` (and any embedding host) and `rued`
-(docs/ROADMAP.md 7.4). On unix a socket, mode `0660`, group `rue`; on
-Windows a named pipe (`\\.\pipe\rue`) whose discretionary access-control
+The channel between `rescind` (and any embedding host) and `rescindd`
+(docs/ROADMAP.md 7.4). On unix a socket, mode `0660`, group `rescind`; on
+Windows a named pipe (`\\.\pipe\rescind`) whose discretionary access-control
 list grants SYSTEM and the local administrators full access and the same
 group read and write, and no one else anything. Frames are
 newline-delimited JSON objects; every line is one frame. The version is the
-integer in the `hello`; `rued` refuses any other with R0501. Nothing above
+integer in the `hello`; `rescindd` refuses any other with R0501. Nothing above
 the transport differs between the two.
 
 ## Identity
 
-Identity comes from the operating system, never from the client. `rued`
+Identity comes from the operating system, never from the client. `rescindd`
 reads the peer's effective uid (`SO_PEERCRED` on Linux, `LOCAL_PEERCRED`
 on FreeBSD, `getpeereid` on macOS) or, on Windows, the client's SID by
 impersonating the pipe; it maps that to an account name and matches the
@@ -24,7 +24,7 @@ operators do
 end
 ```
 
-- `user:` is the account, or `:socket_owner` for the account `rued` runs
+- `user:` is the account, or `:socket_owner` for the account `rescindd` runs
   as, which on Windows is the account the service runs under.
 - `operator_for:` is `:all` or the plan ids the identity may act on.
 - `admin: true` grants the admin verbs and nothing about plan scope.
@@ -32,9 +32,9 @@ end
   receives as `event` frames.
 
 There are no implicit operators: the socket owner and any member of group
-`rue` are refused without a declaration (R0503). A user that maps to
+`rescind` are refused without a declaration (R0503). A user that maps to
 several identities must name one in the `hello`. In daemon dry-run mode
-(`rued run --dry-run`) a site with no `operators` block admits every peer as
+(`rescindd run --dry-run`) a site with no `operators` block admits every peer as
 the socket owner's `dry-run` identity, with admin.
 
 ## Frames
@@ -105,7 +105,7 @@ connection). Registrations and disconnections are journaled
 (`HookRegistered`, `HookDeregistered`, `OperatorConnected`,
 `OperatorDisconnected`).
 
-A child `rued` spawned (`--spawn NAME=COMMAND`) has no peer credentials and
+A child `rescindd` spawned (`--spawn NAME=COMMAND`) has no peer credentials and
 is the socket owner by construction; its first line on stdout must be the
 `register` frame, its stdin receives the acknowledgement and then the
 requests, and it must still be a declared registrar's hook.
@@ -131,14 +131,14 @@ connection and alternates the two, as T4's host does. There is no split of
 the connection into halves: replies are matched to requests by the one
 reader, so a second thread reading the socket would take a reply its caller
 is waiting for. A client that demultiplexes by id -- what
-`rue_engine::hook::LineLink` is for a hook -- is machinery nothing has
+`rescind_engine::hook::LineLink` is for a hook -- is machinery nothing has
 needed yet, and is not built.
 
 Delivery is best-effort and never a journal refusal.
 
 ## The CLI
 
-`rue apply|status|recant|renew|confirm|commit|resume|handoff-done|abandon|cancel`
-speak this protocol. `--socket` (or `RUE_SOCKET`) names the socket;
+`rescind apply|status|recant|renew|confirm|commit|resume|handoff-done|abandon|cancel`
+speak this protocol. `--socket` (or `RESCIND_SOCKET`) names the socket;
 `--identity` names the identity when the user maps to more than one. The
 outcome's line is the last line on stdout; its exit code is the process's.

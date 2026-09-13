@@ -1,13 +1,13 @@
 //! Journal signing, docs/ROADMAP.md 5.10: an Ed25519 key in OpenSSH format
 //! held by the engine signs each entry's canonical body as an SSHSIG in the
-//! namespace `rue-journal`; `rue journal verify --key` checks every
+//! namespace `rescind-journal`; `rescind journal verify --key` checks every
 //! signature with the public half. The chain verifies without any of this;
 //! signing is what a reader outside the engine's process can check.
 
 use std::fmt::Write as _;
 use std::path::Path;
 
-use rue_core::journal::{self, body_bytes, Entry, Sig, DOMAIN};
+use rescind_core::journal::{self, body_bytes, Entry, Sig, DOMAIN};
 use ssh_encoding::{Decode, Encode};
 use ssh_key::{HashAlg, PrivateKey, PublicKey, SshSig};
 

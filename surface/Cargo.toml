@@ -1,6 +1,6 @@
 [package]
-name = "rue-surface"
-description = "The .rue front end: lexer, parser with recovery over a lossless tree, formatter, and (from unit B) the resolver to the plan IR"
+name = "rescind-surface"
+description = "The .scind front end: lexer, parser with recovery over a lossless tree, formatter, and (from unit B) the resolver to the plan IR"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -9,7 +9,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-rue-core = { path = "../core" }
+rescind-core = { path = "../core" }
 logos.workspace = true
 rowan.workspace = true
 serde.workspace = true

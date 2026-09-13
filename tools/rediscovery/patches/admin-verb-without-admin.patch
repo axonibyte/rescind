@@ -7,7 +7,7 @@
  
  fn admin(op: &Operator, verb: &str) -> Result<(), ControlError> {
 -    if op.admin {
-+    if op.admin || std::env::var_os("RUE_NEVER_SET").is_none() {
++    if op.admin || std::env::var_os("RESCIND_NEVER_SET").is_none() {
          Ok(())
      } else {
          Err(ControlError::new(

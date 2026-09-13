@@ -9,21 +9,21 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use rue_core::body::{lit, FactRef, Prim, RegionSet, Run, Write};
-use rue_core::ir::{PlanIr, IR_VERSION};
-use rue_core::model::{
+use rescind_core::body::{lit, FactRef, Prim, RegionSet, Run, Write};
+use rescind_core::ir::{PlanIr, IR_VERSION};
+use rescind_core::model::{
     Ack, Authenticator, Backstop, Cost, Drift, Duration, FootprintEntry, ForceName, HostRecord,
     Instant, Item, Kind, Op, Output, Plan, Refusal, Site, StepI, Trigger, Undo, UndoLocus,
 };
-use rue_engine::clock::{Clock, FakeClock};
-use rue_engine::executor::{Executor, FakeExecutor, FakeHandle, LocusKind, Scripted};
-use rue_engine::gates::FakeApprovalHandle;
-use rue_engine::host::Host;
-use rue_engine::journal::{Journal, MemorySink, Sink};
-use rue_engine::lifecycle::{ApplyOptions, Engine};
-use rue_engine::scheduler::FakeSchedulerHandle;
-use rue_engine::secrets::FakeAcceptor;
-use rue_engine::store::Store;
+use rescind_engine::clock::{Clock, FakeClock};
+use rescind_engine::executor::{Executor, FakeExecutor, FakeHandle, LocusKind, Scripted};
+use rescind_engine::gates::FakeApprovalHandle;
+use rescind_engine::host::Host;
+use rescind_engine::journal::{Journal, MemorySink, Sink};
+use rescind_engine::lifecycle::{ApplyOptions, Engine};
+use rescind_engine::scheduler::FakeSchedulerHandle;
+use rescind_engine::secrets::FakeAcceptor;
+use rescind_engine::store::Store;
 
 use crate::Event;
 
@@ -98,7 +98,7 @@ fn host(name: &str, reach: &[&str]) -> Host {
         record: record(name, reach),
         address: "10.0.0.1".into(),
         scheduler: Some("cron".into()),
-        rue_root: None,
+        rescind_root: None,
         facts: BTreeMap::new(),
     }
 }
@@ -134,7 +134,7 @@ fn site() -> Site {
 
 fn run_body(cmd: &str) -> Vec<Prim> {
     vec![Prim::Run(Run {
-        cmd: vec![rue_core::body::Part::Lit(cmd.into())],
+        cmd: vec![rescind_core::body::Part::Lit(cmd.into())],
         env: vec![],
         stdin: None,
     })]
@@ -180,12 +180,12 @@ pub fn temporary() -> Plan {
     let mut second = Op::new(
         "fence",
         vec![
-            FootprintEntry::anchored(SHARED, "rue-sim-a"),
+            FootprintEntry::anchored(SHARED, "rescind-sim-a"),
             FootprintEntry::entry(Kind::Modified, "file:/etc/kept"),
         ],
     );
     second.do_ = vec![
-        region(SHARED, "rue-sim-a", "inside a"),
+        region(SHARED, "rescind-sim-a", "inside a"),
         write("file:/etc/kept", "changed"),
     ];
     second.undo = Undo::Restore;
@@ -202,15 +202,15 @@ pub fn temporary() -> Plan {
     );
     p.wane = Some(Duration::new(3_600));
     p.renew_within = Some(Duration::new(600));
-    p.gate = Some(rue_core::model::PlanGate {
-        expr: rue_core::model::GateExpr::Thresh {
+    p.gate = Some(rescind_core::model::PlanGate {
+        expr: rescind_core::model::GateExpr::Thresh {
             n: 2,
             factors: vec![
-                rue_core::model::Factor::Auth {
+                rescind_core::model::Factor::Auth {
                     id: "oncall".into(),
                     weight: 1,
                 },
-                rue_core::model::Factor::Auth {
+                rescind_core::model::Factor::Auth {
                     id: "second".into(),
                     weight: 1,
                 },
@@ -232,9 +232,9 @@ pub fn temporary() -> Plan {
 pub fn permanent() -> Plan {
     let mut op = Op::new(
         "hold-open",
-        vec![FootprintEntry::anchored(SHARED, "rue-sim-b")],
+        vec![FootprintEntry::anchored(SHARED, "rescind-sim-b")],
     );
-    op.do_ = vec![region(SHARED, "rue-sim-b", "inside b")];
+    op.do_ = vec![region(SHARED, "rescind-sim-b", "inside b")];
     op.undo = Undo::Restore;
     op.undo_locus = UndoLocus::Target;
 
@@ -287,7 +287,7 @@ pub fn succession() -> Plan {
         ],
     );
     start.do_ = vec![
-        Prim::Stage(rue_core::body::Stage {
+        Prim::Stage(rescind_core::body::Stage {
             name: "guest.conf".into(),
             content: lit("a staged file"),
             mode: 0o640,
@@ -312,7 +312,8 @@ pub fn succession() -> Plan {
         undo_pre: vec!["power:node-a".into()],
     };
     fence.undo_locus = UndoLocus::Controller;
-    fence.locus = rue_core::model::Locus::Host(rue_core::model::HostRef::Static(APPLIANCE.into()));
+    fence.locus =
+        rescind_core::model::Locus::Host(rescind_core::model::HostRef::Static(APPLIANCE.into()));
 
     // The console: no transport of this site reaches it, so the step is
     // deferred and a `handoff-done` continues it.
@@ -323,12 +324,13 @@ pub fn succession() -> Plan {
     heir.do_ = vec![write("file:/etc/heir", "heir")];
     heir.undo = Undo::Restore;
     heir.undo_locus = UndoLocus::Controller;
-    heir.locus = rue_core::model::Locus::Host(rue_core::model::HostRef::Static(CONSOLE.into()));
+    heir.locus =
+        rescind_core::model::Locus::Host(rescind_core::model::HostRef::Static(CONSOLE.into()));
     heir.handoff_done = Some("heir_seated".into());
 
     let mut gated = StepI::new(fence);
-    gated.gate = Some(rue_core::model::GateExpr::Single(
-        rue_core::model::Factor::Auth {
+    gated.gate = Some(rescind_core::model::GateExpr::Single(
+        rescind_core::model::Factor::Auth {
             id: "oncall".into(),
             weight: 1,
         },
@@ -341,9 +343,9 @@ pub fn succession() -> Plan {
     // this step existed, the check had no world it could fire in.
     let mut share = Op::new(
         "share-fence",
-        vec![FootprintEntry::anchored(SHARED, "rue-sim-c")],
+        vec![FootprintEntry::anchored(SHARED, "rescind-sim-c")],
     );
-    share.do_ = vec![region(SHARED, "rue-sim-c", "inside c")];
+    share.do_ = vec![region(SHARED, "rescind-sim-c", "inside c")];
     share.undo = Undo::Restore;
     share.undo_locus = UndoLocus::Target;
 
@@ -353,7 +355,7 @@ pub fn succession() -> Plan {
         vec![
             Item::Step(StepI::new(share)),
             Item::Repeat {
-                form: rue_core::model::RepeatForm::Over {
+                form: rescind_core::model::RepeatForm::Over {
                     list: "guests".into(),
                     max: 8,
                     set_valued: true,
@@ -370,18 +372,20 @@ pub fn succession() -> Plan {
     // The probe that reads the guest facts: over ssh, which reads files
     // alone, this is the only way `guest:state:{g}` is a fact at all.
     p.probes = vec![
-        rue_core::model::ProbeDecl {
+        rescind_core::model::ProbeDecl {
             name: "heir_seated".into(),
-            locus: rue_core::model::Locus::Host(rue_core::model::HostRef::Static(CONSOLE.into())),
+            locus: rescind_core::model::Locus::Host(rescind_core::model::HostRef::Static(
+                CONSOLE.into(),
+            )),
             body: run_body("seated"),
             produces: vec![],
             static_: false,
             equivalence: "bytes".into(),
             reads: None,
         },
-        rue_core::model::ProbeDecl {
+        rescind_core::model::ProbeDecl {
             name: "guest_state".into(),
-            locus: rue_core::model::Locus::Target,
+            locus: rescind_core::model::Locus::Target,
             body: run_body("jls -j {g} -h name"),
             produces: vec!["state".into()],
             static_: false,
@@ -407,7 +411,7 @@ pub struct Scratch(pub PathBuf);
 impl Scratch {
     fn new(name: &str) -> Scratch {
         let p = std::env::temp_dir().join(format!(
-            "rue-{name}-{}-{}",
+            "rescind-{name}-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -464,8 +468,8 @@ impl Sim {
             // and answered by the probe alone (5.1, unit 2).
             f.observations.insert(
                 "guest_state".to_string(),
-                rue_engine::executor::Observation {
-                    tri: Some(rue_core::model::Tri::Yes),
+                rescind_engine::executor::Observation {
+                    tri: Some(rescind_core::model::Tri::Yes),
                     text: "running".into(),
                 },
             );
@@ -542,7 +546,7 @@ impl Sim {
     }
 
     /// Every instance record the store holds.
-    pub fn records(&self) -> Vec<rue_engine::lifecycle::InstanceRecord> {
+    pub fn records(&self) -> Vec<rescind_engine::lifecycle::InstanceRecord> {
         self.engine.instances().unwrap_or_default()
     }
 
@@ -572,7 +576,7 @@ impl Sim {
                 if let Some(id) = self.current() {
                     let _ = self.engine.approve_proof(
                         &id,
-                        rue_core::journal::Scope::Step(n as u32),
+                        rescind_core::journal::Scope::Step(n as u32),
                         "oncall",
                         "token",
                         "requester",
@@ -584,7 +588,7 @@ impl Sim {
                 if let Some(id) = self.current() {
                     let _ = self.engine.approve_proof(
                         &id,
-                        rue_core::journal::Scope::Plan,
+                        rescind_core::journal::Scope::Plan,
                         who,
                         "token",
                         "requester",
@@ -676,7 +680,7 @@ impl Sim {
         if !rec.backstop.as_ref().is_some_and(|b| b.armed && !b.fired) {
             return;
         }
-        let covered: Vec<u32> = rue_core::backstop::coverage(rec.plan())
+        let covered: Vec<u32> = rescind_core::backstop::coverage(rec.plan())
             .map(|c| c.covered)
             .unwrap_or_default();
         let mut drifted = false;
@@ -686,11 +690,12 @@ impl Sim {
                 .ssh
                 .with(|f| f.files.get(&key(&format!("markers/{n}"))).cloned());
             let Some(markers) = markers else { continue };
-            let markers = rue_engine::footprint::parse_markers(&String::from_utf8_lossy(&markers));
+            let markers =
+                rescind_engine::footprint::parse_markers(&String::from_utf8_lossy(&markers));
             let Some(op) = rec.op_at(n) else { continue };
             let policy = op
                 .effective_drift()
-                .unwrap_or(rue_core::model::Drift::Clobber);
+                .unwrap_or(rescind_core::model::Drift::Clobber);
             let mut held = false;
             // `file_facts` and not `observed_facts`, deliberately: this
             // models the RENDERED ARTIFACT, which has no executor and can
@@ -700,9 +705,9 @@ impl Sim {
             // artifact keeps the narrower half of 5.2's rule, and 5.2 says
             // so. Widening this to match the engine would have the shadow
             // world compare shapes against markers that do not carry them.
-            for (k, e, path) in rue_engine::footprint::file_facts(&op.footprint) {
+            for (k, e, path) in rescind_engine::footprint::file_facts(&op.footprint) {
                 let now = self.ssh.with(|f| f.facts.get(&e.shape).cloned());
-                let digest = rue_engine::footprint::digest_of(now.as_deref());
+                let digest = rescind_engine::footprint::digest_of(now.as_deref());
                 let recorded = markers
                     .iter()
                     .find(|m| m.path == path)
@@ -715,7 +720,7 @@ impl Sim {
                             .map(|b| String::from_utf8_lossy(b).into_owned())
                             .unwrap_or_default();
                         let anchor = e.anchor.clone().unwrap_or_default();
-                        match rue_engine::region::strip(&text, &anchor) {
+                        match rescind_engine::region::strip(&text, &anchor) {
                             Some(stripped) => self.ssh.with(|f| {
                                 f.facts.insert(e.shape.clone(), stripped.into_bytes());
                             }),
@@ -734,7 +739,7 @@ impl Sim {
                         }
                     }
                     Kind::Owned => {
-                        if changed && policy == rue_core::model::Drift::Defer {
+                        if changed && policy == rescind_core::model::Drift::Defer {
                             held = true;
                         } else {
                             self.ssh.with(|f| {
@@ -743,7 +748,7 @@ impl Sim {
                         }
                     }
                     Kind::Modified => {
-                        if changed && policy == rue_core::model::Drift::Defer {
+                        if changed && policy == rescind_core::model::Drift::Defer {
                             held = true;
                         } else {
                             let snap = self.ssh.with(|f| {
@@ -793,7 +798,7 @@ impl Sim {
         outputs.insert("token".to_string(), SECRET.to_string());
         self.ssh.with(|f| {
             f.script
-                .push_back(Scripted::Ok(rue_engine::executor::Output {
+                .push_back(Scripted::Ok(rescind_engine::executor::Output {
                     stdout: String::new(),
                     outputs,
                 }))

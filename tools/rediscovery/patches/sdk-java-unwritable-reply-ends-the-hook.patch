@@ -1,7 +1,7 @@
 # Reverts: a reply the codec cannot write is answered with a refusal naming why, rather than an exception that ends the serve loop
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/sdk/java/src/main/java/dev/rue/hook/Serve.java
-+++ b/sdk/java/src/main/java/dev/rue/hook/Serve.java
+--- a/sdk/java/src/main/java/dev/rescind/hook/Serve.java
++++ b/sdk/java/src/main/java/dev/rescind/hook/Serve.java
 @@ -93,14 +93,7 @@
                  reply = refusal(frame.get("id"), "the handler took " + took.toMillis() + "ms, over its "
                          + budget.toMillis() + "ms budget; answering late is worse than answering no");

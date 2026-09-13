@@ -7,7 +7,7 @@
                      Err(why) => return self.fail_after_do(rec, &at, &op, &pre, why),
                  };
 -                let changed = footprint::changed_facts(&before, &after);
-+                let changed: Vec<String> = if std::env::var_os("RUE_NEVER_SET").is_some() {
++                let changed: Vec<String> = if std::env::var_os("RESCIND_NEVER_SET").is_some() {
 +                    footprint::changed_facts(&before, &after)
 +                } else {
 +                    Vec::new()

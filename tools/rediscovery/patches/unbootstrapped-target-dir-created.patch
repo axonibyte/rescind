@@ -7,7 +7,7 @@
          };
          match ex.bootstrap_state(host) {
 -            Ok(st) if st.ready() => {}
-+            Ok(st) if st.ready() || std::env::var_os("RUE_NEVER_SET").is_none() => {}
++            Ok(st) if st.ready() || std::env::var_os("RESCIND_NEVER_SET").is_none() => {}
              Ok(st) => {
                  return Ok(Err(format!(
-                     "R0407: {} is not bootstrapped (rue_root {}, group {}, instances {}, lock {}, modes {}); run `rue bootstrap {}`",
+                     "R0407: {} is not bootstrapped (rescind_root {}, group {}, instances {}, lock {}, modes {}); run `rescind bootstrap {}`",

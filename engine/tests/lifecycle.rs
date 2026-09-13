@@ -9,15 +9,15 @@ mod common;
 use std::collections::BTreeMap;
 
 use common::world::{self, World, OWNER};
-use rue_core::journal::{Entry, Event as J};
-use rue_core::ledger::LedgerCode;
-use rue_core::model::{
+use rescind_core::journal::{Entry, Event as J};
+use rescind_core::ledger::LedgerCode;
+use rescind_core::model::{
     Duration, FootprintEntry, Item, Kind, Output as OpOutput, PlanGate, StepI, Tri, Undo,
 };
-use rue_core::states::{RCode, State};
-use rue_engine::executor::{Observation, Output, RPrim, Resolved, Scripted};
-use rue_engine::journal::Sink;
-use rue_engine::lifecycle::{applied_steps, ApplyOptions, EngineError};
+use rescind_core::states::{RCode, State};
+use rescind_engine::executor::{Observation, Output, RPrim, Resolved, Scripted};
+use rescind_engine::journal::Sink;
+use rescind_engine::lifecycle::{applied_steps, ApplyOptions, EngineError};
 
 fn opts() -> ApplyOptions {
     ApplyOptions {
@@ -77,7 +77,7 @@ fn a_temporary_plan_applies_its_steps_in_order_write_ahead_and_rests_applied() {
 /// fake runs step n. A sink that counts the fake's calls at delivery time
 /// sees n-1 calls when entry n arrives.
 struct CountingSink {
-    ssh: rue_engine::executor::FakeHandle,
+    ssh: rescind_engine::executor::FakeHandle,
     seen: std::sync::Arc<std::sync::Mutex<Vec<(u32, usize)>>>,
 }
 
@@ -98,15 +98,15 @@ impl Sink for CountingSink {
 fn the_write_ahead_entry_is_acknowledged_before_the_step_runs() {
     let w = World::new("write-ahead");
     let seen = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
-    let store = rue_engine::store::Store::create(&w.dir.join("store2")).unwrap();
+    let store = rescind_engine::store::Store::create(&w.dir.join("store2")).unwrap();
     let sinks: Vec<Box<dyn Sink>> = vec![Box::new(CountingSink {
         ssh: w.ssh.clone(),
         seen: seen.clone(),
     })];
-    let journal = rue_engine::journal::Journal::open(&store, sinks, None).unwrap();
-    let execs: Vec<Box<dyn rue_engine::executor::Executor>> =
+    let journal = rescind_engine::journal::Journal::open(&store, sinks, None).unwrap();
+    let execs: Vec<Box<dyn rescind_engine::executor::Executor>> =
         vec![Box::new(w.ssh.clone()), Box::new(w.local.clone())];
-    let mut engine = rue_engine::lifecycle::Engine::open(
+    let mut engine = rescind_engine::lifecycle::Engine::open(
         store,
         journal,
         w.clock.clone(),
@@ -444,7 +444,7 @@ fn a_plan_with_a_gate_is_pending_and_its_window_lapses_fail_closed() {
     let mut w = World::new("gate");
     let mut plan = world::temp_plan("p", vec![world::step(world::op("a"))]);
     plan.gate = Some(PlanGate {
-        expr: rue_core::model::GateExpr::Single(rue_core::model::Factor::Auth {
+        expr: rescind_core::model::GateExpr::Single(rescind_core::model::Factor::Auth {
             id: "oncall".into(),
             weight: 1,
         }),
@@ -481,7 +481,7 @@ fn a_plan_with_a_gate_is_pending_and_its_window_lapses_fail_closed() {
     // Cancel while pending.
     let mut plan = world::temp_plan("q", vec![world::step(world::op("b"))]);
     plan.gate = Some(PlanGate {
-        expr: rue_core::model::GateExpr::Single(rue_core::model::Factor::Auth {
+        expr: rescind_core::model::GateExpr::Single(rescind_core::model::Factor::Auth {
             id: "oncall".into(),
             weight: 1,
         }),
@@ -734,7 +734,7 @@ fn a_restore_undo_removes_the_owned_file_strips_the_region_and_writes_the_snapsh
         f.facts.insert("file:/etc/conf".into(), b"k=1\n".to_vec());
         f.facts.insert("file:/etc/shared".into(), b"top\n".to_vec());
     });
-    let mut o = rue_core::model::Op::new(
+    let mut o = rescind_core::model::Op::new(
         "cfg",
         vec![
             FootprintEntry::entry(Kind::Owned, "file:/etc/new"),
@@ -744,26 +744,26 @@ fn a_restore_undo_removes_the_owned_file_strips_the_region_and_writes_the_snapsh
     );
     o.undo = Undo::Restore;
     o.do_ = vec![
-        rue_core::body::Prim::Write(rue_core::body::Write {
-            fact: rue_core::body::FactRef {
+        rescind_core::body::Prim::Write(rescind_core::body::Write {
+            fact: rescind_core::body::FactRef {
                 shape: "file:/etc/new".into(),
                 anchor: None,
             },
-            content: rue_core::body::lit("hello"),
+            content: rescind_core::body::lit("hello"),
         }),
-        rue_core::body::Prim::RegionSet(rue_core::body::RegionSet {
-            fact: rue_core::body::FactRef {
+        rescind_core::body::Prim::RegionSet(rescind_core::body::RegionSet {
+            fact: rescind_core::body::FactRef {
                 shape: "file:/etc/shared".into(),
                 anchor: Some("blk".into()),
             },
-            content: rue_core::body::lit("inside"),
+            content: rescind_core::body::lit("inside"),
         }),
-        rue_core::body::Prim::Write(rue_core::body::Write {
-            fact: rue_core::body::FactRef {
+        rescind_core::body::Prim::Write(rescind_core::body::Write {
+            fact: rescind_core::body::FactRef {
                 shape: "file:/etc/conf".into(),
                 anchor: None,
             },
-            content: rue_core::body::lit("k=2\n"),
+            content: rescind_core::body::lit("k=2\n"),
         }),
     ];
     let plan = world::temp_plan("p", vec![world::step(o)]);
@@ -775,9 +775,8 @@ fn a_restore_undo_removes_the_owned_file_strips_the_region_and_writes_the_snapsh
     let after_do = w.ssh.with(|f| f.facts.clone());
     assert_eq!(after_do["file:/etc/new"], b"hello");
     assert_eq!(after_do["file:/etc/conf"], b"k=2\n");
-    assert!(
-        String::from_utf8_lossy(&after_do["file:/etc/shared"]).contains("# rue-region blk begin")
-    );
+    assert!(String::from_utf8_lossy(&after_do["file:/etc/shared"])
+        .contains("# rescind-region blk begin"));
     let rec = w.engine.status(&out.id).unwrap().unwrap();
     assert_eq!(rec.snapshots.get("1/1").map(String::as_str), Some("top\n"));
     assert_eq!(rec.snapshots.get("1/2").map(String::as_str), Some("k=1\n"));
@@ -1093,7 +1092,7 @@ fn a_migrated_store_is_journaled_at_the_first_boot() {
 fn a_plan_the_check_refuses_never_reaches_the_store() {
     let mut w = World::new("refused-check");
     // No wane and no commit: E0501.
-    let plan = rue_core::model::Plan::new("p", OWNER, vec![world::step(world::op("a"))]);
+    let plan = rescind_core::model::Plan::new("p", OWNER, vec![world::step(world::op("a"))]);
     let err = w
         .engine
         .apply(world::ir(plan), BTreeMap::new(), opts())
@@ -1108,10 +1107,10 @@ fn a_when_chooses_its_arm_once_and_a_repeat_runs_its_body_per_item() {
     let mut w = World::new("when-repeat");
     w.ssh.observe_as("cold", Observation::no("warm"));
     let mut b_op = world::op("b");
-    b_op.do_ = vec![rue_core::body::Prim::Run(rue_core::body::Run {
+    b_op.do_ = vec![rescind_core::body::Prim::Run(rescind_core::body::Run {
         cmd: vec![
-            rue_core::body::Part::Lit("do b on ".into()),
-            rue_core::body::Part::Ref(rue_core::body::controller("g")),
+            rescind_core::body::Part::Lit("do b on ".into()),
+            rescind_core::body::Part::Ref(rescind_core::body::controller("g")),
         ],
         env: vec![],
         stdin: None,
@@ -1122,12 +1121,12 @@ fn a_when_chooses_its_arm_once_and_a_repeat_runs_its_body_per_item() {
             Item::When {
                 guard: world::guard("cold", Tri::Unknown),
                 window: None,
-                on_lapse: rue_core::model::OnLapse::Revert,
+                on_lapse: rescind_core::model::OnLapse::Revert,
                 then_: vec![world::step(world::op("heat"))],
                 else_: vec![world::step(world::op("a"))],
             },
             Item::Repeat {
-                form: rue_core::model::RepeatForm::Over {
+                form: rescind_core::model::RepeatForm::Over {
                     list: "guests".into(),
                     max: 3,
                     set_valued: true,
@@ -1156,15 +1155,15 @@ fn a_repeat_s_steps_are_undone_each_with_its_own_item() {
     // Each iteration of a repeat is its own applied step, with its own
     // value of the variable: its undo must name the guest IT started. The
     // undo ran with no controller values at all, so an undo reading the
-    // variable -- T2's `jail -r rue-t2-#{g}` -- could not resolve, and a
+    // variable -- T2's `jail -r rescind-t2-#{g}` -- could not resolve, and a
     // recant of a promote that had started any guest left it Stuck. Nothing
     // had ever reverted a repeat whose undo said which item it was undoing.
     let mut w = World::new("repeat-undo");
     let item = |verb: &str| {
-        vec![rue_core::body::Prim::Run(rue_core::body::Run {
+        vec![rescind_core::body::Prim::Run(rescind_core::body::Run {
             cmd: vec![
-                rue_core::body::Part::Lit(format!("{verb} b on ")),
-                rue_core::body::Part::Ref(rue_core::body::controller("g")),
+                rescind_core::body::Part::Lit(format!("{verb} b on ")),
+                rescind_core::body::Part::Ref(rescind_core::body::controller("g")),
             ],
             env: vec![],
             stdin: None,
@@ -1181,7 +1180,7 @@ fn a_repeat_s_steps_are_undone_each_with_its_own_item() {
         vec![
             world::step(world::op("a")),
             Item::Repeat {
-                form: rue_core::model::RepeatForm::Over {
+                form: rescind_core::model::RepeatForm::Over {
                     list: "guests".into(),
                     max: 3,
                     set_valued: true,
@@ -1218,23 +1217,23 @@ fn each_iteration_of_nested_repeats_touches_and_restores_the_fact_it_names() {
     // applied" and skipped them.
     let mut w = World::new("nested-repeat");
     let shape = "file:/conf/{o}-{i}";
-    let mut o = rue_core::model::Op::new(
+    let mut o = rescind_core::model::Op::new(
         "conf",
-        vec![rue_core::model::FootprintEntry::entry(
+        vec![rescind_core::model::FootprintEntry::entry(
             Kind::Modified,
             shape,
         )],
     );
-    o.do_ = vec![rue_core::body::Prim::Write(rue_core::body::Write {
-        fact: rue_core::body::FactRef {
+    o.do_ = vec![rescind_core::body::Prim::Write(rescind_core::body::Write {
+        fact: rescind_core::body::FactRef {
             shape: shape.into(),
             anchor: None,
         },
-        content: rue_core::body::lit("new"),
+        content: rescind_core::body::lit("new"),
     })];
     o.undo = Undo::Restore;
     let over = |list: &str, var: &str, body: Vec<Item>| Item::Repeat {
-        form: rue_core::model::RepeatForm::Over {
+        form: rescind_core::model::RepeatForm::Over {
             list: list.into(),
             max: 3,
             set_valued: true,
@@ -1296,11 +1295,11 @@ fn each_iteration_of_nested_repeats_touches_and_restores_the_fact_it_names() {
 fn a_knell_waits_for_its_acknowledgement_unless_acked_up_front() {
     let mut w = World::new("knell");
     let mut k = world::op("fence");
-    k.refusal = rue_core::model::Refusal::Knell {
+    k.refusal = rescind_core::model::Refusal::Knell {
         guard: None,
-        cost: rue_core::model::Cost::Probe("blast".into()),
-        ack: rue_core::model::Ack::Gate(rue_core::model::GateExpr::Single(
-            rue_core::model::Factor::Humans { weight: 1 },
+        cost: rescind_core::model::Cost::Probe("blast".into()),
+        ack: rescind_core::model::Ack::Gate(rescind_core::model::GateExpr::Single(
+            rescind_core::model::Factor::Humans { weight: 1 },
         )),
     };
     k.undo = Undo::NoUndo;
@@ -1373,7 +1372,7 @@ fn a_step_whose_do_the_engine_died_inside_is_undone_on_the_way_back() {
     let mut rec = w.engine.status(&id).unwrap().unwrap();
     rec.state = State::Applying;
     rec.applied.retain(|a| a.step == 1);
-    rec.attempting = Some(rue_engine::lifecycle::AppliedStep::new(
+    rec.attempting = Some(rescind_engine::lifecycle::AppliedStep::new(
         2,
         0,
         &BTreeMap::new(),
@@ -1406,14 +1405,14 @@ fn died_inside_step_two(w: &World, id: &str, pre: &str) {
     let mut rec = w.engine.status(id).unwrap().unwrap();
     rec.state = State::Applying;
     rec.applied.retain(|a| a.step == 1);
-    rec.attempting = Some(rue_engine::lifecycle::AppliedStep::new(
+    rec.attempting = Some(rescind_engine::lifecycle::AppliedStep::new(
         2,
         0,
         &BTreeMap::new(),
     ));
     rec.attempting_pre = BTreeMap::from([(
         "file:/b".to_string(),
-        rue_engine::footprint::digest_of(Some(pre.as_bytes())),
+        rescind_engine::footprint::digest_of(Some(pre.as_bytes())),
     )]);
     w.engine.store().write_instance(id, &rec).unwrap();
 }
@@ -1646,7 +1645,7 @@ fn a_drill_applies_recants_and_attests_the_canary_came_back() {
     // The chain the attestation is part of verifies: that is the whole of
     // its own verification (7.14).
     let chain = w.engine.store().read_journal().unwrap();
-    rue_core::journal::verify(&chain).unwrap();
+    rescind_core::journal::verify(&chain).unwrap();
 }
 
 /// Only a canary. A drill applies a real plan to a real machine, and the

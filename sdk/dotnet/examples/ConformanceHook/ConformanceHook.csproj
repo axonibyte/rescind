@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <AssemblyName>ConformanceHook</AssemblyName>
-    <RootNamespace>Rue.Hook.Example</RootNamespace>
+    <RootNamespace>Rescind.Hook.Example</RootNamespace>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 

@@ -1,4 +1,4 @@
-# Reverts: a line that is not JSON is skipped by the rue-hook shim, as every SDK skips it; returned as an error it ended the shim and every later request met silence
+# Reverts: a line that is not JSON is skipped by the rescind-hook shim, as every SDK skips it; returned as an error it ended the shim and every later request met silence
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
 --- a/sdk/shim/src/main.rs
 +++ b/sdk/shim/src/main.rs

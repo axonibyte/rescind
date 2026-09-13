@@ -3,8 +3,8 @@
 //! the owner wants a longer run, and a planted violation per invariant so
 //! the checks are known to catch what they are for.
 
-use rue_sim::world::Sim;
-use rue_sim::{check_all, events, run, shrink, sweep, Event, INVARIANTS};
+use rescind_sim::world::Sim;
+use rescind_sim::{check_all, events, run, shrink, sweep, Event, INVARIANTS};
 
 fn env(name: &str) -> Option<u32> {
     std::env::var(name).ok().and_then(|v| v.parse().ok())
@@ -12,9 +12,9 @@ fn env(name: &str) -> Option<u32> {
 
 #[test]
 fn a_sweep_of_seeds_breaks_no_invariant() {
-    // `RUE_SIM_SEED` and `RUE_SIM_STEPS` run one longer scenario; with
+    // `RESCIND_SIM_SEED` and `RESCIND_SIM_STEPS` run one longer scenario; with
     // neither, a fixed sweep every run repeats exactly.
-    match (env("RUE_SIM_SEED"), env("RUE_SIM_STEPS")) {
+    match (env("RESCIND_SIM_SEED"), env("RESCIND_SIM_STEPS")) {
         (Some(seed), steps) => {
             let steps = steps.unwrap_or(60) as usize;
             let es = events(seed, steps);
@@ -44,7 +44,7 @@ fn the_shrinker_cuts_a_failing_list_to_what_still_fails() {
     assert!(check_all(&mut sim).is_none(), "the world is clean first");
     sim.ssh.with(|f| {
         f.dirs
-            .remove(&(rue_sim::world::TARGET.to_string(), id.clone()));
+            .remove(&(rescind_sim::world::TARGET.to_string(), id.clone()));
     });
     let v = check_all(&mut sim).expect("the planted removal is caught");
     assert_eq!(v.number, 15, "{v:?}");
@@ -92,11 +92,11 @@ fn every_invariant_catches_a_planted_violation() {
     sim.ssh.with(|f| {
         f.files.insert(
             (
-                rue_sim::world::TARGET.to_string(),
+                rescind_sim::world::TARGET.to_string(),
                 "any".to_string(),
                 "leak".to_string(),
             ),
-            rue_sim::world::SECRET.as_bytes().to_vec(),
+            rescind_sim::world::SECRET.as_bytes().to_vec(),
         );
     });
     let v = check_all(&mut sim).expect("a secret on the target is caught");
@@ -116,7 +116,7 @@ fn every_invariant_catches_a_planted_violation() {
     let live: Vec<String> = sim
         .records()
         .iter()
-        .filter(|r| !rue_core::states::terminal(r.state))
+        .filter(|r| !rescind_core::states::terminal(r.state))
         .map(|r| format!("{} {}", r.id, r.state))
         .collect();
     // Both plans hold a region on the shared fact, and both must be live
@@ -133,7 +133,7 @@ fn every_invariant_catches_a_planted_violation() {
     );
     sim.ssh.with(|f| {
         f.facts
-            .insert(rue_sim::world::SHARED.to_string(), b"wiped\n".to_vec());
+            .insert(rescind_sim::world::SHARED.to_string(), b"wiped\n".to_vec());
     });
     let v = check_all(&mut sim).expect("a wiped shared fact is caught");
     assert_eq!(v.number, 12, "{v:?}");
@@ -146,7 +146,7 @@ fn every_invariant_catches_a_planted_violation() {
     }
     let id = sim.current().expect("an instance");
     sim.ssh.with(|f| {
-        f.dirs.remove(&(rue_sim::world::TARGET.to_string(), id));
+        f.dirs.remove(&(rescind_sim::world::TARGET.to_string(), id));
     });
     let v = check_all(&mut sim).expect("the removal is caught");
     assert_eq!(v.number, 15, "{v:?}");
@@ -213,9 +213,9 @@ fn every_invariant_catches_a_planted_violation() {
         .into_iter()
         .find(|r| r.id == id)
         .expect("its record");
-    rec.staged.push(rue_engine::lifecycle::Staged {
+    rec.staged.push(rescind_engine::lifecycle::Staged {
         step: 1,
-        host: rue_sim::world::TARGET.to_string(),
+        host: rescind_sim::world::TARGET.to_string(),
         name: "left-behind".to_string(),
     });
     sim.engine.store().write_instance(&id, &rec).unwrap();
@@ -235,7 +235,7 @@ fn every_invariant_catches_a_planted_violation() {
         .find(|r| r.id == id)
         .expect("its record");
     if let Some(w) = rec.waiting.as_mut() {
-        w.bound = Some(rue_core::model::Instant::new(1));
+        w.bound = Some(rescind_core::model::Instant::new(1));
     }
     sim.engine.store().write_instance(&id, &rec).unwrap();
     let v = check_all(&mut sim).expect("a wait past its bound is caught");
@@ -248,8 +248,8 @@ fn every_invariant_catches_a_planted_violation() {
     let mut sim = Sim::new("plant-5");
     sim.apply(Event::ApplyTemporary);
     plant_entry(&sim, &sim.current().expect("an instance"), |e| {
-        e.event = rue_core::journal::Event::Refused {
-            reason: format!("it said {}", rue_sim::world::SECRET),
+        e.event = rescind_core::journal::Event::Refused {
+            reason: format!("it said {}", rescind_sim::world::SECRET),
         };
     });
     let v = check_all(&mut sim).expect("a secret in a sink is caught");
@@ -259,7 +259,9 @@ fn every_invariant_catches_a_planted_violation() {
     let mut sim = Sim::new("plant-19");
     sim.apply(Event::ApplyPermanent);
     let id = sim.current().expect("an instance");
-    plant_entry(&sim, &id, |e| e.event = rue_core::journal::Event::Expired);
+    plant_entry(&sim, &id, |e| {
+        e.event = rescind_core::journal::Event::Expired
+    });
     let v = check_all(&mut sim).expect("a permanent plan expiring is caught");
     assert_eq!(v.number, 19, "{v:?}");
     caught.push(19);
@@ -268,7 +270,7 @@ fn every_invariant_catches_a_planted_violation() {
     sim.apply(Event::ApplyPermanent);
     let id = sim.current().expect("an instance");
     plant_entry(&sim, &id, |e| {
-        e.event = rue_core::journal::Event::BackstopFired { step: 1 }
+        e.event = rescind_core::journal::Event::BackstopFired { step: 1 }
     });
     let v = check_all(&mut sim).expect("a committed plan's backstop firing is caught");
     assert_eq!(v.number, 20, "{v:?}");
@@ -298,7 +300,7 @@ fn every_invariant_catches_a_planted_violation() {
     for e in [Event::ApplyTemporary, Event::Approve(0), Event::Approve(1)] {
         sim.apply(e);
     }
-    let empty = rue_core::ledger::Ledger::default();
+    let empty = rescind_core::ledger::Ledger::default();
     sim.engine.store().write_ledger(&empty).unwrap();
     let v = check_all(&mut sim).expect("an emptied ledger is caught");
     assert_eq!(v.number, 13, "{v:?}");
@@ -330,11 +332,11 @@ fn every_invariant_catches_a_planted_violation() {
     }
     let id = sim.current().expect("an instance");
     for ev in [
-        rue_core::journal::Event::DriftHeld {
+        rescind_core::journal::Event::DriftHeld {
             step: 2,
             facts: vec!["file:/etc/kept".into()],
         },
-        rue_core::journal::Event::DriftClobbered {
+        rescind_core::journal::Event::DriftClobbered {
             step: 2,
             facts: vec!["file:/etc/kept".into()],
         },
@@ -428,7 +430,7 @@ fn the_succession_plan_runs_its_repeat_its_gate_its_stage_and_its_handoff() {
         sim.ssh
             .with(|f| f.calls.iter().any(|c| c.body.iter().any(|p| matches!(
                 p,
-                rue_engine::executor::RPrim::Stage { name, .. } if name == "guest.conf"
+                rescind_engine::executor::RPrim::Stage { name, .. } if name == "guest.conf"
             )))),
         "the step staged a file"
     );
@@ -501,8 +503,8 @@ fn a_dropped_read_and_a_do_that_never_took_leave_the_world_consistent() {
     assert!(check_all(&mut sim).is_none(), "the world is consistent");
     assert!(
         sim.sink.entries().iter().any(|e| {
-            matches!(&e.event, rue_core::journal::Event::Stuck { .. })
-                || matches!(&e.event, rue_core::journal::Event::Reverted)
+            matches!(&e.event, rescind_core::journal::Event::Stuck { .. })
+                || matches!(&e.event, rescind_core::journal::Event::Reverted)
         }),
         "the recant said what happened rather than passing over it"
     );
@@ -519,7 +521,7 @@ fn a_dropped_read_and_a_do_that_never_took_leave_the_world_consistent() {
         sim.sink
             .entries()
             .iter()
-            .any(|e| matches!(&e.event, rue_core::journal::Event::UndoSkipped { .. })),
+            .any(|e| matches!(&e.event, rescind_core::journal::Event::UndoSkipped { .. })),
         "the do that never took was not undone, and the journal says so: {:?}",
         sim.sink
             .entries()
@@ -531,11 +533,11 @@ fn a_dropped_read_and_a_do_that_never_took_leave_the_world_consistent() {
 
 /// Append an entry to the chain the sink holds, as the engine would: for a
 /// plant that needs two entries to mean anything.
-fn append_entry(sim: &Sim, instance: &str, event: rue_core::journal::Event) {
+fn append_entry(sim: &Sim, instance: &str, event: rescind_core::journal::Event) {
     let mut entries = sim.sink.entries.lock().unwrap_or_else(|e| e.into_inner());
     let last = entries[entries.len() - 1].clone();
     let prev = entries.clone();
-    entries.push(rue_core::journal::append(
+    entries.push(rescind_core::journal::append(
         &prev,
         last.at,
         &last.plan,
@@ -549,14 +551,14 @@ fn append_entry(sim: &Sim, instance: &str, event: rue_core::journal::Event) {
 /// Rewrite the last entry the sink received, keeping the chain it is part
 /// of intact: a plant that broke the chain would be caught by invariant 4
 /// before the one it was made for ever ran.
-fn plant_entry(sim: &Sim, instance: &str, f: impl Fn(&mut rue_core::journal::Entry)) {
+fn plant_entry(sim: &Sim, instance: &str, f: impl Fn(&mut rescind_core::journal::Entry)) {
     let mut entries = sim.sink.entries.lock().unwrap_or_else(|e| e.into_inner());
     let last = entries.len() - 1;
     let mut e = entries[last].clone();
     e.instance = instance.to_string();
     f(&mut e);
     let prev = entries[..last].to_vec();
-    entries[last] = rue_core::journal::append(
+    entries[last] = rescind_core::journal::append(
         &prev,
         e.at,
         &e.plan,

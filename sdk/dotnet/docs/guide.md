@@ -24,7 +24,7 @@ unreachable:
   exception a handler throws (`TypeName: message`), and a reply the
   serializer cannot write, because a refusal with a reason is better than a
   hook that died.
-- **Silence.** No reply before the engine's deadline (`rued run
+- **Silence.** No reply before the engine's deadline (`rescindd run
   --hook-deadline`, 30 seconds by default). The engine refuses the step
   and can say nothing about why. The budget below turns a slow handler
   into a refusal instead.
@@ -89,7 +89,7 @@ the host can read it.
 ```csharp
 using System.Diagnostics;
 using System.Text.Json.Nodes;
-using Rue.Hook;
+using Rescind.Hook;
 
 sealed class Deploy : IExecute
 {
@@ -128,7 +128,7 @@ slow handler is left to the engine's deadline.
 
 ## Transports
 
-This library serves over stdio, as a child `rued` spawns (`--spawn`). It
+This library serves over stdio, as a child `rescindd` spawns (`--spawn`). It
 has no socket client: a .NET process that must connect to a daemon already
 running, rather than be spawned by it, speaks docs/control-protocol.md
 itself, or runs its handlers behind a spawned child. `Serve.Loop(input,

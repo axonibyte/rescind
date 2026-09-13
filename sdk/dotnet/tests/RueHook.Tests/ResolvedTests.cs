@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Xunit;
 
-namespace Rue.Hook.Tests;
+namespace Rescind.Hook.Tests;
 
 /// 7.11: an SDK exposes execute.run's secrets to the run handler "without
 /// ever placing them on a command line". The value has to be reachable --

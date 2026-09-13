@@ -1,8 +1,8 @@
 //! The journal chain: hashes that cover the predecessor, verification that
 //! catches every kind of tampering, and the JSON spelling of an entry.
 
-use rue_core::journal::*;
-use rue_core::model::Instant;
+use rescind_core::journal::*;
+use rescind_core::model::Instant;
 
 fn chain3() -> Vec<Entry> {
     let e1 = append(

@@ -1,5 +1,5 @@
 //! Where goldens live and how they are compared. The test suite is
-//! read-only; `rue-goldens` is the only writer, and only when told to.
+//! read-only; `rescind-goldens` is the only writer, and only when told to.
 
 use std::env;
 use std::path::{Path, PathBuf};
@@ -12,10 +12,10 @@ pub struct Artifact {
     pub bytes: Result<Vec<u8>, String>,
 }
 
-/// The repository root: `RUE_REPO_ROOT` if set, otherwise the nearest
+/// The repository root: `RESCIND_REPO_ROOT` if set, otherwise the nearest
 /// ancestor of the working directory that contains `.reaper.toml`.
 pub fn repo_root() -> Result<PathBuf, String> {
-    if let Ok(r) = env::var("RUE_REPO_ROOT") {
+    if let Ok(r) = env::var("RESCIND_REPO_ROOT") {
         if !r.is_empty() {
             return Ok(PathBuf::from(r));
         }
@@ -26,7 +26,7 @@ pub fn repo_root() -> Result<PathBuf, String> {
             return Ok(d);
         }
         if !d.pop() {
-            return Err("repo_root: no .reaper.toml in any ancestor of the working directory, and RUE_REPO_ROOT is unset".into());
+            return Err("repo_root: no .reaper.toml in any ancestor of the working directory, and RESCIND_REPO_ROOT is unset".into());
         }
     }
 }
@@ -88,6 +88,6 @@ pub fn render_mismatch(expected_file: &Path, actual_file: &Path, m: &Mismatch) -
     for l in &m.actual_context {
         s.push_str(&format!("    {l}\n"));
     }
-    s.push_str("  if the change is intended: RUE_UPDATE_GOLDENS=1 cargo run -p rue-tenants --bin rue-goldens\n");
+    s.push_str("  if the change is intended: RESCIND_UPDATE_GOLDENS=1 cargo run -p rescind-tenants --bin rescind-goldens\n");
     s
 }

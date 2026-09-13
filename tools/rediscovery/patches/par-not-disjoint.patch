@@ -1,7 +1,7 @@
 # Reverts: par_ok: children of a par must have pairwise disjoint umbras (E0303)
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/proto/src/Rue/Proto/Interference.hs
-+++ b/proto/src/Rue/Proto/Interference.hs
+--- a/proto/src/Rescind/Proto/Interference.hs
++++ b/proto/src/Rescind/Proto/Interference.hs
 @@ -242,7 +242,7 @@
          , cb <- rest
          , (a, oa) <- ca

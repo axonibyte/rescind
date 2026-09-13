@@ -2,7 +2,7 @@
 //! canonical bytes, the hash chain, and the signature slot. No secret value
 //! can be typed into an entry -- `secret_labels` carries labels only -- and
 //! nothing from the body model is reachable from here. Signing (Ed25519
-//! SSHSIG over the canonical entry, namespace `rue-journal`) fills the slot in
+//! SSHSIG over the canonical entry, namespace `rescind-journal`) fills the slot in
 //! a later unit; the chain verifies without it.
 
 use std::fmt;
@@ -13,6 +13,13 @@ use sha2::{Digest, Sha256};
 use crate::canon::{message, Canon, Encoder};
 use crate::model::Instant;
 
+// THE OLD NAME, KEPT ON PURPOSE. This is a signature and hash domain
+// separator, not a label: it is mixed into every entry ever written, so
+// changing it would make every journal that already exists unverifiable --
+// including the release fixtures whose whole job is to prove that a store an
+// older engine wrote still migrates and still drives. A domain separator's
+// text means nothing to anyone; its stability means everything. The project
+// was renamed from `rue` to `rescind` in v0.4.0 and this string did not move.
 pub const DOMAIN: &str = "rue-journal";
 
 /// A SHA-256 digest, hex in JSON and text.

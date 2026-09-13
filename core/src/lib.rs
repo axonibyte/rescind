@@ -1,4 +1,4 @@
-//! rue-core: the core model (docs/ROADMAP.md section 5) and everything
+//! rescind-core: the core model (docs/ROADMAP.md section 5) and everything
 //! computed from it -- the checker, the verdict and its prose, `explain`, the
 //! runtime state machine and the cross-plan ledger -- as pure functions.
 //!

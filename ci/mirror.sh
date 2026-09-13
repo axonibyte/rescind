@@ -7,16 +7,16 @@
 # ref lock to the one that pushes first ("cannot lock ref ... is at X but
 # expected Y") although the destination then holds the newer state. A
 # mirror is idempotent, so the loser re-clones and pushes again; only a
-# push that fails every attempt is a failure. RUE_MIRROR_ATTEMPTS and
-# RUE_MIRROR_PAUSE (seconds) are for the self-test.
+# push that fails every attempt is a failure. RESCIND_MIRROR_ATTEMPTS and
+# RESCIND_MIRROR_PAUSE (seconds) are for the self-test.
 set -euo pipefail
 
 src="${1:?usage: mirror.sh <source-url> <destination-url>}"
 dst="${2:?usage: mirror.sh <source-url> <destination-url>}"
-attempts="${RUE_MIRROR_ATTEMPTS:-3}"
-pause="${RUE_MIRROR_PAUSE:-15}"
+attempts="${RESCIND_MIRROR_ATTEMPTS:-3}"
+pause="${RESCIND_MIRROR_PAUSE:-15}"
 
-work=$(mktemp -d "${TMPDIR:-/tmp}/rue-mirror.XXXXXX")
+work=$(mktemp -d "${TMPDIR:-/tmp}/rescind-mirror.XXXXXX")
 trap 'rm -rf "$work"' EXIT INT TERM
 
 for attempt in $(seq 1 "$attempts"); do

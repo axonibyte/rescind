@@ -72,7 +72,7 @@ if [ "$(git -C "$root" rev-parse --is-shallow-repository 2> /dev/null)" = "true"
     exit 2
 fi
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-prov.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-prov.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 rc=0

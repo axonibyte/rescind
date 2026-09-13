@@ -2,11 +2,11 @@
 """An audit hook: a journal sink that keeps every entry, and a notifier.
 
 Bind it in a site with `journal to: local(), hook(:audit)` and
-`notify via: hook(:audit)`, and have rued spawn it:
+`notify via: hook(:audit)`, and have rescindd spawn it:
 
-    rued run --spawn audit="python3 audit_hook.py" ...
+    rescindd run --spawn audit="python3 audit_hook.py" ...
 
-Each journal entry is appended to $RUE_AUDIT_LOG (default audit.ndjson)
+Each journal entry is appended to $RESCIND_AUDIT_LOG (default audit.ndjson)
 as one line of JSON. A sink that cannot record an entry must say so: the
 engine then refuses to proceed (R0304) rather than run a step nobody
 recorded. Notifications go to stderr, because stdout carries the protocol.
@@ -16,7 +16,7 @@ import json
 import os
 import sys
 
-from rue_hook import Hooks, Journal, Notify, Refusal, serve_stdio
+from rescind_hook import Hooks, Journal, Notify, Refusal, serve_stdio
 
 
 class AuditLog(Journal):
@@ -41,4 +41,4 @@ def hooks(path):
 
 
 if __name__ == "__main__":
-    serve_stdio("audit", hooks(os.environ.get("RUE_AUDIT_LOG", "audit.ndjson")))
+    serve_stdio("audit", hooks(os.environ.get("RESCIND_AUDIT_LOG", "audit.ndjson")))

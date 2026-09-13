@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
-namespace Rue.Hook;
+namespace Rescind.Hook;
 
 /// <summary>
 /// A value of an <c>execute.run</c> body after resolution: its text, and

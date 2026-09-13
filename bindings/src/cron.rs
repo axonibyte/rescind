@@ -1,12 +1,12 @@
 //! `cron()`, the POSIX scheduler binding of docs/ROADMAP.md 7.3 and 7.7.
 //!
 //! The entry is a fenced region of the host's crontab, anchored by the
-//! instance id, exactly as a `Region` fact is anchored elsewhere in rue:
+//! instance id, exactly as a `Region` fact is anchored elsewhere in rescind:
 //!
 //! ```text
-//! # rue-region <instance> begin
-//! * * * * * /bin/sh /var/db/rue/instances/<instance>/artifact.sh
-//! # rue-region <instance> end
+//! # rescind-region <instance> begin
+//! * * * * * /bin/sh /var/db/rescind/instances/<instance>/artifact.sh
+//! # rescind-region <instance> end
 //! ```
 //!
 //! The crontab is not a file fact an executor may write, so the edit is a
@@ -19,11 +19,11 @@
 //! nothing of their own to do. That is the shape 7.7 gives cron: "fires
 //! within about one minute after the deadline".
 
-use rue_core::model::{Instant, Tri};
-use rue_engine::executor::{ExecError, Executor, ProbeRun, RPrim, Resolved};
-use rue_engine::host::Host;
-use rue_engine::scheduler::{Job, Presence, Scheduler};
-use rue_render::quote;
+use rescind_core::model::{Instant, Tri};
+use rescind_engine::executor::{ExecError, Executor, ProbeRun, RPrim, Resolved};
+use rescind_engine::host::Host;
+use rescind_engine::scheduler::{Job, Presence, Scheduler};
+use rescind_render::quote;
 
 /// The granularity of the entry: every minute.
 const SCHEDULE: &str = "* * * * *";
@@ -36,11 +36,11 @@ fn q(s: &str) -> Result<String, ExecError> {
 }
 
 fn begin(instance: &str) -> String {
-    format!("# rue-region {instance} begin")
+    format!("# rescind-region {instance} begin")
 }
 
 fn end(instance: &str) -> String {
-    format!("# rue-region {instance} end")
+    format!("# rescind-region {instance} end")
 }
 
 /// The command that reinstalls the crontab without this instance's region.

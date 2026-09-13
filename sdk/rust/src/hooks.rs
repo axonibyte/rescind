@@ -6,7 +6,7 @@
 //! produces is a plan that binds to it and then refuses at the first step,
 //! which is a long way from where the mistake was made.
 
-use rue_hook_proto::{Observation, Op, Output, RPrim};
+use rescind_hook_proto::{Observation, Op, Output, RPrim};
 use serde_json::{json, Value};
 
 use crate::{

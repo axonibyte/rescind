@@ -2,8 +2,8 @@
 //! helpers, and a seeded generator of knell-free plans for the laws.
 #![allow(dead_code)]
 
-use rue_core::body::*;
-use rue_core::model::*;
+use rescind_core::body::*;
+use rescind_core::model::*;
 
 pub mod gen;
 

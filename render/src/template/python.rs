@@ -3,8 +3,8 @@
 //! through the host's shell: `sh -c` on POSIX, `powershell.exe -Command` on
 //! Windows.
 
-use rue_core::artifact::Shell;
-use rue_core::model::Drift;
+use rescind_core::artifact::Shell;
+use rescind_core::model::Drift;
 
 use super::banner;
 use crate::actions::{Action, Kind};
@@ -165,7 +165,7 @@ def foreign_region(path):
 
 
 def replace(path, text):
-    tmp = path + '.rue-tmp'
+    tmp = path + '.rescind-tmp'
     with open(tmp, 'w', encoding='utf-8') as f:
         f.write(text)
     os.replace(tmp, path)
@@ -175,8 +175,8 @@ def strip_region(path, anchor):
     if not os.path.isfile(path):
         return False
     lines = read(path).split('\n')
-    begin = '# rue-region ' + anchor + ' begin'
-    end = '# rue-region ' + anchor + ' end'
+    begin = '# rescind-region ' + anchor + ' begin'
+    end = '# rescind-region ' + anchor + ' end'
     if lines.count(begin) != 1 or lines.count(end) != 1:
         return False
     out = []
@@ -199,12 +199,12 @@ def region_set(path, anchor, content):
     text = read(path) if os.path.isfile(path) else ''
     if text and not text.endswith('\n'):
         text += '\n'
-    replace(path, text + '# rue-region ' + anchor + ' begin\n' + content + '\n# rue-region ' + anchor + ' end\n')
+    replace(path, text + '# rescind-region ' + anchor + ' begin\n' + content + '\n# rescind-region ' + anchor + ' end\n')
 
 
 def restore(snapshot, path):
-    shutil.copyfile(snapshot, path + '.rue-tmp')
-    os.replace(path + '.rue-tmp', path)
+    shutil.copyfile(snapshot, path + '.rescind-tmp')
+    os.replace(path + '.rescind-tmp', path)
 
 
 def remove(path):

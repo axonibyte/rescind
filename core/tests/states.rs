@@ -1,9 +1,9 @@
 //! Tier 4: the five class rules of section 5.9, asserted over every context,
 //! state and event the machine admits. The table itself is a golden.
 
-use rue_core::intent::Intent;
-use rue_core::model::{Mode, OnLapse};
-use rue_core::states::*;
+use rescind_core::intent::Intent;
+use rescind_core::model::{Mode, OnLapse};
+use rescind_core::states::*;
 
 fn manual_temporary() -> Ctx {
     Ctx {
@@ -233,8 +233,8 @@ fn the_table_lists_only_applicable_transitions_and_respects_intent() {
 }
 
 mod time {
-    use rue_core::model::{Duration, Instant};
-    use rue_core::states::{expired, renew, RenewRefusal};
+    use rescind_core::model::{Duration, Instant};
+    use rescind_core::states::{expired, renew, RenewRefusal};
 
     #[test]
     fn expiry_is_observed_at_the_instant_closed_boundary() {

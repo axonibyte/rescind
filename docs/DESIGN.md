@@ -9,29 +9,29 @@ points at the rule rather than restating it.
 ## Crates and the direction of dependency
 
 ```
-core/      rue-core     the model, the checker, the verdict, the journal model,
+core/      rescind-core     the model, the checker, the verdict, the journal model,
                         the digests, the state machine; no I/O
-render/    rue-render   the backstop artifact per artifact language; depends on
+render/    rescind-render   the backstop artifact per artifact language; depends on
                         core only; no I/O
-engine/    rue-engine   the runtime (ROADMAP 7): the clock in this unit; the
+engine/    rescind-engine   the runtime (ROADMAP 7): the clock in this unit; the
                         store, lifecycle, executors, arming, the control
                         channel and the hook protocol by Phase 3's units
-cli/       rue          check | explain | artifact | states over a plan IR file
-tenants/harness         rue-tenants: the tenants and negatives as terms, the case
-                        table, the golden writer (rue-goldens) and the tier-2
+cli/       rescind          check | explain | artifact | states over a plan IR file
+tenants/harness         rescind-tenants: the tenants and negatives as terms, the case
+                        table, the golden writer (rescind-goldens) and the tier-2
                         and tier-3 suites
-tenants/e2e             rue-e2e: the tier 5 and 6 harness, run on a disposable
+tenants/e2e             rescind-e2e: the tier 5 and 6 harness, run on a disposable
                         reaper guest by tenants/e2e/run.sh and never by the
                         gate
 proto/                  the Phase 0 Haskell prototype, kept as the record; its
                         tier-1 and tier-4 tests run in the gate
 ```
 
-Dependency direction is downward only (ROADMAP 4.2). `rue-core` depends on
-nothing in the workspace and on no I/O crate; `rue-render` on core;
-`rue-engine` on core, render and surface; the CLI on all of them; the
+Dependency direction is downward only (ROADMAP 4.2). `rescind-core` depends on
+nothing in the workspace and on no I/O crate; `rescind-render` on core;
+`rescind-engine` on core, render and surface; the CLI on all of them; the
 harnesses on the public API and on nothing else. Per-OS knowledge
-lives in `rue-render` (templates and quoting), `ci/build-target.sh`
+lives in `rescind-render` (templates and quoting), `ci/build-target.sh`
 (toolchains and linkers) and, from Phase 3, the generic executor and
 scheduler bindings; the one exception is `core/src/artifact.rs`, the
 vocabulary that says which shell family an `os` implies and which artifact
@@ -40,7 +40,7 @@ template at check time (E0403) and core cannot depend on render.
 
 ## The front end
 
-`rue-surface` (docs/LANGUAGE.md is the reader's guide): a logos lexer, a
+`rescind-surface` (docs/LANGUAGE.md is the reader's guide): a logos lexer, a
 hand-written recursive-descent parser with statement-level recovery
 emitting rowan's lossless tree (`surface/src/parser.rs`), a formatter that
 is the identity on the canonical layout (`fmt.rs`), the tree lowered to
@@ -79,7 +79,7 @@ listing (Appendix B); both read only the verdict and the plan.
 The checker's input as data, `docs/TESTING.md` "The plan IR": one
 canonical-JSON document holding the site, the requester and one host's
 plan, `ir_version` 5 (3 plus the plan's probe declarations, 4 plus the
-fact shape a probe `reads`). It is `rue_core::model`'s serde form, spelled field by
+fact shape a probe `reads`). It is `rescind_core::model`'s serde form, spelled field by
 field, with unknown fields refused. The tenants' terms are the IR's only
 emitter until Phase 2's front end; `core/tests/ir.rs` holds a document that
 exercises every primitive and reference and round-trips byte for byte.
@@ -108,7 +108,7 @@ reservations of section 5.12.
 
 ## The engine
 
-`engine/` (rue-engine) is the runtime of ROADMAP section 7, arriving by
+`engine/` (rescind-engine) is the runtime of ROADMAP section 7, arriving by
 unit. What is in place:
 
 - **The clock** (`engine/src/clock.rs`): a trait every module reads time
@@ -119,7 +119,7 @@ unit. What is in place:
   an exclusive open on Windows), `instances/<id>.json` in canonical JSON,
   `ledger.json` and the engine's own copy of the chain in `journal.ndjson`.
   Every write goes to a temporary name beside the file and is renamed after
-  a sync. An unknown or missing schema is R0502; `rued migrate` is the only
+  a sync. An unknown or missing schema is R0502; `rescindd migrate` is the only
   migration, dry-runnable, refused on a store another account owns, and
   recorded in `migrated.json` for the daemon's next start to journal. An
   older schema is R0502 too, and says to migrate. Schema 2 (v0.2.0) is the
@@ -137,11 +137,11 @@ unit. What is in place:
   shipped (`tenants/_upgrade/`) must check clean or be refused only by
   rules added since, which say so (`Code::since`, `Code::migration`).
 - **The journal** (`engine/src/journal.rs`, 7.6): entries chained by core's
-  `append`, optionally signed (SSHSIG, Ed25519, namespace `rue-journal`,
+  `append`, optionally signed (SSHSIG, Ed25519, namespace `rescind-journal`,
   `engine/src/sign.rs`), written to the store, then delivered to every sink
   synchronously; a sink that does not acknowledge is R0304, the refusal is
   chained after the entry and delivered to the sinks that still
-  acknowledge, and the plan refuses to proceed. `rue journal verify`
+  acknowledge, and the plan refuses to proceed. `rescind journal verify`
   checks a file's chain and, with `--key`, every signature.
 - **The executor seam** (`engine/src/executor.rs`, 7.2): one object-safe
   trait for everything done to a host. The engine hands it a resolved body
@@ -158,12 +158,12 @@ unit. What is in place:
   `known_hosts`, and every remote operation one `sh` reading its script
   from stdin: the stdin preamble is octal-escaped assignments decoded by
   `printf '%b'` inside that script, never `SendEnv`, never argv, and the
-  script carries the artifact's own helpers (`rue_render::sh_helpers`). A
+  script carries the artifact's own helpers (`rescind_render::sh_helpers`). A
   probe's command answers a guard by its exit status (0 yes, 1 no, else
   unknown), its stdout the fact; a `run` binds a declared output with a
-  stdout line `rue-output NAME=VALUE`. Stdout and stderr reported back are
+  stdout line `rescind-output NAME=VALUE`. Stdout and stderr reported back are
   scrubbed of every secret the body carried. The host lock is `flock` on
-  `<rue_root>/lock` locally and a long-lived `lockf` (FreeBSD) or `flock`
+  `<rescind_root>/lock` locally and a long-lived `lockf` (FreeBSD) or `flock`
   (Linux) over ssh; a family with neither in base has none (macOS).
 - **Footprints at runtime** (`engine/src/footprint.rs`, 4.3, 5.2, 7.7):
   before `do`, snapshots of `Modified` and `Region` facts (to the record
@@ -202,8 +202,8 @@ unit. What is in place:
   when the host is bootstrapped (R0407); a `:target` undo on a host without
   a filesystem is refused before `do` (R0408); staged files are removed
   after their step and at boot for any instance not applying; the
-  directory goes at close or commit. `rue bootstrap` prints the commands a
-  target lacks, per family, and runs nothing; `rue doctor` reports every
+  directory goes at close or commit. `rescind bootstrap` prints the commands a
+  target lacks, per family, and runs nothing; `rescind doctor` reports every
   host's reach and bootstrap, the sinks, signing and settle.
 - **The lifecycle** (`engine/src/lifecycle.rs`, 5.9, 7.1, 7.8): the driver
   over core's `states::transition`. Events come from verbs, from a step's
@@ -260,11 +260,11 @@ unit. What is in place:
   peer's account read from the client's SID rather than a uid. A group the
   system does not know refuses the daemon rather than widening the pipe.
 - **Windows** (`engine/src/pipe.rs`, `daemon/src/service.rs`,
-  `bindings/src/local.rs`, 7.9 and 12): `rued` registers with the
+  `bindings/src/local.rs`, 7.9 and 12): `rescindd` registers with the
   service-control manager, answering `Interrogate` and stopping on `Stop`
-  and `Shutdown` through the same flag `rue run` never sets; `local()`
+  and `Shutdown` through the same flag `rescind run` never sets; `local()`
   runs PowerShell with `-NoProfile -Command` and keeps its root under
-  `%ProgramData%\rue`; the host lock is a locked file taken with
+  `%ProgramData%\rescind`; the host lock is a locked file taken with
   `LockFileEx`, the same file the PowerShell artifact opens exclusively.
   All of it is built for `x86_64-pc-windows-gnu` and tested under wine,
   which carries the pipe end to end and names its client from that
@@ -277,25 +277,25 @@ unit. What is in place:
   looking the link up at call time so an unregistered hook refuses
   honestly. Secrets have a place in exactly four messages.
 - **Embedding** (docs/control-protocol.md, docs/hook-protocol.md, `sdk/`):
-  a host process embeds rue by holding a connection to `rued`, never by
+  a host process embeds rescind by holding a connection to `rescindd`, never by
   linking it (NIF embedding is deliberately not built). On one connection
   it is a declared operator issuing verbs within `operator_for`, a declared
   registrar whose hooks the engine calls back into within `may_register`,
   and a subscriber to its plans; `Client::read` queues an event that
   arrives while a verb is in flight, for `next_event` to drain, so a host
   alternates verbs and events on the one connection rather than splitting
-  it. The wire is one table, `rue-hook-proto`'s `OPS`, frozen at v1 by
+  it. The wire is one table, `rescind-hook-proto`'s `OPS`, frozen at v1 by
   `docs/hook-protocol-v1.json`; each SDK of 7.11 carries a transcription
-  of it that `tools/lint-hook-ops.sh` binds to `OPS`, and `rue sdk-conform`
+  of it that `tools/lint-hook-ops.sh` binds to `OPS`, and `rescind sdk-conform`
   judges any of them against the scripted world of docs/sdk-conformance.md.
   Every SDK hands an `execute.run` handler its resolved values as a type
   that formats and serializes a secret as `<secret>` and gives its text
   only through `expose` (7.11's "without ever placing them on a command
   line"), and bounds a handler by an optional budget, answering `ok: false`
   with the overrun when it is spent, because the engine's deadline is not
-  on the wire for an SDK to see. `rue check --ir` gives an embedder the IR a terminal check produces, and
+  on the wire for an SDK to see. `rescind check --ir` gives an embedder the IR a terminal check produces, and
   the verdict the daemon reaches for an embedded apply is the one
-  `rue check` gives on the same text. A hook may stand in for the
+  `rescind check` gives on the same text. A hook may stand in for the
   controller: `hook(:x, transport: :controller)` puts the controller's
   actions in a host process, and E0608 refuses at check a plan with an
   action no executor it reaches can perform.
@@ -340,16 +340,16 @@ unit. What is in place:
   acceptor of `secrets deliver_to:` that takes it, and the engine then
   holds nothing. `requester()` takes it only while a client is attached and
   hands it to that client's reply; `hold()` keeps it in memory, gives it up
-  once to `rue reveal`, and drops it at its bound, when the instance ends,
+  once to `rescind reveal`, and drops it at its bound, when the instance ends,
   and at a restart. A list every acceptor declines is `applied; secret
   undelivered` and exit 7. Nothing about a secret reaches the store or a
   journal entry but its label, and a secret in a hook message other than
   the two that may carry one is dropped at the seam (R0305).
-- **Drills** (`engine/src/lifecycle.rs`, 7.14): `rue drill` reads every
+- **Drills** (`engine/src/lifecycle.rs`, 7.14): `rescind drill` reads every
   fact the plan's footprint names on the hosts it touches, applies, recants,
   reads them again, and journals `DrillAttested` with a line per fact. The
   attestation lives in the chain and nowhere else, so what verifies it is
-  `rue journal verify`, which verifies the chain; `--attestations` prints
+  `rescind journal verify`, which verifies the chain; `--attestations` prints
   them once it has. `restored` is true only when every fact was read and
   every digest came back, so a fact the engine could not read attests to
   nothing and says so. Two refusals guard it, both R0410: every host must
@@ -363,7 +363,7 @@ unit. What is in place:
   armed and unfired has that controller's live commitment on it -- the
   backstop will undo work there on its own schedule -- and the apply is
   refused, R0409, before anything is created; the refusal names the
-  directory, which `rue reclaim --force --reason` can take once an operator
+  directory, which `rescind reclaim --force --reason` can take once an operator
   has read it. A foreign directory that is spent -- fired, or with no
   artifact at all -- refuses nobody: hosts accumulate them, a killed
   controller leaving its directory where it fired, and none of them commits
@@ -383,18 +383,18 @@ unit. What is in place:
   does not know that holds an armed, unfired artifact
   is left where it is and journaled `InstanceDirOrphaned{armed: true}`;
   one with no artifact or a `fired` marker is removed and journaled
-  `Reclaimed`. `rue doctor` lists what was left in place, and `rue doctor
+  `Reclaimed`. `rescind doctor` lists what was left in place, and `rescind doctor
   --canary` proves a real backstop fires: a throwaway artifact of the
   engine's own (no plan, no undo, nothing outside its own instance
   directory), armed with a deadline already past and removed whatever
-  happened. `rue reclaim`
+  happened. `rescind reclaim`
   refuses while the artifact is armed and its entry present (R0405) until
   `--force --reason`. An artifact `abandon` could not disarm and that
   later fires is read on the next reap and journaled
   `BackstopFiredAfterAbandon`: accepted and visible, never a surprise.
-- **rued** (`daemon/src/run.rs`): the site block to a daemon: sinks,
+- **rescindd** (`daemon/src/run.rs`): the site block to a daemon: sinks,
   signing key, hook executors, schedulers, inventory, operators and
-  registrars from `rue_surface::resolve::site_bindings`; the store created
+  registrars from `rescind_surface::resolve::site_bindings`; the store created
   when empty; boot with its reconciliation, then a reap thread, a
   heartbeat thread and the accept loop; `--dry-run` for daemon dry-run
   mode; `--spawn NAME=COMMAND` for a hook child over stdio; rc.d and
@@ -409,7 +409,7 @@ engine takes it across any region undo, which is the only case where two
 writers can corrupt one file; and two controllers acting on one host,
 which the roadmap defers to Phase 5. The engine does not take the host
 lock for *every* undo because `host_lock` opens a file bootstrap creates,
-and a `:controller` step on a machine with no `rue_root` would then fail
+and a `:controller` step on a machine with no `rescind_root` would then fail
 to revert. A lock nothing takes would be worse than none.
 
 The end-to-end work settled two things. **A step whose `do` the engine
@@ -426,23 +426,23 @@ did is not.
 only when something refused it.** Both a plan that reverted after a
 refusal and a plan an operator recanted end `Closed`, and section 6.8
 gives one code to "refused" and another to "ok"; the reason the record
-carries is what tells them apart. So `rue recant` on a healthy instance,
-`rue cancel` on a pending one, and a temporary plan that waned and
+carries is what tells them apart. So `rescind recant` on a healthy instance,
+`rescind cancel` on a pending one, and a temporary plan that waned and
 reverted cleanly are all exit 0, while a step that failed, an executor
 that went silent, and an abandon of an instance that got there by
 refusing are exit 1.
 
 Positions the gates and secrets unit takes where the roadmap is silent,
 for the owner. **The operator's own identity is the authenticator** a proof
-is verified against unless `rue approve --authenticator` names another; the
+is verified against unless `rescind approve --authenticator` names another; the
 submitter is always the channel's peer identity, and the journal keeps both.
-**`rue approve` with nothing on stdin prints the challenge** rather than
+**`rescind approve` with nothing on stdin prints the challenge** rather than
 submitting an empty proof, so the token a binding wants can be fetched with
 the same verb that spends it. **The host contract is the host records plus
 the static probes**, hashed as canonical JSON: the roadmap names its
 contents (5.1) and leaves the shape to the engine. **An approval binding
 that opens every gate is a property of the binding**, not a special case in
-the gate evaluator: `always()` answers `approves_everything`, and `rued`
+the gate evaluator: `always()` answers `approves_everything`, and `rescindd`
 refuses to build it outside `--dry-run`. **A binding that fails while being
 offered a secret has not accepted it**: the failure is journaled and the
 next acceptor is offered the value, because a refusal to answer is not a
@@ -466,11 +466,11 @@ with only `unless_heartbeat:` writes no deadline file, and reconciliation
 must not read that as reclaimable. **A transport that cannot ask a host
 its time reports no skew rather than zero** (`Executor::clock_now`
 answering `None`), so R0403 is enforced where it can be and its absence is
-visible in `rue doctor` instead of assumed away; a hook that does not
+visible in `rescind doctor` instead of assumed away; a hook that does not
 serve `execute.clock` refuses it and is read the same way. **The
 instance-directory modes come back with the listing** (`modes_ok`), which
 is where the engine reads them for R0406. **A scheduler that cannot say
-whether its entry is there is never read as absence**, so `rue reclaim`
+whether its entry is there is never read as absence**, so `rescind reclaim`
 refuses on `unknown` exactly as it does on `present`.
 
 Positions the engine takes where section 7 is silent, for the owner: a
@@ -495,8 +495,8 @@ step on a host only they reach is deferred (a rehearsal is not).
 A `:target` backstop is a standalone script in the instance directory on
 the target, registered with the host's scheduler, that undoes the covered
 steps (those with `undo_locus: :target`) in reverse order when its trigger
-is due (sections 5.6 and 7.7). `rue-render` produces it from the plan, the
-host record, an `Instance` (id and `rue_root`) and the `Bindings` a request
+is due (sections 5.6 and 7.7). `rescind-render` produces it from the plan, the
+host record, an `Instance` (id and `rescind_root`) and the `Bindings` a request
 supplies (parameters; host fields beyond name and os), in the host's
 declared language: POSIX `sh` (FreeBSD, Linux, macOS), PowerShell
 (Windows), or Python run by `uv run --offline --script` with PEP 723
@@ -506,15 +506,15 @@ string for the host's shell, then the whole text for the artifact's
 language. What an artifact cannot carry is refused at render, not guessed:
 a secret, a controller value, an earlier step's output, a fact read, a
 controller primitive, `env:`/`stdin:` on a run, a held resource under
-restore, a restore over a non-file fact. `rue artifact` prints it; the
+restore, a restore over a non-file fact. `rescind artifact` prints it; the
 tenants' artifacts are goldens beside their verdicts.
 
 ### The instance directory the artifact reads
 
-This layout is the contract between `rue-render` and Phase 3's engine. The
+This layout is the contract between `rescind-render` and Phase 3's engine. The
 engine writes everything but the last line; the artifact reads it and
 writes the last line. Paths are relative to
-`<rue_root>/instances/<instance-id>/`.
+`<rescind_root>/instances/<instance-id>/`.
 
 | Path | Written by | Content |
 |---|---|---|
@@ -526,10 +526,10 @@ writes the last line. Paths are relative to
 | `controller` | engine, at create | the id of the controller that made this directory (7.7, 11); read by another controller's engine, by nothing on the target |
 | `artifact.sh` / `.ps1` / `.py` | engine, at install | the rendered artifact |
 | `fired`, `drift`, `clobbered` | the artifact | `fired` once it has run; a step number per line as its policy decided |
-| `<rue_root>/lock` | bootstrap | the host lock (7.7): `flock` for the engine, `lockf`/`flock` for a fired `sh` artifact, `fcntl.flock` for Python, an exclusive open for PowerShell; held for the whole of an artifact's run and across the engine's region undo |
+| `<rescind_root>/lock` | bootstrap | the host lock (7.7): `flock` for the engine, `lockf`/`flock` for a fired `sh` artifact, `fcntl.flock` for Python, an exclusive open for PowerShell; held for the whole of an artifact's run and across the engine's region undo |
 
-Region markers in a file are the lines `# rue-region <anchor> begin` and
-`# rue-region <anchor> end`; `region_set` writes them and the artifact
+Region markers in a file are the lines `# rescind-region <anchor> begin` and
+`# rescind-region <anchor> end`; `region_set` writes them and the artifact
 strips between them. A damaged pair is one line missing. Every file the
 engine or the artifact writes is written to a temporary name beside it and
 renamed (section 7.7), so a root scheduler job and a group-member engine can
@@ -551,7 +551,7 @@ half of the rule and the engine keeps all of it.
 
 ## The simulation
 
-`sim/` (rue-sim) is the shadow world of section 10: a seeded event list
+`sim/` (rescind-sim) is the shadow world of section 10: a seeded event list
 driven against a real engine over fakes, with the twenty invariants of
 10.3 checked after every event and a delta-debugging shrinker over the
 events that broke one. It depends on core, render and the engine, and on
@@ -570,11 +570,11 @@ and its facts, which is what abandon means.
 ## The harness and the goldens
 
 `tenants/harness` holds the case tables: `TENANT_CASES` and `NEGATIVES`
-name each case's directory and the host, plan and requester its `.rue`
+name each case's directory and the host, plan and requester its `.scind`
 text is resolved for; `SURFACE_NEGATIVES` the texts the front end refuses.
-`cases()` resolves every text through `rue-surface`; `artifacts()` is the
-list of every expected file, computed from that; `rue-goldens` is the only
-writer and refuses without `RUE_UPDATE_GOLDENS=1`. Every case yields
+`cases()` resolves every text through `rescind-surface`; `artifacts()` is the
+list of every expected file, computed from that; `rescind-goldens` is the only
+writer and refuses without `RESCIND_UPDATE_GOLDENS=1`. Every case yields
 `plan.json`, `verdict.json` and `verdict.txt`; a tenant case also
 `explain.txt`; a case with a `:target` backstop also its artifact; a
 front-end negative `diagnostics.txt`. The Rust terms that carried Phase

@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using Xunit;
 
-namespace Rue.Hook.Tests;
+namespace Rescind.Hook.Tests;
 
 /// The loop: one reply per request line, nothing for anything else, and a budget.
 public class ServeTests

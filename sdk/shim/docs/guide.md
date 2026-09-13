@@ -2,7 +2,7 @@
 
 ## The contract
 
-For each request, `rue-hook` runs `--command` through the host's shell
+For each request, `rescind-hook` runs `--command` through the host's shell
 (`sh -c` on unix, `cmd /C` on Windows), writes the request to its stdin as
 one line of JSON, and waits for it to exit:
 

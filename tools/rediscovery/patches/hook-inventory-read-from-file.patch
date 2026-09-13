@@ -11,7 +11,7 @@
 -                Code::E0607,
 -                format!(
 -                    "`inventory from: hook({})` has no hosts until the hook is asked, and \
--                     checking needs a record now: name one with `rue check --inventory FILE`",
+-                     checking needs a record now: name one with `rescind check --inventory FILE`",
 -                    b.arg.clone().unwrap_or_default()
 -                ),
 -            ));

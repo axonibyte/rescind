@@ -1,7 +1,7 @@
 # Reverts: a handler over its budget answers ok:false naming the overrun (the deadline handling of 7.11) rather than arriving late or as a silence
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/sdk/elixir/lib/rue_hook/hooks.ex
-+++ b/sdk/elixir/lib/rue_hook/hooks.ex
+--- a/sdk/elixir/lib/rescind_hook/hooks.ex
++++ b/sdk/elixir/lib/rescind_hook/hooks.ex
 @@ -75,17 +75,7 @@
    def answer_within(%__MODULE__{} = h, request, nil), do: answer(h, request)
  

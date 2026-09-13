@@ -1,7 +1,7 @@
 # Reverts: a reply missing a field its op requires is refused by name, as in every other SDK; as an assert it vanished under python -O and otherwise ended the serve loop
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/sdk/python/rue_hook/hooks.py
-+++ b/sdk/python/rue_hook/hooks.py
+--- a/sdk/python/rescind_hook/hooks.py
++++ b/sdk/python/rescind_hook/hooks.py
 @@ -236,16 +236,7 @@
          reply = {"id": rid, "ok": True}
          reply.update(fields)

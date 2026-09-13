@@ -12,7 +12,7 @@ use crate::Context;
 /// The first comment line of every artifact.
 pub(crate) fn banner(ctx: &Context<'_>) -> String {
     format!(
-        "rue backstop artifact: plan {} on {} (os {}), instance {}, language {}. Rendered by rue-render; do not edit.",
+        "rescind backstop artifact: plan {} on {} (os {}), instance {}, language {}. Rendered by rescind-render; do not edit.",
         ctx.plan.id,
         ctx.host.name,
         ctx.host.os,

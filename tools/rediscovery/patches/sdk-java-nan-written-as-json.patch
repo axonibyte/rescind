@@ -1,7 +1,7 @@
 # Reverts: a NaN or an infinity is refused rather than written as the bare NaN or Infinity, a line the engine cannot parse
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/sdk/java/src/main/java/dev/rue/hook/Json.java
-+++ b/sdk/java/src/main/java/dev/rue/hook/Json.java
+--- a/sdk/java/src/main/java/dev/rescind/hook/Json.java
++++ b/sdk/java/src/main/java/dev/rescind/hook/Json.java
 @@ -35,11 +35,6 @@
          } else if (v instanceof Boolean || v instanceof Integer || v instanceof Long) {
              b.append(v);

@@ -1,6 +1,6 @@
 [package]
-name = "rue-sim"
-description = "rue's shadow world: seeded events against the engine, the invariants of docs/ROADMAP.md 10.3 after every one, and a shrinker over the events that broke one"
+name = "rescind-sim"
+description = "rescind's shadow world: seeded events against the engine, the invariants of docs/ROADMAP.md 10.3 after every one, and a shrinker over the events that broke one"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,7 +8,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-rue-core = { path = "../core" }
-rue-engine = { path = "../engine" }
-rue-render = { path = "../render" }
+rescind-core = { path = "../core" }
+rescind-engine = { path = "../engine" }
+rescind-render = { path = "../render" }
 serde_json.workspace = true

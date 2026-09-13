@@ -28,7 +28,7 @@ defect.
 checkout that was three and a half years stale while being faithfully
 current with the branch it tracked; the rule wren drew out of it is *cite
 refs, not repositories* -- `<host>/<repo>@<ref>=<commit>`, dated, because
-"the repository" does not have one state. rue makes the same shape of claim
+"the repository" does not have one state. rescind makes the same shape of claim
 about its own past and records only a tag name.
 
 **Done when.** Each vector directory records the commit its tag resolved to

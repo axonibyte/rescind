@@ -1,4 +1,4 @@
-# Reverts: an older store is refused with R0502 and told to run rued migrate; here it is reported as unknown, written by a newer rued, which sends an operator the wrong way.
+# Reverts: an older store is refused with R0502 and told to run rescindd migrate; here it is reported as unknown, written by a newer rescindd, which sends an operator the wrong way.
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
 --- a/engine/src/store.rs
 +++ b/engine/src/store.rs

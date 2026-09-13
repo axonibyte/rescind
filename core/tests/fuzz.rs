@@ -1,17 +1,17 @@
 //! Tier 4 fuzz (docs/ROADMAP.md Phase 1 task 10): over seeded random sites
 //! and plans, `check` never panics and its verdict is canonical; the prose
-//! and the listing never panic; the plan IR round-trips. `RUE_FUZZ_SEED` and
-//! `RUE_FUZZ_STEPS` override the defaults; a failure names the seed and step.
+//! and the listing never panic; the plan IR round-trips. `RESCIND_FUZZ_SEED` and
+//! `RESCIND_FUZZ_STEPS` override the defaults; a failure names the seed and step.
 
 mod common;
 
 use common::gen::*;
-use rue_core::check::{check, deferred_steps};
-use rue_core::explain::explain;
-use rue_core::ir::{parse, PlanIr, IR_VERSION};
-use rue_core::json::canonical;
-use rue_core::prose::prose;
-use rue_core::verdict::to_json;
+use rescind_core::check::{check, deferred_steps};
+use rescind_core::explain::explain;
+use rescind_core::ir::{parse, PlanIr, IR_VERSION};
+use rescind_core::json::canonical;
+use rescind_core::prose::prose;
+use rescind_core::verdict::to_json;
 
 const STEPS: u32 = 500;
 
@@ -47,7 +47,7 @@ fn prose_and_explain_never_panic() {
         assert!(e.is_empty() || e.ends_with('\n'));
         // The page renders whatever the listing does, and closes every tag
         // it opens however strange the plan is.
-        let h = rue_core::explain::explain_html(&plan, &d, Some(&p));
+        let h = rescind_core::explain::explain_html(&plan, &d, Some(&p));
         assert!(h.starts_with("<!DOCTYPE html>") && h.trim_end().ends_with("</html>"));
         assert_eq!(
             h.matches("<tr").count(),

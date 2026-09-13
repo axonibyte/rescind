@@ -4,7 +4,7 @@ command line or into a log by accident."""
 import json
 import unittest
 
-from rue_hook import Execute, Hooks, Resolved, RPrim
+from rescind_hook import Execute, Hooks, Resolved, RPrim
 
 PW = "correct-horse-battery"
 
@@ -39,7 +39,7 @@ class ResolvedTest(unittest.TestCase):
     def test_a_secret_a_handler_puts_in_its_reply_is_not_written_out(self):
         # A handler that echoes a body value into its outputs by mistake:
         # the reply is still written, and not with the secret's text.
-        from rue_hook.serve import _write
+        from rescind_hook.serve import _write
         import io
 
         out = io.StringIO()

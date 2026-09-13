@@ -8,8 +8,8 @@
 //! group, and that the peer is named by a SID rather than a uid.
 //!
 //! The list grants the local `SYSTEM` account and the local
-//! administrators group full access and the rue group read and write,
-//! which is the pipe's answer to the socket's `0660` and group `rue`.
+//! administrators group full access and the rescind group read and write,
+//! which is the pipe's answer to the socket's `0660` and group `rescind`.
 //! Everyone else is refused by the operating system before a byte is read.
 //!
 //! What wine can and cannot do with any of this is stated in
@@ -58,7 +58,7 @@ pub fn pipe_name(path: &Path) -> String {
     let last = path
         .file_name()
         .map(|f| f.to_string_lossy().into_owned())
-        .unwrap_or_else(|| "rue".to_string());
+        .unwrap_or_else(|| "rescind".to_string());
     format!("\\\\.\\pipe\\{last}")
 }
 
@@ -118,7 +118,7 @@ fn sid_string(account: &str) -> Option<String> {
 }
 
 /// The access-control list the pipe carries: SYSTEM and the local
-/// administrators in full, the rue group reading and writing, and no one
+/// administrators in full, the rescind group reading and writing, and no one
 /// else at all. A group the system does not know is a refusal, never a
 /// silently wider pipe.
 pub fn sddl(group: &str) -> Result<String, String> {
@@ -248,7 +248,7 @@ pub fn serve(
     stop: Arc<AtomicBool>,
 ) -> io::Result<()> {
     let name = wide(&pipe_name(path));
-    let group = group.unwrap_or_else(|| "rue".to_string());
+    let group = group.unwrap_or_else(|| "rescind".to_string());
     let (_sd, attrs) = security(&group).map_err(io::Error::other)?;
     let owner = crate::peer::my_account().unwrap_or_default();
     while !stop.load(Ordering::SeqCst) {
@@ -353,15 +353,21 @@ mod tests {
 
     #[test]
     fn a_path_becomes_a_pipe_name_and_a_pipe_name_stays_one() {
-        assert_eq!(pipe_name(Path::new(r"\\.\pipe\rue")), r"\\.\pipe\rue");
-        assert_eq!(pipe_name(Path::new("rued.sock")), r"\\.\pipe\rued.sock");
         assert_eq!(
-            pipe_name(Path::new(r"C:\ProgramData\rue\rued.sock")),
-            r"\\.\pipe\rued.sock"
+            pipe_name(Path::new(r"\\.\pipe\rescind")),
+            r"\\.\pipe\rescind"
         );
         assert_eq!(
-            pipe_name(Path::new("/var/run/rue/rued.sock")),
-            r"\\.\pipe\rued.sock"
+            pipe_name(Path::new("rescindd.sock")),
+            r"\\.\pipe\rescindd.sock"
+        );
+        assert_eq!(
+            pipe_name(Path::new(r"C:\ProgramData\rescind\rescindd.sock")),
+            r"\\.\pipe\rescindd.sock"
+        );
+        assert_eq!(
+            pipe_name(Path::new("/var/run/rescind/rescindd.sock")),
+            r"\\.\pipe\rescindd.sock"
         );
     }
 
@@ -386,7 +392,7 @@ mod tests {
         }
         // A group the system does not know is a refusal, never a wider
         // pipe: the control channel is not opened to everyone by default.
-        let err = sddl("no-such-group-rue-test").unwrap_err();
+        let err = sddl("no-such-group-rescind-test").unwrap_err();
         assert!(err.contains("not an account this system knows"), "{err}");
     }
 

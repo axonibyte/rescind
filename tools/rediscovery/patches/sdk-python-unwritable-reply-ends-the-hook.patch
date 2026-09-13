@@ -1,7 +1,7 @@
 # Reverts: a reply json cannot write is answered with a refusal naming why, rather than a TypeError that ends the serve loop
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/sdk/python/rue_hook/serve.py
-+++ b/sdk/python/rue_hook/serve.py
+--- a/sdk/python/rescind_hook/serve.py
++++ b/sdk/python/rescind_hook/serve.py
 @@ -79,13 +79,7 @@
                      "budget; answering late is worse than answering no"
                  ),

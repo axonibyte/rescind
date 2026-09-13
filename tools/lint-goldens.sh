@@ -22,7 +22,7 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-goldens.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-goldens.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 cd "$root" || exit 2

@@ -1,0 +1,25 @@
+rue 0
+# Negative case E0610: the version line names `rue`, the name this language
+# had before v0.4.0. Every text written for v0.1.0 through v0.3.0 opens this
+# way, including the frozen upgrade vectors, so the front end must say what
+# changed rather than report a missing version marker.
+
+site do
+  inventory from: file("../lab-inventory.toml")
+  journal to: local()
+  backstop scheduler: cron()
+  operators do
+    identity :requester, user: "ops", operator_for: :all, admin: true
+  end
+end
+
+defop :posture, _ do
+  footprint owned: file("/etc/a")
+  do: write(file("/etc/a"), content: "x")
+  undo: :restore
+end
+
+defplan :posture, %{name: "db-01"} do
+  wane 1h
+  posture()
+end

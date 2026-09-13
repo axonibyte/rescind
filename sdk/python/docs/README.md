@@ -1,6 +1,6 @@
-# rue-hook for Python
+# rescind-hook for Python
 
-A hook is a process that `rued` calls on a site's behalf: to record journal
+A hook is a process that `rescindd` calls on a site's behalf: to record journal
 entries, run steps on hosts it cannot reach itself, answer probes, approve
 gates, resolve and receive secrets, deliver notifications, or schedule
 backstops. The protocol is newline-delimited JSON ([hook-protocol.md]).
@@ -8,15 +8,15 @@ This package lets you write a hook as a few small classes, and does the
 registration handshake, the framing and the reply shapes for you.
 
 - **Standard library only.** Python 3.11 or later, and nothing else.
-- **Conformance-tested.** `rue sdk-conform` drives every op of every kind
+- **Conformance-tested.** `rescind sdk-conform` drives every op of every kind
   through this package's own serve loop ([sdk-conformance.md]).
 - **Protocol v1**, which is frozen: a hook written against it keeps working
   until a new protocol version says otherwise.
 
 ## Install
 
-The package is `rue_hook`. It is not on PyPI; install it from a checkout
-of rue:
+The package is `rescind_hook`. It is not on PyPI; install it from a checkout
+of rescind:
 
 ```sh
 pip install ./sdk/python
@@ -36,11 +36,11 @@ own tests run it.
 """An audit hook: a journal sink that keeps every entry, and a notifier.
 
 Bind it in a site with `journal to: local(), hook(:audit)` and
-`notify via: hook(:audit)`, and have rued spawn it:
+`notify via: hook(:audit)`, and have rescindd spawn it:
 
-    rued run --spawn audit="python3 audit_hook.py" ...
+    rescindd run --spawn audit="python3 audit_hook.py" ...
 
-Each journal entry is appended to $RUE_AUDIT_LOG (default audit.ndjson)
+Each journal entry is appended to $RESCIND_AUDIT_LOG (default audit.ndjson)
 as one line of JSON. A sink that cannot record an entry must say so: the
 engine then refuses to proceed (R0304) rather than run a step nobody
 recorded. Notifications go to stderr, because stdout carries the protocol.
@@ -50,7 +50,7 @@ import json
 import os
 import sys
 
-from rue_hook import Hooks, Journal, Notify, Refusal, serve_stdio
+from rescind_hook import Hooks, Journal, Notify, Refusal, serve_stdio
 
 
 class AuditLog(Journal):
@@ -75,7 +75,7 @@ def hooks(path):
 
 
 if __name__ == "__main__":
-    serve_stdio("audit", hooks(os.environ.get("RUE_AUDIT_LOG", "audit.ndjson")))
+    serve_stdio("audit", hooks(os.environ.get("RESCIND_AUDIT_LOG", "audit.ndjson")))
 ```
 
 The protocol is plain lines, so you can drive the hook by hand. After its
@@ -108,18 +108,18 @@ site do
 end
 ```
 
-Then `rued` starts it as a child and talks to it over its stdin and
+Then `rescindd` starts it as a child and talks to it over its stdin and
 stdout:
 
 ```sh
-rued run --site site.rue --store /var/db/rue --socket /var/run/rue/rued.sock \
+rescindd run --site site.scind --store /var/db/rescind --socket /var/run/rescind/rescindd.sock \
   --spawn audit="python3 /usr/local/libexec/audit_hook.py"
 ```
 
 Four names have to agree: the one the hook registers with (the first
 argument of `serve_stdio`), the `NAME` of `--spawn NAME=COMMAND`, the
 `hook(:audit)` the site binds, and one in a registrar's `may_register`.
-`rued` refuses a child that registers under any other name. A child `rued` spawned is the socket
+`rescindd` refuses a child that registers under any other name. A child `rescindd` spawned is the socket
 owner, so its registrar says `user: :socket_owner`. A hook the journal or
 the inventory depends on must be spawned this way: the daemon needs it
 before it starts listening, so it cannot be one that connects later.
@@ -129,7 +129,7 @@ before it starts listening, so it cannot be one that connects later.
 - [guide.md](guide.md): every kind and its handler, refusing, secrets,
   the budget, and serving over the control socket.
 - [testing.md](testing.md): testing a hook, and judging it with
-  `rue sdk-conform`.
+  `rescind sdk-conform`.
 
 [hook-protocol.md]: ../../../docs/hook-protocol.md
 [sdk-conformance.md]: ../../../docs/sdk-conformance.md

@@ -5,7 +5,7 @@
 //! node-b is the guest itself, over ssh, and the guests it starts are
 //! jails -- real kernel objects, observed with jls. The corpse, node-a, is
 //! never reached: everything done to it is done through the cluster driver
-//! (tenants/t2/fixtures/cluster.py), exactly as tenants/t2/plan.rue reaches
+//! (tenants/t2/fixtures/cluster.py), exactly as tenants/t2/plan.scind reaches
 //! it. node-c is on the console, so the heir's step defers and a person
 //! continues it. The rollback knell acts on a real ZFS dataset with an
 //! @split snapshot, and its cost is the real list of what `zfs rollback -r`
@@ -24,9 +24,9 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-use rue_e2e::{
+use rescind_e2e::{
     e2e_root, expect_exit, instance_of, me, must, os_family, python, repo_root,
-    require_provisioned_host, rue, rue_root, rue_with_stdin, token_from, Daemon, Site,
+    require_provisioned_host, rescind, rescind_root, rescind_with_stdin, token_from, Daemon, Site,
     TARGET_ADDRESS,
 };
 
@@ -41,7 +41,7 @@ roles = ["hv"]
 reach = ["ssh"]
 filesystem = true
 scheduler = "cron"
-rue_root = "@ROOT@"
+rescind_root = "@ROOT@"
 
 [[host]]
 name = "node-c"
@@ -57,7 +57,7 @@ second_operator = { human = true }
 fence_driver = { human = false }
 "#;
 
-const TEXT: &str = r#"rue 0
+const TEXT: &str = r#"rescind 0
 site do
   inventory from: file("inventory.toml")
   journal to: file("journal.ndjson")
@@ -140,14 +140,14 @@ defop :resurrection_gate, _ do
 end
 
 defprobe :guest_state do
-  run "jls -j rue-t2-#{g} jid"
+  run "jls -j rescind-t2-#{g} jid"
   reads guest.state(g)
 end
 
 defop :start_guest, %{os: :freebsd} do
   footprint modified: guest.state(g)
-  do: run("jail -c name=rue-t2-#{g} persist")
-  undo: run("jail -r rue-t2-#{g}", idempotent: true)
+  do: run("jail -c name=rescind-t2-#{g} persist")
+  undo: run("jail -r rescind-t2-#{g}", idempotent: true)
   undo_pre guest.state(g)
   refusal: :hold
   undo_locus: :controller
@@ -164,8 +164,8 @@ end
 
 defop :start_heir, %{os: :freebsd} do
   footprint modified: guest.state("heir")
-  do: run("jail -c name=rue-t2-heir persist")
-  undo: run("jail -r rue-t2-heir", idempotent: true)
+  do: run("jail -c name=rescind-t2-heir persist")
+  undo: run("jail -r rescind-t2-heir", idempotent: true)
   undo_pre guest.state("heir")
   refusal: :hold
   undo_locus: :controller
@@ -243,11 +243,11 @@ impl Cluster {
         let inventory = INVENTORY
             .replace("@ADDR@", TARGET_ADDRESS)
             .replace("@OS@", os_family())
-            .replace("@ROOT@", rue_root().to_str().unwrap());
+            .replace("@ROOT@", rescind_root().to_str().unwrap());
         let site = Site::raw(name, &text, &inventory);
         // The spawned children inherit the daemon's environment, and the
         // daemon inherits this process's.
-        std::env::set_var("RUE_T2_STATE", &state);
+        std::env::set_var("RESCIND_T2_STATE", &state);
         let py = python();
         let fixture = repo_root().join("tenants/t2/fixtures/cluster.py");
         let spawn: Vec<String> = ["cluster", "authority"]
@@ -282,7 +282,7 @@ impl Cluster {
     }
 
     fn promote(&self, plan: &str, entry: &str) -> std::process::Output {
-        rue(
+        rescind(
             &self.d.socket,
             &[
                 "apply",
@@ -317,14 +317,14 @@ impl Cluster {
             "--authenticator",
             "operator",
         ];
-        let challenge = rue_with_stdin(&self.d.socket, &args, "");
+        let challenge = rescind_with_stdin(&self.d.socket, &args, "");
         let challenge = must("the acknowledgement's challenge", &challenge);
         let token = token_from(&challenge);
         assert!(
             !token.is_empty(),
             "the challenge carries a digest: {challenge}"
         );
-        rue_with_stdin(&self.d.socket, &args, &token)
+        rescind_with_stdin(&self.d.socket, &args, &token)
     }
 }
 
@@ -343,7 +343,7 @@ fn jails() -> Vec<String> {
     String::from_utf8_lossy(&out.stdout)
         .lines()
         .map(|l| l.trim().to_string())
-        .filter(|l| l.starts_with("rue-t2-"))
+        .filter(|l| l.starts_with("rescind-t2-"))
         .collect()
 }
 
@@ -387,7 +387,7 @@ fn the_auto_promote_fences_starts_its_guests_defers_the_heir_and_commits() {
     running.sort();
     assert_eq!(
         running,
-        vec!["rue-t2-g1".to_string(), "rue-t2-g2".to_string()],
+        vec!["rescind-t2-g1".to_string(), "rescind-t2-g2".to_string()],
         "the guests are jails the kernel holds"
     );
     let actions = c.read("actions");
@@ -414,7 +414,7 @@ fn the_auto_promote_fences_starts_its_guests_defers_the_heir_and_commits() {
     );
 
     // The heir is up; the person says so, and the plan commits.
-    let out = rue(&c.d.socket, &["handoff-done", &id, "--step", "8"]);
+    let out = rescind(&c.d.socket, &["handoff-done", &id, "--step", "8"]);
     let line = must("handoff-done", &out);
     assert!(line.to_lowercase().contains("committed"), "{line}");
     assert!(c.journal().contains("\"committed\""), "{}", c.journal());
@@ -423,7 +423,7 @@ fn the_auto_promote_fences_starts_its_guests_defers_the_heir_and_commits() {
 #[test]
 fn a_recant_after_the_guests_started_stops_each_one_and_records_the_reversal() {
     // Each guest is an iteration of a repeat whose undo names it:
-    // `jail -r rue-t2-#{g}`. The engine undid a repeat's steps with no loop
+    // `jail -r rescind-t2-#{g}`. The engine undid a repeat's steps with no loop
     // variable at all, so this recant could not resolve the undo, left the
     // instance Stuck and both jails running. Nothing had reverted a promote
     // before this case.
@@ -435,10 +435,10 @@ fn a_recant_after_the_guests_started_stops_each_one_and_records_the_reversal() {
     running.sort();
     assert_eq!(
         running,
-        vec!["rue-t2-g1".to_string(), "rue-t2-g2".to_string()]
+        vec!["rescind-t2-g1".to_string(), "rescind-t2-g2".to_string()]
     );
 
-    must("recant", &rue(&c.d.socket, &["recant", &id]));
+    must("recant", &rescind(&c.d.socket, &["recant", &id]));
     assert!(
         jails().is_empty(),
         "each guest's jail was removed by its own undo: {:?}",
@@ -484,7 +484,7 @@ fn a_refusal_after_the_fence_holds_under_auto_until_resumed() {
     running.sort();
     assert_eq!(
         running,
-        vec!["rue-t2-g1".to_string(), "rue-t2-g2".to_string()],
+        vec!["rescind-t2-g1".to_string(), "rescind-t2-g2".to_string()],
         "a hold keeps what was applied; it does not revert"
     );
     let log = c.read("succession.log");
@@ -495,13 +495,13 @@ fn a_refusal_after_the_fence_holds_under_auto_until_resumed() {
 
     // The service recovers; resume retries the step that failed.
     c.set("placement_refuses", "");
-    let out = rue(&c.d.socket, &["resume", &id]);
+    let out = rescind(&c.d.socket, &["resume", &id]);
     expect_exit("resume", &out, 5);
     assert!(
         c.read("placement").contains("held then resumed"),
         "the placement was recorded on the retry"
     );
-    let out = rue(&c.d.socket, &["handoff-done", &id, "--step", "8"]);
+    let out = rescind(&c.d.socket, &["handoff-done", &id, "--step", "8"]);
     let line = must("handoff-done", &out);
     assert!(line.to_lowercase().contains("committed"), "{line}");
 }
@@ -519,7 +519,7 @@ fn jid(name: &str) -> String {
 fn a_start_that_fails_on_a_jail_it_did_not_make_leaves_that_jail_and_holds() {
     // A jail already holds a guest's name, made by someone else. The guest's
     // start fails on it after the fence, and a failed step is undone at once
-    // (5.9) -- by its undo, `jail -r rue-t2-g1`, which removes the jail of
+    // (5.9) -- by its undo, `jail -r rescind-t2-g1`, which removes the jail of
     // that name whoever made it. It must not run: the engine reads the
     // guest's state through the probe that reads it (`jls` over ssh), the
     // state is the same before and after the failed start, so the start
@@ -527,18 +527,18 @@ fn a_start_that_fails_on_a_jail_it_did_not_make_leaves_that_jail_and_holds() {
     // obstacle gone, resume starts the guest.
     let c = Cluster::start("t2-obstacle");
     let made = Command::new("jail")
-        .args(["-c", "name=rue-t2-g1", "persist"])
+        .args(["-c", "name=rescind-t2-g1", "persist"])
         .status()
         .expect("jail");
     assert!(made.success(), "the obstacle jail");
-    let planted = jid("rue-t2-g1");
+    let planted = jid("rescind-t2-g1");
     assert!(!planted.is_empty());
 
     let out = c.promote("promote_auto", "an obstacle in the way");
     let line = expect_exit("apply", &out, 3);
     let id = instance_of(&line);
     assert_eq!(
-        jid("rue-t2-g1"),
+        jid("rescind-t2-g1"),
         planted,
         "the failed start's undo removed or replaced a jail it never made"
     );
@@ -554,20 +554,20 @@ fn a_start_that_fails_on_a_jail_it_did_not_make_leaves_that_jail_and_holds() {
 
     // Whoever made the obstacle removes it; resume retries the start.
     let removed = Command::new("jail")
-        .args(["-r", "rue-t2-g1"])
+        .args(["-r", "rescind-t2-g1"])
         .status()
         .expect("jail");
     assert!(removed.success());
-    let out = rue(&c.d.socket, &["resume", &id]);
+    let out = rescind(&c.d.socket, &["resume", &id]);
     expect_exit("resume", &out, 5);
     let mut running = jails();
     running.sort();
     assert_eq!(
         running,
-        vec!["rue-t2-g1".to_string(), "rue-t2-g2".to_string()],
+        vec!["rescind-t2-g1".to_string(), "rescind-t2-g2".to_string()],
         "resume started both guests"
     );
-    let out = rue(&c.d.socket, &["handoff-done", &id, "--step", "8"]);
+    let out = rescind(&c.d.socket, &["handoff-done", &id, "--step", "8"]);
     let line = must("handoff-done", &out);
     assert!(line.to_lowercase().contains("committed"), "{line}");
 }
@@ -594,7 +594,7 @@ fn a_second_promote_for_the_same_corpse_is_refused_with_75() {
         !c.read("actions").contains("fence"),
         "nobody fenced node-a while two promotes contended for it"
     );
-    must("recant", &rue(&c.d.socket, &["recant", &first]));
+    must("recant", &rescind(&c.d.socket, &["recant", &first]));
 }
 
 #[test]
@@ -643,7 +643,7 @@ fn the_manual_promote_acknowledges_both_knells_and_rolls_back_what_is_ahead() {
         "the write made after the split survived the rollback"
     );
     let _ = line;
-    let out = rue(&c.d.socket, &["handoff-done", &id, "--step", "9"]);
+    let out = rescind(&c.d.socket, &["handoff-done", &id, "--step", "9"]);
     let line = must("handoff-done", &out);
     assert!(line.to_lowercase().contains("committed"), "{line}");
 }

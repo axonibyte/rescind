@@ -2,7 +2,7 @@
 //! through `sha256 -q`, `sha256sum` and `shasum -a 256`, the first that
 //! exists on those three.
 
-use rue_core::model::Drift;
+use rescind_core::model::Drift;
 
 use super::banner;
 use crate::actions::{Action, Kind};
@@ -39,7 +39,7 @@ pub fn render(ctx: &Context<'_>) -> Result<String, RenderError> {
     // With neither in base (macOS) the run proceeds unlocked and a damaged
     // region is deferred, never restored whole.
     o.push_str(
-        "if [ -z \"${RUE_LOCKED:-}\" ]; then\n  if command -v lockf >/dev/null 2>&1; then RUE_LOCKED=1 exec lockf -k -t 300 \"$ROOT/lock\" sh \"$0\"\n  elif command -v flock >/dev/null 2>&1; then RUE_LOCKED=1 exec flock -w 300 \"$ROOT/lock\" sh \"$0\"\n  else RUE_NOLOCK=1; fi\nfi\n",
+        "if [ -z \"${RESCIND_LOCKED:-}\" ]; then\n  if command -v lockf >/dev/null 2>&1; then RESCIND_LOCKED=1 exec lockf -k -t 300 \"$ROOT/lock\" sh \"$0\"\n  elif command -v flock >/dev/null 2>&1; then RESCIND_LOCKED=1 exec flock -w 300 \"$ROOT/lock\" sh \"$0\"\n  else RESCIND_NOLOCK=1; fi\nfi\n",
     );
     o.push_str(HELPERS);
     for s in &ctx.steps {
@@ -74,7 +74,7 @@ pub fn render(ctx: &Context<'_>) -> Result<String, RenderError> {
                     let snap = q(n, &format!("{inst}/snapshots/{n}/{k}"))?;
                     let fallback = match s.drift {
                         Drift::Clobber => format!(
-                            "if [ -n \"${{RUE_NOLOCK:-}}\" ] || foreign_region {p}; then defer {n}; else restore {snap} {p}; clobbered {n}; fi"
+                            "if [ -n \"${{RESCIND_NOLOCK:-}}\" ] || foreign_region {p}; then defer {n}; else restore {snap} {p}; clobbered {n}; fi"
                         ),
                         Drift::Defer => format!("defer {n}"),
                     };
@@ -139,15 +139,15 @@ foreign_region() {
 }
 strip_region() {
   [ -f "$1" ] || return 1
-  b=$(grep -c -F -x "# rue-region $2 begin" "$1"); e=$(grep -c -F -x "# rue-region $2 end" "$1")
+  b=$(grep -c -F -x "# rescind-region $2 begin" "$1"); e=$(grep -c -F -x "# rescind-region $2 end" "$1")
   [ "$b" -eq 1 ] && [ "$e" -eq 1 ] || return 1
-  awk -v a="$2" '$0 == "# rue-region " a " begin" { skip = 1; next } $0 == "# rue-region " a " end" { skip = 0; next } !skip { print }' "$1" > "$1.rue-tmp" && mv "$1.rue-tmp" "$1"
+  awk -v a="$2" '$0 == "# rescind-region " a " begin" { skip = 1; next } $0 == "# rescind-region " a " end" { skip = 0; next } !skip { print }' "$1" > "$1.rescind-tmp" && mv "$1.rescind-tmp" "$1"
 }
 region_set() {
   strip_region "$1" "$2" || true
-  { [ -f "$1" ] && cat "$1"; printf '# rue-region %s begin\n%s\n# rue-region %s end\n' "$2" "$3" "$2"; } > "$1.rue-tmp" && mv "$1.rue-tmp" "$1"
+  { [ -f "$1" ] && cat "$1"; printf '# rescind-region %s begin\n%s\n# rescind-region %s end\n' "$2" "$3" "$2"; } > "$1.rescind-tmp" && mv "$1.rescind-tmp" "$1"
 }
-restore() { cp "$1" "$2.rue-tmp" && mv "$2.rue-tmp" "$2"; }
+restore() { cp "$1" "$2.rescind-tmp" && mv "$2.rescind-tmp" "$2"; }
 defer() { echo "$1" >> "$INST/drift"; }
 clobbered() { echo "$1" >> "$INST/clobbered"; }
 "##;

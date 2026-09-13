@@ -7,7 +7,7 @@
                      .map(|o| o.name.as_str())
                      .collect();
 -                if !missing.is_empty() {
-+                if !missing.is_empty() && std::env::var_os("RUE_NEVER_SET").is_some() {
++                if !missing.is_empty() && std::env::var_os("RESCIND_NEVER_SET").is_some() {
                      let why = format!("silent: no output for {}", missing.join(", "));
                      self.log(
                          rec,

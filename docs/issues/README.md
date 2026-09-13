@@ -1,6 +1,6 @@
 # Issues
 
-rue's issue tracker: one file per issue in this directory, versioned and
+rescind's issue tracker: one file per issue in this directory, versioned and
 reviewed like the code. Bitbucket Cloud retired its native issue tracker
 in August 2026, and the owner chose a tracker in the repository
 (2026-09-11). The roadmap stays the plan of record; an issue is a unit of
@@ -22,7 +22,7 @@ What is wrong or wanted, why it matters, and what done looks like.
 ```
 
 - **status**: `open`, `in-progress` or `closed`.
-- **kind**: `defect` (rue does something wrong), `feature` (something rue
+- **kind**: `defect` (rescind does something wrong), `feature` (something rescind
   should do), `question` (a decision someone has to make), `not-proven` (a
   claim no test holds yet).
 - **phase**: the roadmap phase it belongs to (`5`, `3W`, ...), or `-`.
@@ -55,9 +55,9 @@ with the title, kind and status the issue itself gives.
 | 0002 | unless_heartbeat under a real network partition | not-proven | closed |
 | 0003 | Drill mode: scheduled apply-and-recant on a canary, with an attestation | feature | closed |
 | 0004 | The complete simulation | feature | closed |
-| 0005 | tree-sitter-rue: a grammar for editors | feature | closed |
+| 0005 | tree-sitter-rescind: a grammar for editors | feature | closed |
 | 0006 | A language server: diagnostics and hover | feature | closed |
-| 0007 | rue explain --html | feature | closed |
+| 0007 | rescind explain --html | feature | closed |
 | 0008 | The name sweep, and a public README | feature | closed |
 | 0009 | Multi-controller: refuse, or a lock protocol over a shared fact? | question | closed |
 | 0010 | Release v0.2.1 with the SDK fixes? | question | closed |

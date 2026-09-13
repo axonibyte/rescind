@@ -1,4 +1,4 @@
-//! `rued` as a Windows service, docs/ROADMAP.md 7.9 and 12.
+//! `rescindd` as a Windows service, docs/ROADMAP.md 7.9 and 12.
 //!
 //! The service-control manager starts the executable with the arguments
 //! the service was registered with, hands the process a control handler,
@@ -7,8 +7,8 @@
 //! this module is the dispatcher, the handler, and the argument parsing
 //! between them.
 //!
-//! Registered with `sc.exe create rue binPath= "…\rued.exe service --site
-//! … --store … --socket \\.\pipe\rue"`. Phase 3 builds and unit-tests this
+//! Registered with `sc.exe create rescind binPath= "…\rescindd.exe service --site
+//! … --store … --socket \\.\pipe\rescind"`. Phase 3 builds and unit-tests this
 //! and runs it as a service on no machine: what wine can show is the
 //! parsing and the shape, not the manager (docs/TESTING.md).
 
@@ -29,17 +29,17 @@ use windows_service::{define_windows_service, service_dispatcher};
 use crate::run;
 
 /// The name the service is registered under.
-pub const SERVICE_NAME: &str = "rue";
+pub const SERVICE_NAME: &str = "rescind";
 
 /// The arguments a service's `binPath=` carries after the verb, as the
-/// daemon's own configuration. Every flag `rued run` takes is taken here
+/// daemon's own configuration. Every flag `rescindd run` takes is taken here
 /// too, and an unknown one is a refusal rather than a default.
 pub fn parse_args(args: &[OsString]) -> Result<run::Config, String> {
     let mut cfg = run::Config {
         site: PathBuf::new(),
         store: PathBuf::new(),
-        socket: PathBuf::from(r"\\.\pipe\rue"),
-        group: "rue".to_string(),
+        socket: PathBuf::from(r"\\.\pipe\rescind"),
+        group: "rescind".to_string(),
         dry_run: false,
         reap_every: 5,
         hook_deadline: 30,
@@ -70,7 +70,7 @@ pub fn parse_args(args: &[OsString]) -> Result<run::Config, String> {
             }
             "--spawn" => cfg.spawn.push(value()?),
             "--inventory" => cfg.inventory = Some(PathBuf::from(value()?)),
-            other => return Err(format!("{other} is not a flag rued takes")),
+            other => return Err(format!("{other} is not a flag rescindd takes")),
         }
     }
     if cfg.site.as_os_str().is_empty() || cfg.store.as_os_str().is_empty() {
@@ -110,7 +110,7 @@ define_windows_service!(ffi_service_main, service_main);
 
 fn service_main(args: Vec<OsString>) {
     if let Err(e) = serve(args) {
-        eprintln!("rued: service: {e}");
+        eprintln!("rescindd: service: {e}");
     }
 }
 
@@ -134,7 +134,7 @@ fn serve(args: Vec<OsString>) -> Result<(), String> {
 }
 
 /// Hand the process to the service-control manager. Fails when the
-/// process was not started by it, which is what running `rued service`
+/// process was not started by it, which is what running `rescindd service`
 /// from a console does.
 pub fn dispatch() -> Result<(), String> {
     service_dispatcher::start(SERVICE_NAME, ffi_service_main).map_err(|e| e.to_string())
@@ -154,13 +154,13 @@ mod tests {
     fn a_service_reads_the_flags_the_run_verb_takes_and_refuses_the_rest() {
         let cfg = parse_args(&args(&[
             "--site",
-            r"C:\ProgramData\rue\site.rue",
+            r"C:\ProgramData\rescind\site.scind",
             "--store",
-            r"C:\ProgramData\rue\store",
+            r"C:\ProgramData\rescind\store",
             "--socket",
-            r"\\.\pipe\rue",
+            r"\\.\pipe\rescind",
             "--group",
-            "rue-operators",
+            "rescind-operators",
             "--reap-every",
             "9",
             "--hook-deadline",
@@ -168,28 +168,28 @@ mod tests {
             "--spawn",
             "act=hook.exe",
             "--inventory",
-            r"C:\ProgramData\rue\inventory.toml",
+            r"C:\ProgramData\rescind\inventory.toml",
         ]))
         .unwrap();
-        assert_eq!(cfg.store.to_string_lossy(), r"C:\ProgramData\rue\store");
-        assert_eq!(cfg.socket.to_string_lossy(), r"\\.\pipe\rue");
-        assert_eq!(cfg.group, "rue-operators");
+        assert_eq!(cfg.store.to_string_lossy(), r"C:\ProgramData\rescind\store");
+        assert_eq!(cfg.socket.to_string_lossy(), r"\\.\pipe\rescind");
+        assert_eq!(cfg.group, "rescind-operators");
         assert_eq!((cfg.reap_every, cfg.hook_deadline), (9, 45));
         assert_eq!(cfg.spawn, vec!["act=hook.exe".to_string()]);
         assert_eq!(
             cfg.inventory
                 .as_deref()
                 .map(|p| p.to_string_lossy().into_owned()),
-            Some(r"C:\ProgramData\rue\inventory.toml".to_string())
+            Some(r"C:\ProgramData\rescind\inventory.toml".to_string())
         );
         assert!(!cfg.dry_run);
-        // The pipe is the default channel, and the group is `rue`.
-        let cfg = parse_args(&args(&["--site", "s.rue", "--store", "st"])).unwrap();
-        assert_eq!(cfg.socket.to_string_lossy(), r"\\.\pipe\rue");
-        assert_eq!(cfg.group, "rue");
+        // The pipe is the default channel, and the group is `rescind`.
+        let cfg = parse_args(&args(&["--site", "s.scind", "--store", "st"])).unwrap();
+        assert_eq!(cfg.socket.to_string_lossy(), r"\\.\pipe\rescind");
+        assert_eq!(cfg.group, "rescind");
         // A service with nowhere to keep its instances is a refusal.
-        assert!(parse_args(&args(&["--site", "s.rue"])).is_err());
-        // So is a flag rued does not take, and a flag with no value.
+        assert!(parse_args(&args(&["--site", "s.scind"])).is_err());
+        // So is a flag rescindd does not take, and a flag with no value.
         assert!(parse_args(&args(&["--nonsense"])).is_err());
         assert!(parse_args(&args(&["--site"])).is_err());
     }
@@ -207,7 +207,7 @@ mod tests {
                 on_control(ServiceControl::Pause, &stop),
                 ServiceControlHandlerResult::NotImplemented
             ),
-            "a control rued does not serve says so rather than pretending"
+            "a control rescindd does not serve says so rather than pretending"
         );
         assert!(!stop.load(Ordering::SeqCst));
         assert!(matches!(

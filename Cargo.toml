@@ -1,26 +1,26 @@
-# The rue workspace (docs/ROADMAP.md section 4.2). Members are added as their
-# phase lands; dependency direction is downward only, and rue-core depends on
+# The rescind workspace (docs/ROADMAP.md section 4.2). Members are added as their
+# phase lands; dependency direction is downward only, and rescind-core depends on
 # nothing in the workspace and on no I/O crate.
 [workspace]
 resolver = "2"
-members = ["core", "render", "surface", "hook-proto", "sdk/rust", "sdk/shim", "engine", "bindings", "cli", "daemon", "sim", "tenants/harness", "tenants/e2e", "tree-sitter-rue", "lsp"]
+members = ["core", "render", "surface", "hook-proto", "sdk/rust", "sdk/shim", "engine", "bindings", "cli", "daemon", "sim", "tenants/harness", "tenants/e2e", "tree-sitter-rescind", "lsp"]
 
 [workspace.package]
 # Read by ci/build-target.sh and the deploy step: the tag must be v<version>.
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 # The pipeline image (rust:1.97-trixie), the workstation's pkg rust and the
 # gate's toolchain check all say 1.97; bump the four together.
 rust-version = "1.97"
 license = "BSD-2-Clause"
-repository = "https://bitbucket.org/axonibyte/rue"
+repository = "https://bitbucket.org/axonibyte/rescind"
 
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
 # Default features only: preserve_order would make object keys insertion-
 # ordered and break the canonical form (docs/TESTING.md).
 serde_json = "1"
-# `env`: `--socket` falls back to RUE_SOCKET (docs/control-protocol.md).
+# `env`: `--socket` falls back to RESCIND_SOCKET (docs/control-protocol.md).
 clap = { version = "4", features = ["derive", "env"] }
 anyhow = "1"
 sha2 = "0.10"

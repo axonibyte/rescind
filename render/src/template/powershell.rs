@@ -2,7 +2,7 @@
 //! it by `-EncodedCommand` or on stdin so execution policy never applies;
 //! a host that cannot run PowerShell at all declares `artifact: python`.
 
-use rue_core::model::Drift;
+use rescind_core::model::Drift;
 
 use super::banner;
 use crate::actions::{Action, Kind};
@@ -136,13 +136,13 @@ function ForeignRegion($p) {
 function StripRegion($p, $a) {
   if (-not (Test-Path $p)) { return $false }
   $lines = @(Get-Content $p)
-  $b = @($lines | Where-Object { $_ -eq "# rue-region $a begin" }).Count
-  $e = @($lines | Where-Object { $_ -eq "# rue-region $a end" }).Count
+  $b = @($lines | Where-Object { $_ -eq "# rescind-region $a begin" }).Count
+  $e = @($lines | Where-Object { $_ -eq "# rescind-region $a end" }).Count
   if ($b -ne 1 -or $e -ne 1) { return $false }
   $out = @(); $skip = $false
   foreach ($l in $lines) {
-    if ($l -eq "# rue-region $a begin") { $skip = $true; continue }
-    if ($l -eq "# rue-region $a end") { $skip = $false; continue }
+    if ($l -eq "# rescind-region $a begin") { $skip = $true; continue }
+    if ($l -eq "# rescind-region $a end") { $skip = $false; continue }
     if (-not $skip) { $out += $l }
   }
   Set-Content -Path $p -Value $out
@@ -150,7 +150,7 @@ function StripRegion($p, $a) {
 }
 function RegionSet($p, $a, $c) {
   StripRegion $p $a | Out-Null
-  Add-Content -Path $p -Value @("# rue-region $a begin", $c, "# rue-region $a end")
+  Add-Content -Path $p -Value @("# rescind-region $a begin", $c, "# rescind-region $a end")
 }
 function Restore($s, $p) { Copy-Item -Path $s -Destination $p -Force }
 function Defer($n) { Add-Content -Path (Join-Path $Inst 'drift') -Value $n }

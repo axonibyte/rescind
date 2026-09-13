@@ -21,7 +21,7 @@ There are three ways to answer, and the SDK makes the fourth unreachable:
   the operator reads. A handler returns `Err(Refusal::new("why"))`; every
   handler's type is `Answer<T>`, which is `Result<T, Refusal>`. An op your
   hook does not implement is refused for you, naming it.
-- **Silence.** No reply before the engine's deadline (`rued run
+- **Silence.** No reply before the engine's deadline (`rescindd run
   --hook-deadline`, 30 seconds by default). The engine refuses the step
   and can say nothing about why. The budget below turns a slow handler
   into a refusal instead.
@@ -34,7 +34,7 @@ a `Refusal` instead; a reason is worth more to the operator than a crash.
 
 Set the fields of `Hooks` you serve; it registers exactly those. Each is a
 trait, and a method with a default refuses as unserved until you override
-it. The records are `rue_hook_sdk::proto`'s.
+it. The records are `rescind_hook_sdk::proto`'s.
 
 | kind | site line | trait and methods |
 |---|---|---|
@@ -93,8 +93,8 @@ writes its text.)
 ```rust
 use std::process::Command;
 
-use rue_hook_sdk::proto::{Output, RPrim};
-use rue_hook_sdk::{expose, Answer, Execute, Refusal};
+use rescind_hook_sdk::proto::{Output, RPrim};
+use rescind_hook_sdk::{expose, Answer, Execute, Refusal};
 
 struct Deploy;
 
@@ -129,7 +129,7 @@ reason rather than a silence. Set the budget below `--hook-deadline`; with
 
 ## Serving over the control socket
 
-`serve_stdio` is for a child `rued` spawns. A long-running process that
+`serve_stdio` is for a child `rescindd` spawns. A long-running process that
 connects to a daemon already running uses `serve_socket`, over any reader
 and writer of the channel:
 
@@ -138,10 +138,10 @@ use std::io::BufReader;
 use std::os::unix::net::UnixStream;
 use std::time::Duration;
 
-use rue_hook_sdk::{serve_socket, Hooks, ServeOptions};
+use rescind_hook_sdk::{serve_socket, Hooks, ServeOptions};
 
 fn serve(hooks: Hooks) -> std::io::Result<()> {
-    let stream = UnixStream::connect("/var/run/rue/rued.sock")?;
+    let stream = UnixStream::connect("/var/run/rescind/rescindd.sock")?;
     let mut reader = BufReader::new(stream.try_clone()?);
     let mut writer = stream;
     let mut opts = ServeOptions::new("audit");

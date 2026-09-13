@@ -1,7 +1,7 @@
 # Reverts: a \u escape with fewer than four hex digits left, or a non-hex one, is refused as the codec documents (IllegalArgumentException) rather than as a StringIndexOutOfBoundsException
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/sdk/java/src/main/java/dev/rue/hook/Json.java
-+++ b/sdk/java/src/main/java/dev/rue/hook/Json.java
+--- a/sdk/java/src/main/java/dev/rescind/hook/Json.java
++++ b/sdk/java/src/main/java/dev/rescind/hook/Json.java
 @@ -251,15 +251,7 @@
                      case 'r' -> b.append('\r');
                      case 't' -> b.append('\t');

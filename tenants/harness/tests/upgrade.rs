@@ -8,9 +8,9 @@
 
 use std::path::{Path, PathBuf};
 
-use rue_core::check::check;
-use rue_core::diagnostics::Code;
-use rue_tenants::golden::repo_root;
+use rescind_core::check::check;
+use rescind_core::diagnostics::Code;
+use rescind_tenants::golden::repo_root;
 
 /// A release's tenant cases, as its own `TENANT_CASES` listed them:
 /// (tenant, owner host, plan, requester). v0.1.0 and v0.2.0 list the same.
@@ -52,14 +52,14 @@ fn check_as(
 ) -> Vec<(Code, String)> {
     let inventory =
         (version(release) >= (0, 2, 0)).then(|| text.parent().unwrap().join("inventory.toml"));
-    let opts = rue_surface::resolve::Options {
+    let opts = rescind_surface::resolve::Options {
         suspend_e0604: false,
         host: Some(host.to_string()),
         plan: Some(plan.to_string()),
         requester: Some(requester.to_string()),
         inventory,
     };
-    match rue_surface::resolve::resolve(text, &opts) {
+    match rescind_surface::resolve::resolve(text, &opts) {
         Err(diags) => diags.into_iter().map(|d| (d.code, d.message)).collect(),
         Ok(ir) => check(&ir.site, &ir.requester, &ir.plan)
             .diagnostics

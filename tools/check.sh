@@ -3,7 +3,7 @@
 # phase RAN and passed.
 #
 # A phase whose tool is missing exits 77 and is skipped LOUDLY; it counts as a
-# failure unless the caller named it in RUE_CHECK_SKIP_OK (comma-separated
+# failure unless the caller named it in RESCIND_CHECK_SKIP_OK (comma-separated
 # phase names). That is how a host with no GHC says so on purpose -- the
 # FreeBSD reaper guest declares its skips in .reaper.toml -- and nothing is
 # ever assumed about the host.
@@ -13,9 +13,9 @@
 # piped into anything that could answer for it (dash has no pipefail).
 #
 # Environment:
-#   RUE_CHECK_SKIP_OK   phases allowed to skip when their tool is absent
-#   RUE_BUILDDIR        cabal --builddir (default proto/dist-newstyle)
-#   RUE_CABAL_UPDATE=1  run `cabal update` before building (CI and reaper)
+#   RESCIND_CHECK_SKIP_OK   phases allowed to skip when their tool is absent
+#   RESCIND_BUILDDIR        cabal --builddir (default proto/dist-newstyle)
+#   RESCIND_CABAL_UPDATE=1  run `cabal update` before building (CI and reaper)
 #   CARGO_HOME, CARGO_TARGET_DIR   honored as cargo does (reaper and CI set
 #                       them to caches); nothing here overrides them
 #
@@ -31,11 +31,11 @@ set -u
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd) || exit 2
 cd "$root" || exit 2
 
-RUE_BUILDDIR=${RUE_BUILDDIR:-$root/proto/dist-newstyle}
-RUE_REPO_ROOT=$root
-export RUE_BUILDDIR RUE_REPO_ROOT
+RESCIND_BUILDDIR=${RESCIND_BUILDDIR:-$root/proto/dist-newstyle}
+RESCIND_REPO_ROOT=$root
+export RESCIND_BUILDDIR RESCIND_REPO_ROOT
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-check.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-check.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 rc=0
@@ -43,7 +43,7 @@ failed=''
 skipped=''
 
 skip_ok() {
-    case ",${RUE_CHECK_SKIP_OK:-}," in
+    case ",${RESCIND_CHECK_SKIP_OK:-}," in
         *",$1,"*) return 0 ;;
     esac
     return 1
@@ -58,7 +58,7 @@ phase() { # phase <name> <cmd...>   cmd exits: 0 ok, 77 tool missing, else fail
     if [ "$st" -eq 0 ]; then
         printf -- '--- ok: %s\n' "$name"
     elif [ "$st" -eq 77 ] && skip_ok "$name"; then
-        printf -- '--- SKIP (declared in RUE_CHECK_SKIP_OK): %s\n' "$name"
+        printf -- '--- SKIP (declared in RESCIND_CHECK_SKIP_OK): %s\n' "$name"
         skipped="$skipped $name"
     elif [ "$st" -eq 77 ]; then
         printf -- '--- FAIL: %s (tool missing, and not declared skippable here)\n' "$name"
@@ -194,7 +194,7 @@ p_cargo_build() {
 }
 
 # Read-only like the cabal suite: the same checksum guard over tenants/ and
-# docs/ brackets the run. rue-e2e is the tier 5 and 6 harness: its tests
+# docs/ brackets the run. rescind-e2e is the tier 5 and 6 harness: its tests
 # rewrite the sshd, firewall and loopback configuration of the machine they
 # run on and refuse without a provisioned disposable guest, so the gate
 # excludes that one package by name and tenants/e2e/run.sh is its only
@@ -202,7 +202,7 @@ p_cargo_build() {
 p_cargo_test() {
     rust_toolchain || return $?
     golden_sums "$tmp/r.before" || return 1
-    cargo test --workspace --exclude rue-e2e --release --locked || return 1
+    cargo test --workspace --exclude rescind-e2e --release --locked || return 1
     golden_sums "$tmp/r.after" || return 1
     if ! cmp -s "$tmp/r.before" "$tmp/r.after"; then
         echo "cargo test changed files under tenants/ or docs/; the suite is read-only" >&2
@@ -226,10 +226,10 @@ toolchain() {
 
 p_cabal_build() {
     toolchain || return $?
-    if [ "${RUE_CABAL_UPDATE:-0}" = 1 ]; then
+    if [ "${RESCIND_CABAL_UPDATE:-0}" = 1 ]; then
         ( cd proto && cabal update ) || return 1
     fi
-    ( cd proto && cabal build all --builddir "$RUE_BUILDDIR" )
+    ( cd proto && cabal build all --builddir "$RESCIND_BUILDDIR" )
 }
 
 # The suite is read-only: a checksum of everything under tenants/ and docs/
@@ -246,7 +246,7 @@ golden_sums() {
 p_cabal_test() {
     toolchain || return $?
     golden_sums "$tmp/g.before" || return 1
-    ( cd proto && cabal test all --builddir "$RUE_BUILDDIR" --test-show-details=direct ) || return 1
+    ( cd proto && cabal test all --builddir "$RESCIND_BUILDDIR" --test-show-details=direct ) || return 1
     golden_sums "$tmp/g.after" || return 1
     if ! cmp -s "$tmp/g.before" "$tmp/g.after"; then
         echo "cabal test changed files under tenants/ or docs/; the suite is read-only" >&2
@@ -283,8 +283,8 @@ if [ -n "$skipped" ]; then
     printf 'skipped by declaration:%s\n' "$skipped"
 fi
 if [ "$rc" -ne 0 ]; then
-    printf 'rue check: FAIL:%s\n' "$failed"
+    printf 'rescind check: FAIL:%s\n' "$failed"
     exit 1
 fi
-printf 'rue check: PASS\n'
+printf 'rescind check: PASS\n'
 exit 0

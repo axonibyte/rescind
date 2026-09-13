@@ -10,16 +10,16 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 
-use rue_bindings::local::LocalExecutor;
-use rue_core::model::{HostRecord, Tri};
-use rue_engine::executor::{Executor, ProbeRun, RPrim, Resolved};
-use rue_engine::host::Host;
+use rescind_bindings::local::LocalExecutor;
+use rescind_core::model::{HostRecord, Tri};
+use rescind_engine::executor::{Executor, ProbeRun, RPrim, Resolved};
+use rescind_engine::host::Host;
 
 struct TempDir(PathBuf);
 impl TempDir {
     fn new(name: &str) -> TempDir {
         let p = std::env::temp_dir().join(format!(
-            "rue-local-{name}-{}-{}",
+            "rescind-local-{name}-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -58,7 +58,7 @@ fn host(root: &std::path::Path) -> Host {
         },
         address: "127.0.0.1".into(),
         scheduler: None,
-        rue_root: Some(root.to_string_lossy().into_owned()),
+        rescind_root: Some(root.to_string_lossy().into_owned()),
         facts: Default::default(),
     }
 }
@@ -78,7 +78,7 @@ fn a_run_gets_its_env_and_stdin_and_reports_outputs_status_and_scrubbed_text() {
     let mut x = LocalExecutor::default();
     let body = vec![RPrim::Run {
         cmd: Resolved::plain(
-            "read -r line; echo \"got $line and $TOKEN\"; echo 'rue-output name=v1'",
+            "read -r line; echo \"got $line and $TOKEN\"; echo 'rescind-output name=v1'",
         ),
         env: vec![(
             "TOKEN".into(),
@@ -144,7 +144,7 @@ fn file_primitives_act_on_real_files_with_regions_by_the_artifact_s_rule() {
     x.run(&h, "i", &body).unwrap();
     assert_eq!(
         fs::read_to_string(&f).unwrap(),
-        "top\nk=1\n# rue-region blk begin\ninside\n# rue-region blk end\n"
+        "top\nk=1\n# rescind-region blk begin\ninside\n# rescind-region blk end\n"
     );
     assert_eq!(
         fs::metadata(&f).unwrap().permissions().mode() & 0o777,
@@ -162,7 +162,7 @@ fn file_primitives_act_on_real_files_with_regions_by_the_artifact_s_rule() {
     .unwrap();
     assert_eq!(fs::read_to_string(&f).unwrap(), "top\nk=1\n");
     // Damaged markers refuse rather than guess.
-    fs::write(&f, "top\n# rue-region blk begin\nx\n").unwrap();
+    fs::write(&f, "top\n# rescind-region blk begin\nx\n").unwrap();
     let err = x
         .run(
             &h,
@@ -265,7 +265,7 @@ fn instance_directories_carry_their_modes_and_the_host_lock_holds() {
     let h = host(&d.0);
     let mut x = LocalExecutor::default();
     let st = x.bootstrap_state(&h).unwrap();
-    assert!(st.rue_root && !st.instances_dir && !st.lock && !st.modes_ok);
+    assert!(st.rescind_root && !st.instances_dir && !st.lock && !st.modes_ok);
     // Bootstrap by hand, as the operator would.
     fs::create_dir_all(d.0.join("instances")).unwrap();
     fs::set_permissions(d.0.join("instances"), fs::Permissions::from_mode(0o2770)).unwrap();
@@ -273,7 +273,7 @@ fn instance_directories_carry_their_modes_and_the_host_lock_holds() {
     fs::set_permissions(d.0.join("lock"), fs::Permissions::from_mode(0o664)).unwrap();
     let st = x.bootstrap_state(&h).unwrap();
     assert!(
-        st.rue_root && st.instances_dir && st.lock && st.modes_ok,
+        st.rescind_root && st.instances_dir && st.lock && st.modes_ok,
         "{st:?}"
     );
     x.instance_dir_create(&h, "i-1").unwrap();
@@ -295,7 +295,7 @@ fn instance_directories_carry_their_modes_and_the_host_lock_holds() {
     );
     x.replace_file(&h, "i-1", "deadline", b"123\n").unwrap();
     assert_eq!(x.get_file(&h, "i-1", "deadline").unwrap(), b"123\n");
-    assert!(!dir.join("deadline.rue-tmp").exists());
+    assert!(!dir.join("deadline.rescind-tmp").exists());
     let list = x.instance_dir_list(&h).unwrap();
     assert_eq!(list.len(), 1);
     assert!(

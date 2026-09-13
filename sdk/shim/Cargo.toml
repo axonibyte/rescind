@@ -1,5 +1,5 @@
 [package]
-name = "rue-hook"
+name = "rescind-hook"
 description = "The hook shim (docs/ROADMAP.md 7.11): registers as a hook and hands each request to a configured command on its stdin, so anything that can read a line and write one can serve a kind"
 version.workspace = true
 edition.workspace = true
@@ -8,16 +8,16 @@ license.workspace = true
 repository.workspace = true
 
 [[bin]]
-name = "rue-hook"
+name = "rescind-hook"
 path = "src/main.rs"
 
 [dependencies]
-rue-hook-proto = { path = "../../hook-proto" }
-rue-hook-sdk = { path = "../rust" }
+rescind-hook-proto = { path = "../../hook-proto" }
+rescind-hook-sdk = { path = "../rust" }
 serde_json.workspace = true
 clap.workspace = true
 
 [dev-dependencies]
 # The conformance runner plays the daemon. A dev-only edge: nothing the
 # engine ships depends on a shim.
-rue-engine = { path = "../../engine" }
+rescind-engine = { path = "../../engine" }

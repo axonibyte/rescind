@@ -6,8 +6,8 @@
 //! replayable from its seed.
 #![allow(dead_code)]
 
-use rue_core::body::*;
-use rue_core::model::*;
+use rescind_core::body::*;
+use rescind_core::model::*;
 
 /// xorshift32: deterministic across platforms, replayable from the seed.
 pub struct Rng(pub u32);
@@ -524,8 +524,8 @@ pub fn gen_with_knell(rng: &mut Rng) -> Vec<Item> {
     v
 }
 
-/// The seed and step count a property runs with: `RUE_FUZZ_SEED` and
-/// `RUE_FUZZ_STEPS`, else the defaults given.
+/// The seed and step count a property runs with: `RESCIND_FUZZ_SEED` and
+/// `RESCIND_FUZZ_STEPS`, else the defaults given.
 pub fn fuzz_params(default_seed: u32, default_steps: u32) -> (u32, u32) {
     let get = |k: &str, d: u32| {
         std::env::var(k)
@@ -537,8 +537,8 @@ pub fn fuzz_params(default_seed: u32, default_steps: u32) -> (u32, u32) {
             .unwrap_or(d)
     };
     (
-        get("RUE_FUZZ_SEED", default_seed),
-        get("RUE_FUZZ_STEPS", default_steps),
+        get("RESCIND_FUZZ_SEED", default_seed),
+        get("RESCIND_FUZZ_STEPS", default_steps),
     )
 }
 
@@ -557,7 +557,7 @@ pub fn each_step(default_seed: u32, default_steps: u32, mut f: impl FnMut(&mut R
         match r {
             Ok(next) => rng.0 = next,
             Err(e) => {
-                eprintln!("fuzz: seed {seed} step {step} (rng state {state:#x}) failed; RUE_FUZZ_SEED={state} RUE_FUZZ_STEPS=1 replays it");
+                eprintln!("fuzz: seed {seed} step {step} (rng state {state:#x}) failed; RESCIND_FUZZ_SEED={state} RESCIND_FUZZ_STEPS=1 replays it");
                 std::panic::resume_unwind(e);
             }
         }

@@ -1,0 +1,22 @@
+# rescindd: rescind's engine daemon (systemd). Install to /etc/systemd/system/.
+#
+# The account rescindd runs as is the socket owner (7.4); the socket's directory
+# is created for it here. The store is created with this build's schema
+# when empty and migrated only by `rescindd migrate`.
+
+[Unit]
+Description=rescind engine daemon
+After=network.target
+
+[Service]
+Type=simple
+User=rescindd
+Group=rescind
+RuntimeDirectory=rescind
+RuntimeDirectoryMode=0750
+ExecStart=/usr/local/bin/rescindd run --site /etc/rescind/site.scind --store /var/lib/rescind/store --socket /run/rescind/rescindd.sock --group rescind
+Restart=on-failure
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target

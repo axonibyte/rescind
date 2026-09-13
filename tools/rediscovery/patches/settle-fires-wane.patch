@@ -7,7 +7,7 @@
                  }
              }
 -            if self.settling {
-+            if self.settling && std::env::var_os("RUE_NEVER_SET").is_some() {
++            if self.settling && std::env::var_os("RESCIND_NEVER_SET").is_some() {
                  continue;
              }
              // Wane: every bounded state of a temporary plan, observed before

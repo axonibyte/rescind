@@ -9,8 +9,8 @@
 use std::path::PathBuf;
 
 use lsp_types::{Position, Uri};
-use rue_lsp::server::{capabilities, handle_notification, handle_request};
-use rue_lsp::{judge, offset_of, position_of, Documents};
+use rescind_lsp::server::{capabilities, handle_notification, handle_request};
+use rescind_lsp::{judge, offset_of, position_of, Documents};
 
 fn tenant(rel: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -20,7 +20,7 @@ fn tenant(rel: &str) -> PathBuf {
 }
 
 fn uri(path: &std::path::Path) -> Uri {
-    rue_lsp::uri_of(path).unwrap_or_else(|| panic!("a file uri for {}", path.display()))
+    rescind_lsp::uri_of(path).unwrap_or_else(|| panic!("a file uri for {}", path.display()))
 }
 
 fn open(docs: &mut Documents, path: &std::path::Path) -> Uri {
@@ -31,7 +31,7 @@ fn open(docs: &mut Documents, path: &std::path::Path) -> Uri {
         serde_json::json!({
             "textDocument": {
                 "uri": url.to_string(),
-                "languageId": "rue",
+                "languageId": "rescind",
                 "version": 1,
                 "text": text,
             }
@@ -44,7 +44,7 @@ fn open(docs: &mut Documents, path: &std::path::Path) -> Uri {
 
 #[test]
 fn a_clean_tenant_opens_with_no_diagnostics() {
-    let path = tenant("tenants/t3/plan.rue");
+    let path = tenant("tenants/t3/plan.scind");
     let text = std::fs::read_to_string(&path).unwrap();
     let j = judge(&path, &text);
     assert!(
@@ -57,13 +57,13 @@ fn a_clean_tenant_opens_with_no_diagnostics() {
 /// A parse error is where it is: the line the front end named, underlined.
 #[test]
 fn a_parse_error_is_reported_at_its_own_line() {
-    let path = tenant("surface/tests/corpus/err-stray-token.rue");
+    let path = tenant("surface/tests/corpus/err-stray-token.scind");
     let text = std::fs::read_to_string(&path).unwrap();
     let j = judge(&path, &text);
     assert!(!j.diagnostics.is_empty(), "the error is reported");
     assert!(!j.checked, "a text that does not parse is not checked");
     let d = &j.diagnostics[0];
-    assert_eq!(d.source.as_deref(), Some("rue"));
+    assert_eq!(d.source.as_deref(), Some("rescind"));
     assert_eq!(
         d.range.start.line, 2,
         "the corpus puts it on line 3: {:?}",
@@ -82,7 +82,7 @@ fn a_parse_error_is_reported_at_its_own_line() {
 /// trip to the roadmap.
 #[test]
 fn a_refused_tenant_carries_the_checkers_code_and_its_migration_note() {
-    let path = tenant("tenants/_negative/E0401-backstop-armed-after-reach/plan.rue");
+    let path = tenant("tenants/_negative/E0401-backstop-armed-after-reach/plan.scind");
     let text = std::fs::read_to_string(&path).unwrap();
     let j = judge(&path, &text);
     assert!(j.checked, "it parses and resolves, so the checker ran");
@@ -100,7 +100,7 @@ fn a_refused_tenant_carries_the_checkers_code_and_its_migration_note() {
 /// author has already changed.
 #[test]
 fn an_unsaved_buffer_is_parsed_and_not_checked() {
-    let path = tenant("tenants/t3/plan.rue");
+    let path = tenant("tenants/t3/plan.scind");
     let saved = std::fs::read_to_string(&path).unwrap();
     let edited = format!("{saved}\n# a comment the file on disk does not have\n");
     let j = judge(&path, &edited);
@@ -116,7 +116,7 @@ fn an_unsaved_buffer_is_parsed_and_not_checked() {
 /// its undo, its undo locus, its drift policy and its footprint.
 #[test]
 fn hover_on_a_step_says_what_explain_says() {
-    let path = tenant("tenants/t3/plan.rue");
+    let path = tenant("tenants/t3/plan.scind");
     let text = std::fs::read_to_string(&path).unwrap();
     // The line the plan's step is written on, and the op's own name.
     let (line, col) = text
@@ -154,7 +154,7 @@ fn hover_on_a_step_says_what_explain_says() {
 /// thing it can find.
 #[test]
 fn hover_on_a_comment_answers_nothing() {
-    let path = tenant("tenants/t3/plan.rue");
+    let path = tenant("tenants/t3/plan.scind");
     let mut docs = Documents::default();
     let url = open(&mut docs, &path);
     let req = lsp_server::Request::new(
@@ -177,7 +177,7 @@ fn hover_on_a_comment_answers_nothing() {
 /// a text nobody has open are diagnostics about nothing.
 #[test]
 fn closing_a_document_clears_its_diagnostics() {
-    let path = tenant("surface/tests/corpus/err-stray-token.rue");
+    let path = tenant("surface/tests/corpus/err-stray-token.scind");
     let mut docs = Documents::default();
     let url = open(&mut docs, &path);
     assert_eq!(docs.len(), 1);
@@ -201,7 +201,7 @@ fn the_capabilities_promise_only_what_is_served() {
     assert!(c.completion_provider.is_none(), "completion is not served");
     assert!(
         c.document_formatting_provider.is_none(),
-        "`rue fmt` is not wired in yet, and the server does not claim it"
+        "`rescind fmt` is not wired in yet, and the server does not claim it"
     );
 }
 
@@ -212,16 +212,16 @@ fn the_capabilities_promise_only_what_is_served() {
 #[test]
 fn a_path_and_its_uri_go_both_ways() {
     for p in [
-        "/tmp/plain/plan.rue",
-        "/tmp/with a space/plan.rue",
-        "/tmp/caf\u{e9}/plan.rue",
-        "/tmp/a+b/plan.rue",
-        "/tmp/100%/plan.rue",
+        "/tmp/plain/plan.scind",
+        "/tmp/with a space/plan.scind",
+        "/tmp/caf\u{e9}/plan.scind",
+        "/tmp/a+b/plan.scind",
+        "/tmp/100%/plan.scind",
     ] {
         let path = PathBuf::from(p);
-        let url = rue_lsp::uri_of(&path).unwrap_or_else(|| panic!("a uri for {p}"));
+        let url = rescind_lsp::uri_of(&path).unwrap_or_else(|| panic!("a uri for {p}"));
         assert_eq!(
-            rue_lsp::path_of(&url).as_deref(),
+            rescind_lsp::path_of(&url).as_deref(),
             Some(path.as_path()),
             "{p} came back as {url:?}"
         );
@@ -233,7 +233,7 @@ fn a_path_and_its_uri_go_both_ways() {
 /// puts every column after it out by one if they are counted in bytes.
 #[test]
 fn positions_are_counted_in_utf16_code_units() {
-    let text = "rue 0\n# \u{2014} dash\ndefplan :x\n";
+    let text = "rescind 0\n# \u{2014} dash\ndefplan :x\n";
     let line2 = text.lines().nth(1).unwrap();
     let offset = text.find("dash").unwrap();
     let p = position_of(text, offset);

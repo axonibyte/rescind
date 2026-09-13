@@ -12,7 +12,7 @@
 # whole question being whether both sinks really were delivered to.
 
 defmodule RefusingLog do
-  def state_dir, do: System.get_env("RUE_T4_STATE") || "/tmp/rue-t4-state"
+  def state_dir, do: System.get_env("RESCIND_T4_STATE") || "/tmp/rescind-t4-state"
 
   defp path(name), do: Path.join(state_dir(), name)
 

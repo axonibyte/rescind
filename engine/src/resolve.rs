@@ -18,8 +18,8 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
-use rue_core::body::{Body, Part, Prim, Ref, Template, Value};
-use rue_core::model::{Op, Undo};
+use rescind_core::body::{Body, Part, Prim, Ref, Template, Value};
+use rescind_core::model::{Op, Undo};
 
 use crate::executor::{RPrim, Resolved};
 use crate::host::Host;

@@ -1,4 +1,4 @@
-//! `rue-hook`: the shim of docs/ROADMAP.md 7.11.
+//! `rescind-hook`: the shim of docs/ROADMAP.md 7.11.
 //!
 //! It registers as a hook and hands each request to a command, on that
 //! command's stdin, reading the reply from its stdout. So a hook can be a
@@ -7,7 +7,7 @@
 //! handshake.
 //!
 //! ```sh
-//! rued run --spawn fence="rue-hook --name fence --kinds probe,execute \
+//! rescindd run --spawn fence="rescind-hook --name fence --kinds probe,execute \
 //!                            --command ./fence.sh"
 //! ```
 //!
@@ -23,7 +23,7 @@
 //! What the shim deliberately does **not** do is repair a reply. It passes
 //! the command's own object through, `ok` and fields and all. A shim that
 //! quietly completed a malformed reply would make the command's mistakes
-//! invisible and would make `rue sdk-conform`'s provocations
+//! invisible and would make `rescind sdk-conform`'s provocations
 //! inexpressible; the engine's R0303 is the honest answer to a reply that
 //! promises what it does not carry.
 //!
@@ -38,16 +38,16 @@ use std::io::{BufReader, Read, Write};
 use std::process::{Command, Stdio};
 
 use clap::Parser;
-use rue_hook_proto::{Registration, HOOK_PROTOCOL};
-use rue_hook_sdk::proto::KINDS;
-use rue_hook_sdk::{read_frame, refusal_frame, write_frame, Refusal};
+use rescind_hook_proto::{Registration, HOOK_PROTOCOL};
+use rescind_hook_sdk::proto::KINDS;
+use rescind_hook_sdk::{read_frame, refusal_frame, write_frame, Refusal};
 use serde_json::{json, Value};
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "rue-hook",
+    name = "rescind-hook",
     version,
-    about = "Serve a rue hook by handing each request to a command."
+    about = "Serve a rescind hook by handing each request to a command."
 )]
 struct Args {
     /// The name to register as. Over stdio it must equal the name the
@@ -74,14 +74,14 @@ fn main() -> std::io::Result<()> {
     let args = Args::parse();
     if args.kinds.is_empty() {
         eprintln!(
-            "rue-hook: --kinds names at least one of: {}",
+            "rescind-hook: --kinds names at least one of: {}",
             KINDS.join(", ")
         );
         std::process::exit(2);
     }
     if let Some(bad) = args.kinds.iter().find(|k| !KINDS.contains(&k.as_str())) {
         eprintln!(
-            "rue-hook: `{bad}` is not a kind of this protocol; the kinds are {}",
+            "rescind-hook: `{bad}` is not a kind of this protocol; the kinds are {}",
             KINDS.join(", ")
         );
         std::process::exit(2);
@@ -102,7 +102,7 @@ fn main() -> std::io::Result<()> {
     match read_frame(&mut r)? {
         Some(ack) if ack.pointer("/register/ok") == Some(&json!(true)) => {}
         other => {
-            eprintln!("rue-hook: registration was not acknowledged: {other:?}");
+            eprintln!("rescind-hook: registration was not acknowledged: {other:?}");
             std::process::exit(1);
         }
     }
@@ -124,7 +124,7 @@ fn main() -> std::io::Result<()> {
             // The command chose not to answer.
             Answer::Silent => {
                 eprintln!(
-                    "rue-hook: {} wrote nothing and exited 0 for {}.{}: staying silent, which \
+                    "rescind-hook: {} wrote nothing and exited 0 for {}.{}: staying silent, which \
                      the engine reads as a refusal of the step",
                     args.command,
                     frame["kind"].as_str().unwrap_or("?"),
@@ -153,7 +153,7 @@ enum Answer {
 /// Run the command with the request on its stdin and read one JSON object
 /// from its stdout.
 fn hand_to_command(command: &str, request: &Value) -> Answer {
-    let (shell, flag) = rue_hook_sdk::proto::host_shell();
+    let (shell, flag) = rescind_hook_sdk::proto::host_shell();
     let mut child = match Command::new(shell)
         .arg(flag)
         .arg(command)

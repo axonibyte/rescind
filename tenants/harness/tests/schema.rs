@@ -11,9 +11,9 @@
 use std::collections::BTreeSet;
 use std::fs;
 
-use rue_core::verdict::VERDICT_VERSION;
-use rue_tenants::artifacts;
-use rue_tenants::golden::repo_root;
+use rescind_core::verdict::VERDICT_VERSION;
+use rescind_tenants::artifacts;
+use rescind_tenants::golden::repo_root;
 use serde_json::Value;
 
 const SUPPORTED: &[&str] = &[

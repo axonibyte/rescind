@@ -33,7 +33,7 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$list" ] || list=$root/tools/darwin-denylist.txt
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-darwin.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-darwin.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 if [ ! -r "$list" ]; then

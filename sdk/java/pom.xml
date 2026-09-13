@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  The Java embedding SDK for rue's hook protocol (docs/ROADMAP.md 7.11).
+  The Java embedding SDK for rescind's hook protocol (docs/ROADMAP.md 7.11).
 
   No framework dependency and no runtime dependency at all: the JDK ships
   no JSON, so this carries a small codec of its own rather than obliging
@@ -15,12 +15,12 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>dev.rue</groupId>
-  <artifactId>rue-hook</artifactId>
+  <groupId>dev.rescind</groupId>
+  <artifactId>rescind-hook</artifactId>
   <version>0.3.0</version>
   <packaging>jar</packaging>
-  <name>rue-hook</name>
-  <description>A conformance-tested client of rue's hook protocol (docs/hook-protocol.md v1).</description>
+  <name>rescind-hook</name>
+  <description>A conformance-tested client of rescind's hook protocol (docs/hook-protocol.md v1).</description>
   <licenses>
     <license>
       <name>BSD-2-Clause</name>

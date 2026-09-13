@@ -8,6 +8,6 @@
          // while no static probe was ever frozen.
 -        if rec.state == State::Applying {
 +        if false && rec.state == State::Applying {
-             let n = rue_core::algebra::numbered(&rec.plan().body)
+             let n = rescind_core::algebra::numbered(&rec.plan().body)
                  .into_iter()
                  .map(|(n, _)| n)

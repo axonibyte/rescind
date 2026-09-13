@@ -1,4 +1,4 @@
-# rue under reaper (ROADMAP.md section 12, D-032).
+# rescind under reaper (ROADMAP.md section 12, D-032).
 #
 # Two guests, each building in one mode and running in another where that is
 # what the work needs:
@@ -23,7 +23,7 @@
 #                                    1.97) and uv with a system Python from
 #                                    pkg, then the whole gate but bash,
 #                                    shellcheck and cabal (declared HERE, in
-#                                    RUE_CHECK_SKIP_OK, so a missing tool
+#                                    RESCIND_CHECK_SKIP_OK, so a missing tool
 #                                    anywhere else is a failure and never a
 #                                    quiet pass), then the tier 5 and 6 harness
 #                                    against pf, sshd and cron.
@@ -38,7 +38,7 @@
 # to a file and executed, never piped into a shell.
 
 schema = 1
-project = "rue"
+project = "rescind"
 
 # Container execution is the default; verbs that need the guest itself say so.
 exec = "container"
@@ -88,7 +88,7 @@ uv python install 3.12 && \
 rustup component add rustfmt clippy && \
 mkdir -p $REAPER_CACHE_BUILD_DIR/tmp && \
 export CARGO_HOME=$REAPER_CACHE_CARGO CARGO_TARGET_DIR=$REAPER_CACHE_TARGET \
-CABAL_DIR=$REAPER_CACHE_CABAL RUE_BUILDDIR=$REAPER_CACHE_BUILD_DIR \
+CABAL_DIR=$REAPER_CACHE_CABAL RESCIND_BUILDDIR=$REAPER_CACHE_BUILD_DIR \
 TMPDIR=$REAPER_CACHE_BUILD_DIR/tmp && \
 cd proto && \
 cabal update && \
@@ -96,7 +96,7 @@ cabal build all --builddir $REAPER_CACHE_BUILD_DIR && \
 cd .. && \
 cargo build --workspace --all-targets --release --locked && \
 rustup target add x86_64-pc-windows-gnu && \
-cargo check --workspace --exclude rue-e2e --all-targets --release --locked \
+cargo check --workspace --exclude rescind-e2e --all-targets --release --locked \
 --target x86_64-pc-windows-gnu && \
 sh tools/check.sh && \
 bash ci/test-windows.sh"""
@@ -129,7 +129,7 @@ cache = ["rustup", "cargo", "target"]
 cmd = """
 export RUSTUP_HOME=$REAPER_CACHE_RUSTUP CARGO_HOME=$REAPER_CACHE_CARGO \
 CARGO_TARGET_DIR=$REAPER_CACHE_TARGET PATH=$REAPER_CACHE_CARGO/bin:$PATH && \
-RUE_CHECK_SKIP_OK=bash-syntax,shellcheck,cabal-build,cabal-test sh tools/check.sh && \
+RESCIND_CHECK_SKIP_OK=bash-syntax,shellcheck,cabal-build,cabal-test sh tools/check.sh && \
 sh tenants/e2e/run.sh"""
 
 # The run every guest inherits unless it overrides the key (FreeBSD does):
@@ -150,7 +150,7 @@ sh tenants/e2e/run.sh"""
 # .NET is not in Ubuntu's index at all, so it comes from Microsoft's
 # install script into a cache -- the same fetch-to-a-file-then-run idiom
 # ghcup and rustup already use here, and into /tank because the SDK is most
-# of a gigabyte and the guest's root disk has about two spare. Declaring a skip for each of them in RUE_CHECK_SKIP_OK would
+# of a gigabyte and the guest's root disk has about two spare. Declaring a skip for each of them in RESCIND_CHECK_SKIP_OK would
 # be the alternative, and the owner's decision for this phase was that the
 # gate gains no SDK phase and therefore no skip. So this is the one reaper
 # guest that runs them, alongside the pipeline.
@@ -176,7 +176,7 @@ mkdir -p $REAPER_CACHE_DOTNET && \
 export DOTNET_ROOT=$REAPER_CACHE_DOTNET DOTNET_CLI_HOME=$REAPER_CACHE_DOTNET/home \
 PATH=$REAPER_CACHE_DOTNET:$PATH DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 \
 NUGET_PACKAGES=$REAPER_CACHE_DOTNET/nuget MAVEN_ARGS=-Dmaven.repo.local=$REAPER_CACHE_MAVEN && \
-cargo build --release --locked -p rue && \
+cargo build --release --locked -p rescind && \
 sh sdk/conform-all.sh && \
 sh sdk/test-all.sh && \
 sh tenants/e2e/run.sh"""
@@ -187,7 +187,7 @@ sh tenants/e2e/run.sh"""
 exclude = ["/proto/dist-newstyle/", "/.cabal_cache/", "/target/", "/.cargo_cache/", "/out/"]
 
 [reset]
-# rue_root on a guest is $REAPER_STATE/rue (tenants/e2e/provision.sh), so a
+# rescind_root on a guest is $REAPER_STATE/rescind (tenants/e2e/provision.sh), so a
 # reset rolls back every instance directory the harness left.
 datasets = ["state"]
 

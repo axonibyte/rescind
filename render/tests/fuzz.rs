@@ -6,9 +6,9 @@
 mod gen;
 
 use gen::*;
-use rue_core::body::{Prim, Ref, Value};
-use rue_core::model::*;
-use rue_render::{render, Bindings, Instance};
+use rescind_core::body::{Prim, Ref, Value};
+use rescind_core::model::*;
+use rescind_render::{render, Bindings, Instance};
 
 const STEPS: u32 = 500;
 
@@ -36,8 +36,8 @@ fn refs_of(plan: &Plan) -> Vec<Ref> {
         }
     }
     let mut out = Vec::new();
-    for (_, it) in rue_core::algebra::numbered(&plan.body) {
-        let Some(o) = rue_core::algebra::op_of(it) else {
+    for (_, it) in rescind_core::algebra::numbered(&plan.body) {
+        let Some(o) = rescind_core::algebra::op_of(it) else {
             continue;
         };
         let mut bodies = vec![&o.do_];
@@ -85,7 +85,7 @@ fn render_never_panics_and_never_bakes_a_secret() {
         b.host_fields.insert("address".into(), "10.0.0.1".into());
         let inst = Instance {
             id: "fuzz".into(),
-            rue_root: rng.maybe(|_| "/tmp/r".to_string()),
+            rescind_root: rng.maybe(|_| "/tmp/r".to_string()),
         };
         for h in &site.hosts {
             match render(&site, &plan, &h.name, &inst, &b) {

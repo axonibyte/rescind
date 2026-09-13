@@ -834,6 +834,168 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
+name = "rescind"
+version = "0.4.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "libc",
+ "miette",
+ "rescind-core",
+ "rescind-engine",
+ "rescind-render",
+ "rescind-surface",
+ "rescind-tenants",
+ "serde_json",
+]
+
+[[package]]
+name = "rescind-bindings"
+version = "0.4.0"
+dependencies = [
+ "libc",
+ "rescind-core",
+ "rescind-engine",
+ "rescind-render",
+ "serde_json",
+ "toml",
+ "windows-sys",
+]
+
+[[package]]
+name = "rescind-core"
+version = "0.4.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
+name = "rescind-e2e"
+version = "0.4.0"
+dependencies = [
+ "libc",
+ "serde_json",
+]
+
+[[package]]
+name = "rescind-engine"
+version = "0.4.0"
+dependencies = [
+ "getrandom 0.3.4",
+ "libc",
+ "rand_core",
+ "rescind-core",
+ "rescind-hook-proto",
+ "rescind-render",
+ "serde",
+ "serde_json",
+ "sha2",
+ "ssh-encoding",
+ "ssh-key",
+ "windows-sys",
+]
+
+[[package]]
+name = "rescind-hook"
+version = "0.4.0"
+dependencies = [
+ "clap",
+ "rescind-engine",
+ "rescind-hook-proto",
+ "rescind-hook-sdk",
+ "serde_json",
+]
+
+[[package]]
+name = "rescind-hook-proto"
+version = "0.4.0"
+dependencies = [
+ "rescind-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "rescind-hook-sdk"
+version = "0.4.0"
+dependencies = [
+ "rescind-engine",
+ "rescind-hook-proto",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "rescind-lsp"
+version = "0.4.0"
+dependencies = [
+ "lsp-server",
+ "lsp-types",
+ "rescind-core",
+ "rescind-surface",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "rescind-render"
+version = "0.4.0"
+dependencies = [
+ "rescind-core",
+ "sha2",
+]
+
+[[package]]
+name = "rescind-sim"
+version = "0.4.0"
+dependencies = [
+ "rescind-core",
+ "rescind-engine",
+ "rescind-render",
+ "serde_json",
+]
+
+[[package]]
+name = "rescind-surface"
+version = "0.4.0"
+dependencies = [
+ "logos",
+ "rescind-core",
+ "rowan",
+ "serde",
+ "toml",
+]
+
+[[package]]
+name = "rescind-tenants"
+version = "0.4.0"
+dependencies = [
+ "rescind-core",
+ "rescind-hook-proto",
+ "rescind-render",
+ "rescind-surface",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "rescindd"
+version = "0.4.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "libc",
+ "rescind-bindings",
+ "rescind-core",
+ "rescind-engine",
+ "rescind-surface",
+ "serde_json",
+ "windows-service",
+]
+
+[[package]]
 name = "rfc6979"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -875,168 +1037,6 @@ dependencies = [
  "spki",
  "subtle",
  "zeroize",
-]
-
-[[package]]
-name = "rue"
-version = "0.3.0"
-dependencies = [
- "anyhow",
- "clap",
- "libc",
- "miette",
- "rue-core",
- "rue-engine",
- "rue-render",
- "rue-surface",
- "rue-tenants",
- "serde_json",
-]
-
-[[package]]
-name = "rue-bindings"
-version = "0.3.0"
-dependencies = [
- "libc",
- "rue-core",
- "rue-engine",
- "rue-render",
- "serde_json",
- "toml",
- "windows-sys",
-]
-
-[[package]]
-name = "rue-core"
-version = "0.3.0"
-dependencies = [
- "serde",
- "serde_json",
- "sha2",
-]
-
-[[package]]
-name = "rue-e2e"
-version = "0.3.0"
-dependencies = [
- "libc",
- "serde_json",
-]
-
-[[package]]
-name = "rue-engine"
-version = "0.3.0"
-dependencies = [
- "getrandom 0.3.4",
- "libc",
- "rand_core",
- "rue-core",
- "rue-hook-proto",
- "rue-render",
- "serde",
- "serde_json",
- "sha2",
- "ssh-encoding",
- "ssh-key",
- "windows-sys",
-]
-
-[[package]]
-name = "rue-hook"
-version = "0.3.0"
-dependencies = [
- "clap",
- "rue-engine",
- "rue-hook-proto",
- "rue-hook-sdk",
- "serde_json",
-]
-
-[[package]]
-name = "rue-hook-proto"
-version = "0.3.0"
-dependencies = [
- "rue-core",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "rue-hook-sdk"
-version = "0.3.0"
-dependencies = [
- "rue-engine",
- "rue-hook-proto",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "rue-lsp"
-version = "0.3.0"
-dependencies = [
- "lsp-server",
- "lsp-types",
- "rue-core",
- "rue-surface",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "rue-render"
-version = "0.3.0"
-dependencies = [
- "rue-core",
- "sha2",
-]
-
-[[package]]
-name = "rue-sim"
-version = "0.3.0"
-dependencies = [
- "rue-core",
- "rue-engine",
- "rue-render",
- "serde_json",
-]
-
-[[package]]
-name = "rue-surface"
-version = "0.3.0"
-dependencies = [
- "logos",
- "rowan",
- "rue-core",
- "serde",
- "toml",
-]
-
-[[package]]
-name = "rue-tenants"
-version = "0.3.0"
-dependencies = [
- "rue-core",
- "rue-hook-proto",
- "rue-render",
- "rue-surface",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "rued"
-version = "0.3.0"
-dependencies = [
- "anyhow",
- "clap",
- "libc",
- "rue-bindings",
- "rue-core",
- "rue-engine",
- "rue-surface",
- "serde_json",
- "windows-service",
 ]
 
 [[package]]
@@ -1345,12 +1345,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca0d1bf6fdd806e43ae5198f82f527056d359def39e54e67a0f478ac09dac081"
 
 [[package]]
-name = "tree-sitter-rue"
-version = "0.3.0"
+name = "tree-sitter-rescind"
+version = "0.4.0"
 dependencies = [
  "cc",
- "rue-core",
- "rue-surface",
+ "rescind-core",
+ "rescind-surface",
  "serde_json",
  "tree-sitter",
  "tree-sitter-language",

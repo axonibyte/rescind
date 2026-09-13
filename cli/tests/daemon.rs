@@ -1,7 +1,7 @@
-//! rued and rue end to end over a real socket in a temporary directory:
+//! rescindd and rescind end to end over a real socket in a temporary directory:
 //! the daemon serves a site file, a hook registers over the channel and
-//! serves execute, `rue apply` runs a plan through it and prints the
-//! verdict line last with the outcome's exit code, `rue status` and `rue
+//! serves execute, `rescind apply` runs a plan through it and prints the
+//! verdict line last with the outcome's exit code, `rescind status` and `rescind
 //! recant` act on it, `--dry-run` rehearses, a spawned child over stdio
 //! registers as the socket owner, and daemon dry-run mode suspends E0604.
 
@@ -15,36 +15,36 @@ use std::process::{Child, Command, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use rue_engine::control::Client;
-use rue_engine::hook::{Registration, HOOK_PROTOCOL};
-use rue_engine::peer::{my_uid, user_name};
+use rescind_engine::control::Client;
+use rescind_engine::hook::{Registration, HOOK_PROTOCOL};
+use rescind_engine::peer::{my_uid, user_name};
 use serde_json::{json, Value};
 
-fn rue_bin() -> PathBuf {
-    PathBuf::from(env!("CARGO_BIN_EXE_rue"))
+fn rescind_bin() -> PathBuf {
+    PathBuf::from(env!("CARGO_BIN_EXE_rescind"))
 }
 
 /// The daemon binary beside the CLI's, built fresh by this test run (a
-/// `cargo test -p rue` builds only rue; a stale rued would test old code),
+/// `cargo test -p rescind` builds only rescind; a stale rescindd would test old code),
 /// once per process.
-fn rued_bin() -> PathBuf {
+fn rescindd_bin() -> PathBuf {
     static BUILT: std::sync::Once = std::sync::Once::new();
-    let p = rue_bin().with_file_name("rued");
+    let p = rescind_bin().with_file_name("rescindd");
     BUILT.call_once(|| {
         let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".into());
         let mut c = Command::new(cargo);
-        c.args(["build", "-p", "rued", "--locked"]);
-        if rue_bin().to_string_lossy().contains("/release/") {
+        c.args(["build", "-p", "rescindd", "--locked"]);
+        if rescind_bin().to_string_lossy().contains("/release/") {
             c.arg("--release");
         }
-        let out = c.output().expect("cargo build -p rued");
+        let out = c.output().expect("cargo build -p rescindd");
         assert!(
             out.status.success(),
             "{}",
             String::from_utf8_lossy(&out.stderr)
         );
     });
-    assert!(p.exists(), "no rued at {}", p.display());
+    assert!(p.exists(), "no rescindd at {}", p.display());
     p
 }
 
@@ -52,7 +52,7 @@ struct TempDir(PathBuf);
 impl TempDir {
     fn new(name: &str) -> TempDir {
         let p = std::env::temp_dir().join(format!(
-            "rue-d-{name}-{}-{}",
+            "rescind-d-{name}-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -108,7 +108,7 @@ fn site(me: &str, with_operators: bool) -> String {
             .to_string()
     };
     format!(
-        "rue 0\nsite do\n  inventory from: file(\"inventory.toml\")\n  journal to: file(\"journal.ndjson\")\n  execute via: hook(:act, transport: :api)\n{ops}end\n"
+        "rescind 0\nsite do\n  inventory from: file(\"inventory.toml\")\n  journal to: file(\"journal.ndjson\")\n  execute via: hook(:act, transport: :api)\n{ops}end\n"
     )
 }
 
@@ -134,8 +134,8 @@ struct Daemon {
 
 impl Daemon {
     fn start(dir: &Path, site_file: &Path, extra: &[&str]) -> Daemon {
-        let socket = dir.join("rued.sock");
-        let mut c = Command::new(rued_bin());
+        let socket = dir.join("rescindd.sock");
+        let mut c = Command::new(rescindd_bin());
         c.arg("run")
             .arg("--site")
             .arg(site_file)
@@ -152,13 +152,13 @@ impl Daemon {
             .args(extra)
             .stdout(Stdio::null())
             .stderr(Stdio::piped());
-        let child = c.spawn().expect("rued");
+        let child = c.spawn().expect("rescindd");
         let d = Daemon { child, socket };
         let start = Instant::now();
         while !d.socket.exists() || UnixStream::connect(&d.socket).is_err() {
             assert!(
                 start.elapsed() < Duration::from_secs(20),
-                "rued never served its socket"
+                "rescindd never served its socket"
             );
             thread::sleep(Duration::from_millis(50));
         }
@@ -184,13 +184,13 @@ impl Drop for Daemon {
     }
 }
 
-fn rue(socket: &Path, args: &[&str]) -> std::process::Output {
-    Command::new(rue_bin())
+fn rescind(socket: &Path, args: &[&str]) -> std::process::Output {
+    Command::new(rescind_bin())
         .args(args)
         .arg("--socket")
         .arg(socket)
         .output()
-        .expect("rue")
+        .expect("rescind")
 }
 
 /// A hook over the channel serving execute: answers every run ok, on its
@@ -225,7 +225,7 @@ fn serve_hook(socket: &Path, name: &str) -> thread::JoinHandle<Vec<Value>> {
 
 /// A site whose hosts come from a hook, not a file.
 fn hook_inventory_site(me: &str) -> String {
-    let mut t = String::from("rue 0\nsite do\n");
+    let mut t = String::from("rescind 0\nsite do\n");
     t.push_str("  inventory from: hook(:world)\n");
     t.push_str("  journal to: file(\"journal.ndjson\")\n");
     t.push_str("  execute via: hook(:world, transport: :api)\n");
@@ -249,7 +249,7 @@ fn a_daemon_takes_its_hosts_from_the_inventory_hook_and_says_so() {
     let d = TempDir::new("hook-inv");
     let me = user_name(my_uid()).unwrap();
     fs::write(d.0.join("inventory.toml"), INVENTORY).unwrap();
-    let site_file = d.0.join("plan.rue");
+    let site_file = d.0.join("plan.scind");
     fs::write(&site_file, format!("{}{PLAN}", hook_inventory_site(&me))).unwrap();
     let fixture = concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -263,7 +263,7 @@ fn a_daemon_takes_its_hosts_from_the_inventory_hook_and_says_so() {
 
     // The plan applies on a host only the hook named. `--inventory` is the
     // record the *check* is made against (E0607 without one).
-    let out = rue(
+    let out = rescind(
         &daemon.socket,
         &[
             "apply",
@@ -297,20 +297,20 @@ fn a_daemon_whose_inventory_hook_never_registers_refuses_to_start() {
     let d = TempDir::new("hook-inv-absent");
     let me = user_name(my_uid()).unwrap();
     fs::write(d.0.join("inventory.toml"), INVENTORY).unwrap();
-    let site_file = d.0.join("plan.rue");
+    let site_file = d.0.join("plan.scind");
     fs::write(&site_file, format!("{}{PLAN}", hook_inventory_site(&me))).unwrap();
-    let out = Command::new(rued_bin())
+    let out = Command::new(rescindd_bin())
         .arg("run")
         .arg("--site")
         .arg(&site_file)
         .arg("--store")
         .arg(d.0.join("store"))
         .arg("--socket")
-        .arg(d.0.join("rued.sock"))
+        .arg(d.0.join("rescindd.sock"))
         .arg("--group")
         .arg(my_gid().to_string())
         .output()
-        .expect("rued");
+        .expect("rescindd");
     assert_eq!(out.status.code(), Some(1));
     let err = String::from_utf8_lossy(&out.stderr);
     assert!(
@@ -333,7 +333,7 @@ fn an_event_arriving_while_a_verb_is_in_flight_is_kept_and_not_discarded() {
     let d = TempDir::new("events");
     let me = user_name(my_uid()).unwrap();
     fs::write(d.0.join("inventory.toml"), INVENTORY).unwrap();
-    let site_file = d.0.join("plan.rue");
+    let site_file = d.0.join("plan.scind");
     fs::write(&site_file, format!("{}{PLAN}", site(&me, true))).unwrap();
     let daemon = Daemon::start(&d.0, &site_file, &[]);
     let _hook = serve_hook(&daemon.socket, "act");
@@ -345,7 +345,7 @@ fn an_event_arriving_while_a_verb_is_in_flight_is_kept_and_not_discarded() {
     // Another connection applies p. This one is a subscriber, so the
     // daemon writes p's entries to its socket as they happen -- they are
     // sitting in front of the next reply it reads.
-    let out = rue(
+    let out = rescind(
         &daemon.socket,
         &[
             "apply",
@@ -391,13 +391,13 @@ fn a_plan_applies_through_a_registered_hook_and_every_verb_prints_its_line_last(
     let d = TempDir::new("apply");
     let me = user_name(my_uid()).unwrap();
     fs::write(d.0.join("inventory.toml"), INVENTORY).unwrap();
-    let site_file = d.0.join("plan.rue");
+    let site_file = d.0.join("plan.scind");
     fs::write(&site_file, format!("{}{PLAN}", site(&me, true))).unwrap();
     let daemon = Daemon::start(&d.0, &site_file, &[]);
     let hook = serve_hook(&daemon.socket, "act");
 
     // With no host reachable but through the hook, the plan applies.
-    let out = rue(
+    let out = rescind(
         &daemon.socket,
         &[
             "apply",
@@ -423,24 +423,24 @@ fn a_plan_applies_through_a_registered_hook_and_every_verb_prints_its_line_last(
     let id = last.split(':').next().unwrap().to_string();
 
     // status: one, and all
-    let out = rue(&daemon.socket, &["status", &id, "--identity", "ops"]);
+    let out = rescind(&daemon.socket, &["status", &id, "--identity", "ops"]);
     assert_eq!(out.status.code(), Some(0));
     let text = String::from_utf8_lossy(&out.stdout);
     assert!(
         text.contains("applied (p on h)") && text.contains("wane at"),
         "{text}"
     );
-    let out = rue(&daemon.socket, &["status", "--identity", "ops"]);
+    let out = rescind(&daemon.socket, &["status", "--identity", "ops"]);
     assert_eq!(String::from_utf8_lossy(&out.stdout).lines().count(), 1);
 
     // the sole-identity user path: --identity omitted and two identities
     // map to this user: R0503, exit 2
-    let out = rue(&daemon.socket, &["status"]);
+    let out = rescind(&daemon.socket, &["status"]);
     assert_eq!(out.status.code(), Some(2));
     assert!(String::from_utf8_lossy(&out.stderr).contains("R0503"));
 
     // a second apply of the same plan: R0101, exit 75
-    let out = rue(
+    let out = rescind(
         &daemon.socket,
         &[
             "apply",
@@ -459,7 +459,7 @@ fn a_plan_applies_through_a_registered_hook_and_every_verb_prints_its_line_last(
     );
 
     // renew outside the window: R0102, exit 2
-    let out = rue(
+    let out = rescind(
         &daemon.socket,
         &["renew", &id, "--wane", "2h", "--identity", "ops"],
     );
@@ -469,13 +469,13 @@ fn a_plan_applies_through_a_registered_hook_and_every_verb_prints_its_line_last(
     // recant: closed cleanly, exit 0, its line last. An instance that
     // closes because something refused it is exit 1; one an operator
     // recants did what was asked (section 6.8).
-    let out = rue(&daemon.socket, &["recant", &id, "--identity", "ops"]);
+    let out = rescind(&daemon.socket, &["recant", &id, "--identity", "ops"]);
     let stdout = String::from_utf8_lossy(&out.stdout);
     assert_eq!(out.status.code(), Some(0), "{stdout}");
     assert!(stdout.trim_end().ends_with("closed (reverted)"), "{stdout}");
 
     // a rehearsal against the real daemon: exit 0, nothing run
-    let out = rue(
+    let out = rescind(
         &daemon.socket,
         &[
             "apply",
@@ -497,7 +497,7 @@ fn a_plan_applies_through_a_registered_hook_and_every_verb_prints_its_line_last(
     assert!(stdout.contains("rehearsal: no reservation"), "{stdout}");
 
     // abandon by a non-admin: R0506, exit 2; the owner identity is not admin
-    let out = rue(
+    let out = rescind(
         &daemon.socket,
         &["abandon", &id, "--reason", "x", "--identity", "owner"],
     );
@@ -505,7 +505,7 @@ fn a_plan_applies_through_a_registered_hook_and_every_verb_prints_its_line_last(
     assert!(String::from_utf8_lossy(&out.stderr).contains("R0506"));
 
     // the journal file sink received the chain, and it verifies
-    let out = Command::new(rue_bin())
+    let out = Command::new(rescind_bin())
         .args(["journal", "verify"])
         .arg(d.0.join("journal.ndjson"))
         .output()
@@ -530,7 +530,7 @@ fn a_spawned_child_registers_over_stdio_as_the_socket_owner() {
     let d = TempDir::new("spawn");
     let me = user_name(my_uid()).unwrap();
     fs::write(d.0.join("inventory.toml"), INVENTORY).unwrap();
-    let site_file = d.0.join("plan.rue");
+    let site_file = d.0.join("plan.scind");
     fs::write(&site_file, format!("{}{PLAN}", site(&me, true))).unwrap();
     let stub = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/stub-hook.sh");
     let spawn = format!("act=sh {} act", stub.display());
@@ -538,7 +538,7 @@ fn a_spawned_child_registers_over_stdio_as_the_socket_owner() {
     let mut c = Client::connect(&daemon.socket).unwrap();
     c.hello(Some("ops")).unwrap();
     assert_eq!(c.call("hooks", json!({})).unwrap(), json!(["act"]));
-    let out = rue(
+    let out = rescind(
         &daemon.socket,
         &[
             "apply",
@@ -558,7 +558,7 @@ fn a_spawned_child_registers_over_stdio_as_the_socket_owner() {
     // A child registering a name outside may_register refuses to start.
     daemon.stop();
     let spawn = format!("other=sh {} other", stub.display());
-    let mut c = Command::new(rued_bin());
+    let mut c = Command::new(rescindd_bin());
     let out = c
         .arg("run")
         .arg("--site")
@@ -585,10 +585,10 @@ fn a_spawned_child_registers_over_stdio_as_the_socket_owner() {
 fn daemon_dry_run_mode_suspends_e0604_and_rehearses_everything() {
     let d = TempDir::new("dry");
     fs::write(d.0.join("inventory.toml"), INVENTORY).unwrap();
-    let site_file = d.0.join("plan.rue");
+    let site_file = d.0.join("plan.scind");
     fs::write(&site_file, format!("{}{PLAN}", site("nobody", false))).unwrap();
     // Outside dry-run: E0604 refuses to start.
-    let out = Command::new(rued_bin())
+    let out = Command::new(rescindd_bin())
         .arg("run")
         .arg("--site")
         .arg(&site_file)
@@ -603,13 +603,13 @@ fn daemon_dry_run_mode_suspends_e0604_and_rehearses_everything() {
     assert_eq!(out.status.code(), Some(1));
     assert!(
         String::from_utf8_lossy(&out.stderr)
-            .contains(&rue_core::diagnostics::Code::E0604.to_string()),
+            .contains(&rescind_core::diagnostics::Code::E0604.to_string()),
         "{}",
         String::from_utf8_lossy(&out.stderr)
     );
     // In dry-run: every peer is the dry-run identity; every apply a rehearsal.
     let daemon = Daemon::start(&d.0, &site_file, &["--dry-run"]);
-    let out = rue(
+    let out = rescind(
         &daemon.socket,
         &["apply", site_file.to_str().unwrap(), "--host", "h"],
     );
@@ -631,9 +631,9 @@ fn daemon_dry_run_mode_suspends_e0604_and_rehearses_everything() {
 fn a_group_that_does_not_exist_refuses_to_start() {
     let d = TempDir::new("group");
     fs::write(d.0.join("inventory.toml"), INVENTORY).unwrap();
-    let site_file = d.0.join("plan.rue");
+    let site_file = d.0.join("plan.scind");
     fs::write(&site_file, format!("{}{PLAN}", site("x", true))).unwrap();
-    let out = Command::new(rued_bin())
+    let out = Command::new(rescindd_bin())
         .arg("run")
         .arg("--site")
         .arg(&site_file)
@@ -642,7 +642,7 @@ fn a_group_that_does_not_exist_refuses_to_start() {
         .arg("--socket")
         .arg(d.0.join("s.sock"))
         .arg("--group")
-        .arg("no-such-group-rue-test")
+        .arg("no-such-group-rescind-test")
         .output()
         .unwrap();
     assert_eq!(out.status.code(), Some(1));
@@ -655,7 +655,7 @@ fn always_opens_every_gate_so_a_live_daemon_refuses_to_bind_it() {
     let d = TempDir::new("always");
     fs::write(d.0.join("inventory.toml"), INVENTORY).unwrap();
     let me = user_name(my_uid()).unwrap();
-    let site_file = d.0.join("plan.rue");
+    let site_file = d.0.join("plan.scind");
     // The same site with `approval via: always()`.
     let text = site(&me, true).replace(
         "  execute via: hook(:act, transport: :api)\n",
@@ -663,7 +663,7 @@ fn always_opens_every_gate_so_a_live_daemon_refuses_to_bind_it() {
     );
     fs::write(&site_file, format!("{text}{PLAN}")).unwrap();
     let run = |extra: &[&str]| {
-        let mut c = Command::new(rued_bin());
+        let mut c = Command::new(rescindd_bin());
         c.arg("run")
             .arg("--site")
             .arg(&site_file)
@@ -698,12 +698,12 @@ fn a_drill_on_a_host_that_is_not_a_canary_is_refused_by_the_daemon() {
     let d = TempDir::new("drill");
     let me = user_name(my_uid()).unwrap();
     fs::write(d.0.join("inventory.toml"), INVENTORY).unwrap();
-    let site_file = d.0.join("plan.rue");
+    let site_file = d.0.join("plan.scind");
     fs::write(&site_file, format!("{}{PLAN}", site(&me, true))).unwrap();
     let daemon = Daemon::start(&d.0, &site_file, &[]);
     let hook = serve_hook(&daemon.socket, "act");
 
-    let out = rue(
+    let out = rescind(
         &daemon.socket,
         &[
             "drill",
@@ -722,7 +722,7 @@ fn a_drill_on_a_host_that_is_not_a_canary_is_refused_by_the_daemon() {
         "{said}"
     );
     // Nothing was applied: no instance exists to have a state at all.
-    let out = rue(&daemon.socket, &["status", "--identity", "ops"]);
+    let out = rescind(&daemon.socket, &["status", "--identity", "ops"]);
     assert!(
         String::from_utf8_lossy(&out.stdout).contains("no instances"),
         "{}",

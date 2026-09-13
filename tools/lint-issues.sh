@@ -36,7 +36,7 @@ dir=$root/docs/issues
 readme=$dir/README.md
 [ -f "$readme" ] || { echo "lint-issues: no $readme" >&2; exit 2; }
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-lint-issues.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-lint-issues.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 rc=0

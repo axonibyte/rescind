@@ -13,12 +13,12 @@
 //! command line), its `stdin:` is piped from the same decoding, and the
 //! script itself is not on any command line, so the target's process list
 //! shows `sh` and the plan's own commands and nothing else. The region and
-//! digest helpers the script carries are the artifact's (`rue_render::
+//! digest helpers the script carries are the artifact's (`rescind_render::
 //! sh_helpers`), so a region is set and stripped by one rule here, in the
 //! engine and when the artifact fires.
 //!
 //! The host lock is a long-lived `ssh ... lockf`/`flock` holding
-//! `<rue_root>/lock` until the guard drops.
+//! `<rescind_root>/lock` until the guard drops.
 
 use std::collections::VecDeque;
 use std::fmt::Write as _;
@@ -27,13 +27,13 @@ use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex};
 
-use rue_core::model::{Instant, Tri};
-use rue_engine::executor::{
+use rescind_core::model::{Instant, Tri};
+use rescind_engine::executor::{
     BootstrapState, ExecCaps, ExecError, Executor, HostLockGuard, InstanceDirState, LocusKind,
     Observation, Output, ProbeRun, RPrim, Resolved,
 };
-use rue_engine::host::Host;
-use rue_render::quote;
+use rescind_engine::host::Host;
+use rescind_render::quote;
 
 use crate::local::split_outputs;
 
@@ -261,7 +261,7 @@ fn decoded(s: &str) -> String {
 /// `%OMp`), and GNU reads `-f` as "the file system", which succeeds on a
 /// real path and prints something else entirely. So GNU is tried first,
 /// by a flag BSD refuses outright.
-const MODE_FN: &str = "rue_mode() { stat -c %a \"$1\" 2>/dev/null || stat -f '%OMp%OLp' \"$1\" 2>/dev/null || echo 0; }\n";
+const MODE_FN: &str = "rescind_mode() { stat -c %a \"$1\" 2>/dev/null || stat -f '%OMp%OLp' \"$1\" 2>/dev/null || echo 0; }\n";
 
 /// A mode as the two dialects print it, without its leading zeros: BSD's
 /// `%OMp%OLp` gives `0664`, GNU's `%a` gives `664`, and both mean the
@@ -280,7 +280,7 @@ fn q(s: &str) -> Result<String, ExecError> {
 }
 
 fn path_of(shape: &str) -> Result<String, ExecError> {
-    rue_engine::region::file_path(shape)
+    rescind_engine::region::file_path(shape)
         .map(str::to_string)
         .ok_or_else(|| ExecError::Unsupported(format!("{shape} is not a file fact")))
 }
@@ -305,8 +305,8 @@ fn shell_word(s: &str) -> String {
 }
 
 fn root_of(host: &Host) -> String {
-    host.rue_root.clone().unwrap_or_else(|| {
-        rue_render::Instance::default_root(rue_core::artifact::shell_of(&host.record.os))
+    host.rescind_root.clone().unwrap_or_else(|| {
+        rescind_render::Instance::default_root(rescind_core::artifact::shell_of(&host.record.os))
             .to_string()
     })
 }
@@ -317,7 +317,7 @@ fn prelude(host: &Host, instance: Option<&str>) -> String {
     if let Some(i) = instance {
         let _ = writeln!(s, "INST=\"$ROOT/instances/{i}\"");
     }
-    s.push_str(rue_render::sh_helpers());
+    s.push_str(rescind_render::sh_helpers());
     s
 }
 
@@ -398,7 +398,7 @@ impl Executor for SshExecutor {
                     let p = q(&path_of(shape)?)?;
                     let _ = writeln!(
                         script,
-                        "printf '%b' '{}' > {p}.rue-tmp && mv {p}.rue-tmp {p}",
+                        "printf '%b' '{}' > {p}.rescind-tmp && mv {p}.rescind-tmp {p}",
                         octal(&content.text)
                     );
                 }
@@ -442,7 +442,7 @@ impl Executor for SshExecutor {
                     let n = q(name)?;
                     let _ = writeln!(
                         script,
-                        "mkdir -p \"$INST\" && printf '%b' '{}' > \"$INST\"/{n}.rue-tmp && mv \"$INST\"/{n}.rue-tmp \"$INST\"/{n} && chmod {mode:o} \"$INST\"/{n}",
+                        "mkdir -p \"$INST\" && printf '%b' '{}' > \"$INST\"/{n}.rescind-tmp && mv \"$INST\"/{n}.rescind-tmp \"$INST\"/{n} && chmod {mode:o} \"$INST\"/{n}",
                         octal(&content.text)
                     );
                 }
@@ -523,12 +523,12 @@ impl Executor for SshExecutor {
         let script = format!(
             "{}\
              r=0; [ -d \"$ROOT\" ] && r=1\n\
-             g=0; if getent group rue >/dev/null 2>&1 || pw groupshow rue >/dev/null 2>&1; then g=1; fi\n\
+             g=0; if getent group rescind >/dev/null 2>&1 || pw groupshow rescind >/dev/null 2>&1; then g=1; fi\n\
              i=0; [ -d \"$ROOT/instances\" ] && i=1\n\
              l=0; [ -f \"$ROOT/lock\" ] && l=1\n\
              {MODE_FN}\
-             mi=$(rue_mode \"$ROOT/instances\")\n\
-             ml=$(rue_mode \"$ROOT/lock\")\n\
+             mi=$(rescind_mode \"$ROOT/instances\")\n\
+             ml=$(rescind_mode \"$ROOT/lock\")\n\
              echo \"root=$r group=$g instances=$i lock=$l mi=$mi ml=$ml\"\n",
             prelude(host, None).replacen("set -e\n", "", 1)
         );
@@ -540,7 +540,7 @@ impl Executor for SshExecutor {
                 .to_string()
         };
         Ok(BootstrapState {
-            rue_root: field("root") == "1",
+            rescind_root: field("root") == "1",
             group: field("group") == "1",
             instances_dir: field("instances") == "1",
             lock: field("lock") == "1",
@@ -567,7 +567,7 @@ impl Executor for SshExecutor {
 
     fn instance_dir_list(&mut self, host: &Host) -> Result<Vec<InstanceDirState>, ExecError> {
         let script = format!(
-            "{}{MODE_FN}for d in \"$ROOT\"/instances/*/; do [ -d \"$d\" ] || continue; n=$(basename \"$d\"); a=0; f=0; [ -f \"$d/fired\" ] && f=1; for x in artifact.sh artifact.ps1 artifact.py; do [ -f \"$d/$x\" ] && [ \"$f\" -eq 0 ] && a=1; done; m=$(rue_mode \"$d\"); echo \"$n $a $f $m\"; done\n",
+            "{}{MODE_FN}for d in \"$ROOT\"/instances/*/; do [ -d \"$d\" ] || continue; n=$(basename \"$d\"); a=0; f=0; [ -f \"$d/fired\" ] && f=1; for x in artifact.sh artifact.ps1 artifact.py; do [ -f \"$d/$x\" ] && [ \"$f\" -eq 0 ] && a=1; done; m=$(rescind_mode \"$d\"); echo \"$n $a $f $m\"; done\n",
             prelude(host, None)
         );
         let out = self.exec_ok(host, &script)?;
@@ -599,7 +599,7 @@ impl Executor for SshExecutor {
     ) -> Result<(), ExecError> {
         let r = q(rel)?;
         let script = format!(
-            "{}mkdir -p \"$(dirname \"$INST\"/{r})\" && printf '%b' '{}' > \"$INST\"/{r}.rue-tmp && chmod {mode:o} \"$INST\"/{r}.rue-tmp && mv \"$INST\"/{r}.rue-tmp \"$INST\"/{r}\n",
+            "{}mkdir -p \"$(dirname \"$INST\"/{r})\" && printf '%b' '{}' > \"$INST\"/{r}.rescind-tmp && chmod {mode:o} \"$INST\"/{r}.rescind-tmp && mv \"$INST\"/{r}.rescind-tmp \"$INST\"/{r}\n",
             prelude(host, Some(instance)),
             octal(&String::from_utf8_lossy(bytes))
         );
@@ -615,7 +615,7 @@ impl Executor for SshExecutor {
     ) -> Result<(), ExecError> {
         let r = q(rel)?;
         let script = format!(
-            "{}mkdir -p \"$(dirname \"$INST\"/{r})\" && printf '%b' '{}' > \"$INST\"/{r}.rue-tmp && mv \"$INST\"/{r}.rue-tmp \"$INST\"/{r}\n",
+            "{}mkdir -p \"$(dirname \"$INST\"/{r})\" && printf '%b' '{}' > \"$INST\"/{r}.rescind-tmp && mv \"$INST\"/{r}.rescind-tmp \"$INST\"/{r}\n",
             prelude(host, Some(instance)),
             octal(&String::from_utf8_lossy(bytes))
         );

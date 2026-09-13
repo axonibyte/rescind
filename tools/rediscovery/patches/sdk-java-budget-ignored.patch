@@ -1,7 +1,7 @@
 # Reverts: a handler over its budget answers ok:false naming the overrun (the deadline handling of 7.11) rather than arriving late or as a silence
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/sdk/java/src/main/java/dev/rue/hook/Serve.java
-+++ b/sdk/java/src/main/java/dev/rue/hook/Serve.java
+--- a/sdk/java/src/main/java/dev/rescind/hook/Serve.java
++++ b/sdk/java/src/main/java/dev/rescind/hook/Serve.java
 @@ -89,10 +89,6 @@
              long started = System.nanoTime();
              Map<String, Object> reply = hooks.answer(frame);

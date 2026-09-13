@@ -15,7 +15,7 @@
 //! taken at open and held for the store's life: a second daemon on the same
 //! store is refused, not raced. The schema is checked before anything is
 //! read; an unknown or newer schema is R0502 and nothing is migrated
-//! silently: `rued migrate` is explicit and dry-runnable.
+//! silently: `rescindd migrate` is explicit and dry-runnable.
 
 use std::collections::BTreeMap;
 use std::fmt;
@@ -23,10 +23,10 @@ use std::fs::{self, File, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use rue_core::interference::Fact;
-use rue_core::journal::Entry;
-use rue_core::json::canonical;
-use rue_core::ledger::{Instance as Held, Ledger};
+use rescind_core::interference::Fact;
+use rescind_core::journal::Entry;
+use rescind_core::json::canonical;
+use rescind_core::ledger::{Instance as Held, Ledger};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 /// The schema this build writes and reads.
@@ -80,18 +80,18 @@ impl fmt::Display for StoreError {
             StoreError::Locked(p) => write!(f, "store {} is held by another daemon", p.display()),
             StoreError::Schema(SchemaError::Missing) => write!(
                 f,
-                "R0502: the store has no schema (schema 0); run `rued migrate`"
+                "R0502: the store has no schema (schema 0); run `rescindd migrate`"
             ),
             StoreError::Schema(SchemaError::Unreadable(s)) => {
                 write!(f, "R0502: the store's schema file is unreadable: {s}")
             }
             StoreError::Schema(SchemaError::Unknown(v)) => write!(
                 f,
-                "R0502: store schema {v} is unknown to this build (which knows {SCHEMA}); a newer rued wrote it"
+                "R0502: store schema {v} is unknown to this build (which knows {SCHEMA}); a newer rescindd wrote it"
             ),
             StoreError::Schema(SchemaError::Older(v)) => write!(
                 f,
-                "R0502: store schema {v} is older than this build's {SCHEMA}; run `rued migrate`"
+                "R0502: store schema {v} is older than this build's {SCHEMA}; run `rescindd migrate`"
             ),
             StoreError::NotOwned { path, owner, me } => write!(
                 f,
@@ -113,7 +113,7 @@ fn io(e: std::io::Error) -> StoreError {
 /// Write bytes to `path` through a temporary name beside it and a rename,
 /// with the file synced before the rename.
 pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), StoreError> {
-    let tmp = path.with_extension("rue-tmp");
+    let tmp = path.with_extension("rescind-tmp");
     {
         let mut f = File::create(&tmp).map_err(io)?;
         f.write_all(bytes).map_err(io)?;

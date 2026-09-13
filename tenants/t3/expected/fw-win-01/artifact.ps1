@@ -1,7 +1,7 @@
-# rue backstop artifact: plan open_mgmt_port on fw-win-01 (os windows), instance golden, language powershell. Rendered by rue-render; do not edit.
+# rescind backstop artifact: plan open_mgmt_port on fw-win-01 (os windows), instance golden, language powershell. Rendered by rescind-render; do not edit.
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Continue'
-$Root = 'C:\ProgramData\rue'
+$Root = 'C:\ProgramData\rescind'
 $Inst = Join-Path (Join-Path $Root 'instances') 'golden'
 if (Test-Path (Join-Path $Inst 'fired')) { exit 0 }
 $now = [int64][System.DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
@@ -25,13 +25,13 @@ function ForeignRegion($p) {
 function StripRegion($p, $a) {
   if (-not (Test-Path $p)) { return $false }
   $lines = @(Get-Content $p)
-  $b = @($lines | Where-Object { $_ -eq "# rue-region $a begin" }).Count
-  $e = @($lines | Where-Object { $_ -eq "# rue-region $a end" }).Count
+  $b = @($lines | Where-Object { $_ -eq "# rescind-region $a begin" }).Count
+  $e = @($lines | Where-Object { $_ -eq "# rescind-region $a end" }).Count
   if ($b -ne 1 -or $e -ne 1) { return $false }
   $out = @(); $skip = $false
   foreach ($l in $lines) {
-    if ($l -eq "# rue-region $a begin") { $skip = $true; continue }
-    if ($l -eq "# rue-region $a end") { $skip = $false; continue }
+    if ($l -eq "# rescind-region $a begin") { $skip = $true; continue }
+    if ($l -eq "# rescind-region $a end") { $skip = $false; continue }
     if (-not $skip) { $out += $l }
   }
   Set-Content -Path $p -Value $out
@@ -39,7 +39,7 @@ function StripRegion($p, $a) {
 }
 function RegionSet($p, $a, $c) {
   StripRegion $p $a | Out-Null
-  Add-Content -Path $p -Value @("# rue-region $a begin", $c, "# rue-region $a end")
+  Add-Content -Path $p -Value @("# rescind-region $a begin", $c, "# rescind-region $a end")
 }
 function Restore($s, $p) { Copy-Item -Path $s -Destination $p -Force }
 function Defer($n) { Add-Content -Path (Join-Path $Inst 'drift') -Value $n }
@@ -49,7 +49,7 @@ $M = Join-Path (Join-Path $Inst 'markers') '1'
 if (Test-Path $M) {
   $skip = $false
   if ($skip) { Defer 1 } else {
-    & powershell.exe -NoProfile -NonInteractive -Command 'Remove-NetFirewallRule -Name rue-mgmt'
+    & powershell.exe -NoProfile -NonInteractive -Command 'Remove-NetFirewallRule -Name rescind-mgmt'
     Remove-Item -Force $M
   }
 }

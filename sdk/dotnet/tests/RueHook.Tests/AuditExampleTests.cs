@@ -1,15 +1,15 @@
 using System.Text.Json.Nodes;
-using Rue.Hook.Example;
+using Rescind.Hook.Example;
 using Xunit;
 
-namespace Rue.Hook.Tests;
+namespace Rescind.Hook.Tests;
 
 /// examples/AuditHook, the quick start of docs/README.md, does what the page
 /// says it does.
 public sealed class AuditExampleTests : IDisposable
 {
     private readonly string _dir =
-        Path.Combine(Path.GetTempPath(), $"rue-audit-example-{Guid.NewGuid():N}");
+        Path.Combine(Path.GetTempPath(), $"rescind-audit-example-{Guid.NewGuid():N}");
 
     public AuditExampleTests() => Directory.CreateDirectory(_dir);
 

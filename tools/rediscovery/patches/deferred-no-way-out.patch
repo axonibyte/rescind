@@ -7,7 +7,7 @@
          let mut rec = self.load(id)?;
          let d = rec.deferred.clone();
 -        if d.as_ref().map(|d| d.step) != Some(step) {
-+        if d.as_ref().map(|d| d.step) != Some(step) || std::env::var_os("RUE_NEVER_SET").is_none() {
++        if d.as_ref().map(|d| d.step) != Some(step) || std::env::var_os("RESCIND_NEVER_SET").is_none() {
              return Err(EngineError::WrongState {
                  state: rec.state,
                  verb: format!("handoff-done {step}"),

@@ -1,5 +1,5 @@
 //! The reference conformance hook: docs/sdk-conformance.md's fixed world,
-//! served over stdio, which is what `rue sdk-conform` is pointed at to
+//! served over stdio, which is what `rescind sdk-conform` is pointed at to
 //! judge this SDK.
 //!
 //! It is also the worked example the other SDKs' conformance hooks are
@@ -17,11 +17,11 @@
 
 use std::io::{BufReader, Write};
 
-use rue_hook_sdk::proto::{
+use rescind_hook_sdk::proto::{
     BootstrapState, InstanceDirState, InventoryHost, Observation, Output, RPrim, Registration,
     HOOK_PROTOCOL,
 };
-use rue_hook_sdk::{
+use rescind_hook_sdk::{
     read_frame, write_frame, Answer, Approval, Authenticator, ChallengeRequest, Delivery, Execute,
     Hooks, Inventory, Journal, Notify, Presence, Probe, Refusal, Scheduler, Secrets, Verdict,
     VerifyRequest,
@@ -47,7 +47,7 @@ impl Inventory for World {
             "filesystem": true,
             "stdin_preamble": false,
             "scheduler": "cron",
-            "rue_root": "/var/db/rue",
+            "rescind_root": "/var/db/rescind",
             "artifact": "python",
             "facts": { "site": "west" }
         }))
@@ -70,7 +70,7 @@ impl Execute for World {
             return Err(Refusal::new("the contract's body is one run primitive"));
         };
         out.outputs
-            .insert("echo".into(), rue_hook_sdk::expose(cmd).to_string());
+            .insert("echo".into(), rescind_hook_sdk::expose(cmd).to_string());
         // The secret the request carried, returned in an output the op
         // declared secret: `execute.run` is one of the four messages of
         // 7.5 that may carry one, in both directions.
@@ -79,7 +79,7 @@ impl Execute for World {
             .find(|(k, _)| k == "PW")
             .ok_or_else(|| Refusal::new("the contract's run carries PW"))?;
         out.outputs
-            .insert("secret".into(), rue_hook_sdk::expose(&pw.1).to_string());
+            .insert("secret".into(), rescind_hook_sdk::expose(&pw.1).to_string());
         Ok(out)
     }
 
@@ -94,7 +94,7 @@ impl Execute for World {
 
     fn bootstrap_state(&mut self, _host: &str) -> Answer<BootstrapState> {
         Ok(BootstrapState {
-            rue_root: true,
+            rescind_root: true,
             group: true,
             instances_dir: true,
             lock: true,
@@ -285,7 +285,7 @@ fn main() -> std::io::Result<()> {
     let mut w = std::io::stdout();
 
     // The handshake: the register frame first, then the acknowledgement.
-    let reg: Registration = rue_hook_sdk::registration(&name, &hooks);
+    let reg: Registration = rescind_hook_sdk::registration(&name, &hooks);
     debug_assert_eq!(reg.protocol, HOOK_PROTOCOL);
     write_frame(&mut w, &json!({ "register": reg }))?;
     match read_frame(&mut r)? {

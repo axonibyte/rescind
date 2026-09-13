@@ -19,7 +19,7 @@ impl Scratch {
             .unwrap()
             .as_nanos();
         let p = std::env::temp_dir().join(format!(
-            "rue-sdk-audit-{name}-{}-{nanos}",
+            "rescind-sdk-audit-{name}-{}-{nanos}",
             std::process::id()
         ));
         std::fs::create_dir_all(&p).unwrap();
@@ -104,7 +104,7 @@ fn a_notification_is_acknowledged() {
     assert_eq!(reply, json!({ "id": 1, "ok": true }));
 }
 
-/// The example's `main` is what `rued` runs; it serves these hooks on stdio.
+/// The example's `main` is what `rescindd` runs; it serves these hooks on stdio.
 #[test]
 fn main_is_the_stdio_entry_point() {
     let _: fn() -> std::io::Result<()> = audit_hook::main;

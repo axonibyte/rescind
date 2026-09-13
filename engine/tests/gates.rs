@@ -12,13 +12,13 @@ mod common;
 use std::collections::BTreeMap;
 
 use common::world::{self, World, OWNER};
-use rue_core::journal::Scope;
-use rue_core::model::{
+use rescind_core::journal::Scope;
+use rescind_core::model::{
     Ack, Authenticator, Cost, Duration, Factor, GateExpr, Item, PlanGate, Refusal, StepI,
 };
-use rue_core::states::State;
-use rue_engine::gates::FakeApprovalHandle;
-use rue_engine::lifecycle::ApplyOptions;
+use rescind_core::states::State;
+use rescind_engine::gates::FakeApprovalHandle;
+use rescind_engine::lifecycle::ApplyOptions;
 
 fn opts() -> ApplyOptions {
     ApplyOptions {
@@ -318,7 +318,7 @@ fn a_knell_waits_for_its_acknowledgement_and_the_reason_is_journaled() {
     let (mut w, _) = world("gate-ack");
     let mut op = world::op("a");
     // A knell is the point of no return: it has no undo.
-    op.undo = rue_core::model::Undo::NoUndo;
+    op.undo = rescind_core::model::Undo::NoUndo;
     op.refusal = Refusal::Knell {
         guard: None,
         cost: Cost::NoCost("none".into()),
@@ -361,7 +361,7 @@ fn an_acknowledgement_the_binding_refuses_is_denied_and_the_knell_stays_shut() {
     let (mut w, approval) = world("gate-ack-refused");
     approval.refuse("oncall", "that token is not yours");
     let mut op = world::op("a");
-    op.undo = rue_core::model::Undo::NoUndo;
+    op.undo = rescind_core::model::Undo::NoUndo;
     op.refusal = Refusal::Knell {
         guard: None,
         cost: Cost::NoCost("none".into()),
@@ -407,14 +407,14 @@ fn a_hold_under_auto_mode_is_not_refused_and_reverts_at_wane() {
         ],
     );
     let mut opts = opts();
-    opts.mode = Some(rue_core::model::Mode::Auto);
+    opts.mode = Some(rescind_core::model::Mode::Auto);
     // The second step fails, so the plan refuses with an earlier hold.
     w.ssh.with(|f| {
-        f.script.push_back(rue_engine::executor::Scripted::Ok(
-            rue_engine::executor::Output::default(),
+        f.script.push_back(rescind_engine::executor::Scripted::Ok(
+            rescind_engine::executor::Output::default(),
         ));
         f.script
-            .push_back(rue_engine::executor::Scripted::Fail("no".into()));
+            .push_back(rescind_engine::executor::Scripted::Fail("no".into()));
     });
     let out = w
         .engine
@@ -486,7 +486,7 @@ fn a_knell_asks_its_acknowledger_to_accept_the_measured_cost_not_its_name() {
     // front of a human was a label.
     let (mut w, _) = world("gate-cost");
     let mut op = world::op("rollback");
-    op.undo = rue_core::model::Undo::NoUndo;
+    op.undo = rescind_core::model::Undo::NoUndo;
     op.refusal = Refusal::Knell {
         guard: None,
         cost: Cost::Probe("destroyed_snapshots".into()),
@@ -496,7 +496,7 @@ fn a_knell_asks_its_acknowledger_to_accept_the_measured_cost_not_its_name() {
     plan.probes.push(world::probe("destroyed_snapshots"));
     w.ssh.observe_as(
         "destroyed_snapshots",
-        rue_engine::executor::Observation::yes("tank/rue/a@late, tank/rue/b@late"),
+        rescind_engine::executor::Observation::yes("tank/rescind/a@late, tank/rescind/b@late"),
     );
     let out = w
         .engine
@@ -509,7 +509,7 @@ fn a_knell_asks_its_acknowledger_to_accept_the_measured_cost_not_its_name() {
         .find(|e| e.contains("AckRequested"))
         .expect("an acknowledgement is requested");
     assert!(
-        asked.contains("tank/rue/a@late, tank/rue/b@late"),
+        asked.contains("tank/rescind/a@late, tank/rescind/b@late"),
         "the acknowledger was shown a label, not what is destroyed: {asked}"
     );
 
@@ -517,8 +517,8 @@ fn a_knell_asks_its_acknowledger_to_accept_the_measured_cost_not_its_name() {
     // accept a point of no return blind.
     // A different fact, so this instance does not wait on the first one's
     // reservation: that one is still waiting for its acknowledgement.
-    op.footprint = vec![rue_core::model::FootprintEntry::entry(
-        rue_core::model::Kind::Owned,
+    op.footprint = vec![rescind_core::model::FootprintEntry::entry(
+        rescind_core::model::Kind::Owned,
         "file:/rollback-q",
     )];
     let mut plan = world::temp_plan("q", vec![Item::Knell(StepI::new(op))]);
@@ -556,7 +556,7 @@ fn a_static_probe_is_frozen_where_it_runs_and_a_write_before_the_ack_refuses_it(
     // silently left out -- and no change to it could ever be noticed.
     let (mut w, _) = world("gate-static");
     let mut op = world::op("rollback");
-    op.undo = rue_core::model::Undo::NoUndo;
+    op.undo = rescind_core::model::Undo::NoUndo;
     op.refusal = Refusal::Knell {
         guard: None,
         cost: Cost::NoCost("measured by the preflight".into()),
@@ -564,12 +564,12 @@ fn a_static_probe_is_frozen_where_it_runs_and_a_write_before_the_ack_refuses_it(
     };
     let mut plan = world::temp_plan("p", vec![Item::Knell(StepI::new(op))]);
     let mut written = world::probe("written_bytes_since_split");
-    written.locus = rue_core::model::Locus::Controller;
+    written.locus = rescind_core::model::Locus::Controller;
     written.static_ = true;
     plan.probes.push(written);
     w.local.observe_as(
         "written_bytes_since_split",
-        rue_engine::executor::Observation::yes("0"),
+        rescind_engine::executor::Observation::yes("0"),
     );
     let out = w
         .engine
@@ -581,7 +581,7 @@ fn a_static_probe_is_frozen_where_it_runs_and_a_write_before_the_ack_refuses_it(
     // Somebody writes to the dataset while the acknowledgement is pending.
     w.local.observe_as(
         "written_bytes_since_split",
-        rue_engine::executor::Observation::yes("4096"),
+        rescind_engine::executor::Observation::yes("4096"),
     );
     let out = w
         .engine
@@ -615,12 +615,12 @@ fn a_static_probe_that_moves_while_a_step_gate_waits_refuses_rather_than_crashin
         })],
     );
     let mut written = world::probe("written_bytes_since_split");
-    written.locus = rue_core::model::Locus::Controller;
+    written.locus = rescind_core::model::Locus::Controller;
     written.static_ = true;
     plan.probes.push(written);
     w.local.observe_as(
         "written_bytes_since_split",
-        rue_engine::executor::Observation::yes("0"),
+        rescind_engine::executor::Observation::yes("0"),
     );
     let out = w
         .engine
@@ -629,7 +629,7 @@ fn a_static_probe_that_moves_while_a_step_gate_waits_refuses_rather_than_crashin
     assert_eq!(out.state, State::Waiting, "{}", out.line);
     w.local.observe_as(
         "written_bytes_since_split",
-        rue_engine::executor::Observation::yes("4096"),
+        rescind_engine::executor::Observation::yes("4096"),
     );
     let out = w
         .engine

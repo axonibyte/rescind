@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace Rue.Hook.Tests;
+namespace Rescind.Hook.Tests;
 
 /// Handlers from lambdas, so each test states only the behavior it is about.
 internal sealed class FnProbe(Func<string, string, object> observe) : IProbe

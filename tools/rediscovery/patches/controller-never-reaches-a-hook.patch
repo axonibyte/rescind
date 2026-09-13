@@ -6,7 +6,7 @@
              // A `transport: :controller` hook, when the site binds one, and
              // `local()` otherwise: the same list the checker's E0608 reads,
              // so a plan it passes is one this can place.
--            rue_core::check::CONTROLLER_REACH.to_vec()
+-            rescind_core::check::CONTROLLER_REACH.to_vec()
 +            vec!["local"]
          } else {
              host.record.reach.iter().map(String::as_str).collect()

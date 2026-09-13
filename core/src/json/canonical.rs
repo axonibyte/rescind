@@ -1,5 +1,5 @@
 //! Canonical JSON: the byte format specified in docs/TESTING.md and first
-//! implemented by `Rue.Proto.Json.Canonical` in the prototype.
+//! implemented by `Rescind.Proto.Json.Canonical` in the prototype.
 //!
 //! - UTF-8; object keys sorted by code point; two-space indent; `"key": value`;
 //!   every array or object element on its own line; `[]` and `{}` for empty

@@ -2,7 +2,7 @@
 //! each. The agreement with the roadmap's table and the prototype is the
 //! tools/lint-ecodes.sh guard's job.
 
-use rue_core::diagnostics::Code;
+use rescind_core::diagnostics::Code;
 
 #[test]
 fn every_code_is_e_followed_by_four_digits() {
@@ -28,15 +28,15 @@ fn codes_are_distinct_and_ascending() {
 }
 
 #[test]
-fn there_are_fifty_nine_codes_with_meanings() {
-    assert_eq!(Code::ALL.len(), 59);
+fn there_are_sixty_codes_with_meanings() {
+    assert_eq!(Code::ALL.len(), 60);
     for c in Code::ALL {
         assert!(!c.meaning().is_empty(), "{c} has no meaning");
     }
 }
 
 mod front_end {
-    use rue_core::diagnostics::*;
+    use rescind_core::diagnostics::*;
 
     #[test]
     fn codes_serialize_as_their_text_and_refuse_others() {
@@ -52,7 +52,7 @@ mod front_end {
         let d = Diagnostic {
             code: Code::E0102,
             span: Some(Span {
-                file: "plan.rue".into(),
+                file: "plan.scind".into(),
                 line: 12,
                 col: 5,
             }),
@@ -61,7 +61,7 @@ mod front_end {
             nearest: Some("shed_load".into()),
             message: "unknown name".into(),
         };
-        assert_eq!(d.render(), format!("plan.rue:12:5: {}: unknown name; found unknown name shed_lod; did you mean shed_load?", Code::E0102));
+        assert_eq!(d.render(), format!("plan.scind:12:5: {}: unknown name; found unknown name shed_lod; did you mean shed_load?", Code::E0102));
         let bare = Diagnostic {
             code: Code::E0501,
             span: None,

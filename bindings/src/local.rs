@@ -3,7 +3,7 @@
 //! A `run` is `sh -c` with `env:` set on the child process directly and
 //! `stdin:` fed on its stdin: never on a command line, never in the
 //! process list. Declared outputs are read back from stdout lines of the
-//! form `rue-output NAME=VALUE` (the convention docs/LANGUAGE.md states);
+//! form `rescind-output NAME=VALUE` (the convention docs/LANGUAGE.md states);
 //! the rest of stdout is the run's text. A probe is its first `run`,
 //! answering by exit status (0 yes, 1 no, else unknown), its stdout the
 //! fact. File primitives act in process, regions by `engine::region`'s
@@ -12,24 +12,24 @@
 //! Secrets: a value flagged secret is never placed on argv; stdout and
 //! stderr that would be reported are scrubbed of every secret value the
 //! body carried, so a command that echoes one cannot put it in a journal.
-//! The instance directory is the host's `rue_root` (`/var/db/rue` on this
-//! family) and the host lock is `flock` on `<rue_root>/lock`.
+//! The instance directory is the host's `rescind_root` (`/var/db/rescind` on this
+//! family) and the host lock is `flock` on `<rescind_root>/lock`.
 
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-use rue_core::model::{Instant, Tri};
-use rue_engine::executor::{
+use rescind_core::model::{Instant, Tri};
+use rescind_engine::executor::{
     BootstrapState, ExecCaps, ExecError, Executor, HostLockGuard, InstanceDirState, LocusKind,
     Observation, Output, ProbeRun, RPrim, Resolved,
 };
-use rue_engine::host::Host;
-use rue_engine::region;
+use rescind_engine::host::Host;
+use rescind_engine::region;
 
 /// The stdout line that binds a declared output.
-pub const OUTPUT_PREFIX: &str = "rue-output ";
+pub const OUTPUT_PREFIX: &str = "rescind-output ";
 
 #[derive(Debug, Clone)]
 pub struct LocalExecutor {
@@ -38,21 +38,21 @@ pub struct LocalExecutor {
     /// What that shell takes before the command text: `-c` for a POSIX
     /// shell, `-NoProfile -Command` for PowerShell.
     pub shell_args: Vec<String>,
-    /// `rue_root` for a host that declares none.
+    /// `rescind_root` for a host that declares none.
     pub default_root: PathBuf,
 }
 
 impl Default for LocalExecutor {
     /// The controller's own shell: `/bin/sh` on unix, PowerShell on
-    /// Windows, where the root is `%ProgramData%\\rue` (4.5, 7.7).
+    /// Windows, where the root is `%ProgramData%\\rescind` (4.5, 7.7).
     fn default() -> LocalExecutor {
         #[cfg(not(windows))]
         {
             LocalExecutor {
                 shell: PathBuf::from("/bin/sh"),
                 shell_args: vec!["-c".into()],
-                default_root: PathBuf::from(rue_render::Instance::default_root(
-                    rue_core::artifact::Shell::Posix,
+                default_root: PathBuf::from(rescind_render::Instance::default_root(
+                    rescind_core::artifact::Shell::Posix,
                 )),
             }
         }
@@ -63,10 +63,10 @@ impl Default for LocalExecutor {
                 shell_args: vec!["-NoProfile".into(), "-Command".into()],
                 default_root: PathBuf::from(
                     std::env::var("ProgramData")
-                        .map(|p| format!("{p}\\rue"))
+                        .map(|p| format!("{p}\\rescind"))
                         .unwrap_or_else(|_| {
-                            rue_render::Instance::default_root(
-                                rue_core::artifact::Shell::Powershell,
+                            rescind_render::Instance::default_root(
+                                rescind_core::artifact::Shell::Powershell,
                             )
                             .to_string()
                         }),
@@ -78,7 +78,7 @@ impl Default for LocalExecutor {
 
 impl LocalExecutor {
     fn root(&self, host: &Host) -> PathBuf {
-        host.rue_root
+        host.rescind_root
             .as_ref()
             .map(PathBuf::from)
             .unwrap_or_else(|| self.default_root.clone())
@@ -171,8 +171,8 @@ fn scrub(text: &str, secrets: &[String]) -> String {
 /// existing file's mode.
 pub fn write_atomic(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
     let tmp = path.with_extension(match path.extension() {
-        Some(e) => format!("{}.rue-tmp", e.to_string_lossy()),
-        None => "rue-tmp".to_string(),
+        Some(e) => format!("{}.rescind-tmp", e.to_string_lossy()),
+        None => "rescind-tmp".to_string(),
     });
     let mode = fs::metadata(path).ok().map(|m| m.permissions());
     {
@@ -462,12 +462,12 @@ impl Executor for LocalExecutor {
 
     fn bootstrap_state(&mut self, host: &Host) -> Result<BootstrapState, ExecError> {
         let root = self.root(host);
-        let group = group_exists("rue");
+        let group = group_exists("rescind");
         let instances = root.join("instances");
         let lock = root.join("lock");
         let modes_ok = mode_of(&instances) == Some(0o2770) && mode_of(&lock) == Some(0o664);
         Ok(BootstrapState {
-            rue_root: root.is_dir(),
+            rescind_root: root.is_dir(),
             group,
             instances_dir: instances.is_dir(),
             lock: lock.is_file(),

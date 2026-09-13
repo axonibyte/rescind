@@ -94,7 +94,7 @@ rows() {
     ' "$table"
 }
 
-rowfile=$(mktemp "${TMPDIR:-/tmp}/rue-rediscover-rows.XXXXXX") || exit 2
+rowfile=$(mktemp "${TMPDIR:-/tmp}/rescind-rediscover-rows.XXXXXX") || exit 2
 trap 'rm -f "$rowfile"' EXIT INT TERM
 rows "$tier" > "$rowfile"
 if [ ! -s "$rowfile" ]; then
@@ -159,7 +159,7 @@ build_suite() {
     case $1 in
         cabal) ( cd "$2/proto" && cabal build all --builddir "$2/proto/dist-newstyle" ) > "$3" 2>&1 ;;
         cargo) ( cd "$2" && CARGO_TARGET_DIR="$2/target" cargo build --workspace --all-targets --locked ) > "$3" 2>&1 ;;
-        python) ( cd "$2/sdk/python" && python3 -m compileall -q rue_hook tests ) > "$3" 2>&1 ;;
+        python) ( cd "$2/sdk/python" && python3 -m compileall -q rescind_hook tests ) > "$3" 2>&1 ;;
         mix) ( cd "$2/sdk/elixir" && env MIX_ENV=test mix compile --warnings-as-errors ) > "$3" 2>&1 ;;
         maven) ( cd "$2/sdk/java" && mvn -B -ntp test-compile ) > "$3" 2>&1 ;;
         dotnet) ( cd "$2/sdk/dotnet" && dotnet build tests/RueHook.Tests ) > "$3" 2>&1 ;;
@@ -225,7 +225,7 @@ run_row() { # run_row <patch> <stage> <suite> <selector> <env>
         return 0
     fi
 
-    scratch=$(mktemp -d "${TMPDIR:-/tmp}/rue-rediscover.XXXXXX") || return 1
+    scratch=$(mktemp -d "${TMPDIR:-/tmp}/rescind-rediscover.XXXXXX") || return 1
 
     # A copy, not a checkout, in two commands so each answers for itself.
     # The SDKs' build output is left behind for the reason the target

@@ -2,9 +2,9 @@
 //! reads and writes back unchanged; unknown fields and other versions are
 //! refused.
 
-use rue_core::ir::{parse, IrError, IR_VERSION};
-use rue_core::json::canonical::encode;
-use rue_core::model::*;
+use rescind_core::ir::{parse, IrError, IR_VERSION};
+use rescind_core::json::canonical::encode;
+use rescind_core::model::*;
 
 // A small plan in canonical form: one step with a knell ack gate, a wait
 // factor, a bound-host locus, a heartbeat backstop, and every item kind.
@@ -576,7 +576,7 @@ fn the_documented_spelling_parses_and_writes_back_identically() {
             assert_eq!(
                 s.op.undo,
                 Undo::Computed {
-                    body: vec![rue_core::body::run_lit("restore-posture")],
+                    body: vec![rescind_core::body::run_lit("restore-posture")],
                     undo_pre: vec!["file:/y".into()],
                 }
             );

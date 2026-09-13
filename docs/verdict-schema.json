@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://axonibyte.com/rue/verdict-schema.json",
-  "title": "rue verdict, structured form, version 1",
+  "$id": "https://axonibyte.com/rescind/verdict-schema.json",
+  "title": "rescind verdict, structured form, version 1",
   "description": "docs/ROADMAP.md section 5.8. The prose is generated from this and may change; this may not change without a version bump. Additions are allowed without a bump; removals and renames bump.",
   "type": "object",
   "additionalProperties": false,

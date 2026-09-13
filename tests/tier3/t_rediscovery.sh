@@ -7,7 +7,7 @@ set -u
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd) || exit 2
 guard=$root/tools/rediscovery/check-patches.sh
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-t-rediscovery.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-t-rediscovery.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 rc=0
@@ -57,7 +57,7 @@ expect 1 "unlisted patch is caught"
 
 # 3. A protection that moved: the patch's context is gone.
 reset_tree
-sed 's/armedBefore n = case planBackstop p of/armedBefore n = case (planBackstop p) of/' "$root/proto/src/Rue/Proto/Backstop.hs" > "$tmp/tree/proto/src/Rue/Proto/Backstop.hs"
+sed 's/armedBefore n = case planBackstop p of/armedBefore n = case (planBackstop p) of/' "$root/proto/src/Rescind/Proto/Backstop.hs" > "$tmp/tree/proto/src/Rescind/Proto/Backstop.hs"
 expect 1 "patch whose target moved is caught"
 
 # 4. A malformed row (five fields), and a row naming a suite that does not exist.
@@ -80,7 +80,7 @@ expect 2 "empty table refuses with exit 2"
 # its hunk) and stays a correct diff of the file.
 reset_tree
 patch=$tmp/tree/tools/rediscovery/patches/reach-late-arm.patch
-above=$(sed -n '65p' "$root/proto/src/Rue/Proto/Backstop.hs")
+above=$(sed -n '65p' "$root/proto/src/Rescind/Proto/Backstop.hs")
 awk -v l=" $above" '/^@@ -66,7 \+66,7 @@$/ { print "@@ -65,8 +65,8 @@"; print l; next } { print }' \
     "$patch" > "$tmp/hunk" && mv "$tmp/hunk" "$patch"
 grep -q '^@@ -65,8' "$patch" || { bad "sample hunk rewritten"; }

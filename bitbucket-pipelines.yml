@@ -65,7 +65,7 @@ definitions:
           # performs exactly those in the Rust image; the pipeline as a whole
           # runs every phase, and the declaration is what keeps a missing
           # tool from passing quietly.
-          - RUE_CHECK_SKIP_OK=darwin-deps,cargo-fmt,cargo-clippy,cargo-build,cargo-test RUE_CABAL_UPDATE=1 sh tools/check.sh
+          - RESCIND_CHECK_SKIP_OK=darwin-deps,cargo-fmt,cargo-clippy,cargo-build,cargo-test RESCIND_CABAL_UPDATE=1 sh tools/check.sh
 
     - step: &doFetchAndTest
         name: Fetch dependencies, lint and run tests
@@ -86,8 +86,8 @@ definitions:
           - cargo fmt --check
           - cargo clippy --workspace --all-targets --locked -- -D warnings
           - sh tools/lint-darwin-deps.sh
-          # rue-e2e is the tier 5 harness; it runs on a reaper guest only (tools/check.sh).
-          - cargo test --workspace --exclude rue-e2e --release --locked
+          # rescind-e2e is the tier 5 harness; it runs on a reaper guest only (tools/check.sh).
+          - cargo test --workspace --exclude rescind-e2e --release --locked
 
     - step: &doTestWindows
         # Windows is first-class (D-031). The suite runs on the Windows target
@@ -168,7 +168,7 @@ definitions:
 
     # The SDKs of ROADMAP.md 7.11 that are not Rust, each in the image that
     # carries its toolchain: first its own suite (sdk/test-all.sh), then
-    # judged against `rue sdk-conform` using the rue buildLinuxAmd64 just
+    # judged against `rescind sdk-conform` using the rescind buildLinuxAmd64 just
     # built (ci/sdk-conform.sh). The Rust SDK and the shim are workspace
     # crates, so doFetchAndTest already covers them. These run after the
     # builds and before a deploy, so no tag publishes binaries whose SDKs
@@ -178,7 +178,7 @@ definitions:
     # trixie, its std links pidfd_spawnp and pidfd_getpid at GLIBC_2.39. A
     # bookworm image (2.36) -- the official elixir image's base, and the
     # default .NET 8 SDK's -- would fail to load it, so those two are pinned
-    # to a trixie and a noble variant. ci/sdk-conform.sh runs `rue --version`
+    # to a trixie and a noble variant. ci/sdk-conform.sh runs `rescind --version`
     # first, so an image that cannot load the binary fails there, by name.
     - step: &conformPython
         name: SDK suite and conformance (Python)

@@ -12,7 +12,7 @@
 
 use std::collections::BTreeMap;
 
-use rue_core::model::{Drift, FootprintEntry, Kind};
+use rescind_core::model::{Drift, FootprintEntry, Kind};
 use serde::{Deserialize, Serialize};
 
 use crate::region;
@@ -213,7 +213,7 @@ pub fn changed_facts(before: &Watched, after: &Watched) -> Vec<String> {
         .collect()
 }
 
-pub use rue_core::model::bind_shape;
+pub use rescind_core::model::bind_shape;
 
 #[cfg(test)]
 mod tests {

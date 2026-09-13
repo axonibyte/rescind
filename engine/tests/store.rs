@@ -8,9 +8,9 @@ mod common;
 use std::collections::BTreeMap;
 use std::fs;
 
-use rue_core::interference::Fact;
-use rue_core::ledger::{Instance, Ledger};
-use rue_engine::store::{migrate, schema_of, SchemaError, Store, StoreError, SCHEMA};
+use rescind_core::interference::Fact;
+use rescind_core::ledger::{Instance, Ledger};
+use rescind_engine::store::{migrate, schema_of, SchemaError, Store, StoreError, SCHEMA};
 
 #[test]
 fn a_created_store_carries_the_schema_and_a_second_opener_is_refused() {
@@ -42,7 +42,11 @@ fn records_round_trip_and_a_crash_mid_write_leaves_the_previous_record() {
     );
     assert_eq!(s.instance_ids().unwrap(), vec!["i-1".to_string()]);
     // A temporary file left by a crash before the rename is not a record.
-    fs::write(d.join("store/instances/i-1.rue-tmp"), b"{\"state\": \"half").unwrap();
+    fs::write(
+        d.join("store/instances/i-1.rescind-tmp"),
+        b"{\"state\": \"half",
+    )
+    .unwrap();
     assert_eq!(
         s.read_instance::<BTreeMap<String, String>>("i-1").unwrap(),
         Some(rec)
@@ -90,7 +94,7 @@ fn the_ledger_round_trips_with_its_reservations_intact() {
             rehearsal: false,
         })
         .unwrap_err();
-    assert_eq!(err.0, rue_core::ledger::LedgerCode::R0203);
+    assert_eq!(err.0, rescind_core::ledger::LedgerCode::R0203);
     let empty = Store::create(&d.join("empty")).unwrap();
     assert!(empty.read_ledger().unwrap().holdings().is_empty());
 }
@@ -231,7 +235,7 @@ fn a_v0_1_0_store_is_refused_until_migrated_and_its_instance_then_reverts() {
     }
     let err = Store::open(&root).unwrap_err().to_string();
     assert!(
-        err.starts_with("R0502") && err.contains("run `rued migrate`"),
+        err.starts_with("R0502") && err.contains("run `rescindd migrate`"),
         "{err}"
     );
     let dry = migrate(&root, true, "admin").unwrap();
@@ -250,7 +254,12 @@ fn a_v0_1_0_store_is_refused_until_migrated_and_its_instance_then_reverts() {
     let mut w = common::world::World::over(d);
     let id = "vector.h.96925251";
     let out = w.engine.recant(id, &[]).unwrap();
-    assert_eq!(out.state, rue_core::states::State::Closed, "{}", out.line);
+    assert_eq!(
+        out.state,
+        rescind_core::states::State::Closed,
+        "{}",
+        out.line
+    );
     assert_eq!(w.commands(), vec!["undo b", "undo b", "undo a"]);
 }
 

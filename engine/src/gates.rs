@@ -3,8 +3,8 @@
 //! digest and verifies proofs against it, the proofs an instance
 //! accumulates, and the host contract the digest covers.
 //!
-//! Rue supplies a digest, not a challenge. What a proof is, and how a
-//! human produces it, belongs to the binding; what rue guarantees is that
+//! Rescind supplies a digest, not a challenge. What a proof is, and how a
+//! human produces it, belongs to the binding; what rescind guarantees is that
 //! a proof is bound to one request and one scope, so a proof for a step
 //! verifies for no other step and none for the plan, and that a change to
 //! the plan, its parameters or the host contract after the request
@@ -12,10 +12,10 @@
 
 use std::collections::BTreeMap;
 
-use rue_core::journal::{Event as J, Hash, Scope};
-use rue_core::model::{Authenticator, Instant};
-use rue_core::request::{hash_json, request_digest, scoped_digest, Request};
-use rue_core::states::State;
+use rescind_core::journal::{Event as J, Hash, Scope};
+use rescind_core::model::{Authenticator, Instant};
+use rescind_core::request::{hash_json, request_digest, scoped_digest, Request};
+use rescind_core::states::State;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -110,7 +110,7 @@ impl Engine {
     /// Every host the plan touches, by name.
     fn touched_hosts(&self, rec: &InstanceRecord) -> Vec<String> {
         let mut v: Vec<String> = vec![rec.plan().owner.clone()];
-        for (n, _) in rue_core::algebra::numbered(&rec.plan().body) {
+        for (n, _) in rescind_core::algebra::numbered(&rec.plan().body) {
             if let Some(op) = rec.op_at(n) {
                 if let Ok(h) = self.step_host(rec, op) {
                     v.push(h.name().to_string());
@@ -218,7 +218,7 @@ impl Engine {
         // makes at apply could only end in WrongState. Nothing reached it
         // while no static probe was ever frozen.
         if rec.state == State::Applying {
-            let n = rue_core::algebra::numbered(&rec.plan().body)
+            let n = rescind_core::algebra::numbered(&rec.plan().body)
                 .into_iter()
                 .map(|(n, _)| n)
                 .find(|n| !rec.applied.iter().any(|a| a.step == *n))
@@ -228,7 +228,7 @@ impl Engine {
             return Ok(true);
         }
         rec.refusal = Some(reason.into());
-        self.step(rec, rue_core::states::Event::HostContractChanged)?;
+        self.step(rec, rescind_core::states::Event::HostContractChanged)?;
         self.log(
             rec,
             J::Refused {
@@ -272,7 +272,7 @@ impl Engine {
             owner_host: rec.plan().owner.clone(),
             params_hash: hash_json(&json!(rec.params)).unwrap_or(Hash([0; 32])),
             host_contract_hash: contract,
-            wane: rue_core::intent::effective_wane(rec.plan()),
+            wane: rescind_core::intent::effective_wane(rec.plan()),
             requested_at: rec.requested_at.unwrap_or(Instant::new(0)),
             gate_hash: serde_json::to_value(&rec.plan().gate)
                 .ok()
@@ -315,11 +315,11 @@ impl Engine {
         &mut self,
         rec: &InstanceRecord,
         scope: Scope,
-        gate: &rue_core::model::GateExpr,
+        gate: &rescind_core::model::GateExpr,
     ) -> bool {
         let auths = self.authenticators();
         let proofs = self.proofs_for(rec, scope);
-        let elapsed = rue_core::model::Duration::new(
+        let elapsed = rescind_core::model::Duration::new(
             self.clock
                 .now()
                 .unix_s
@@ -332,10 +332,10 @@ impl Engine {
         {
             return true;
         }
-        rue_core::gates::satisfied(&auths, gate, &proofs, elapsed)
+        rescind_core::gates::satisfied(&auths, gate, &proofs, elapsed)
     }
 
-    /// `rue approve`: the challenge the binding renders for a scope, for
+    /// `rescind approve`: the challenge the binding renders for a scope, for
     /// an operator about to produce a proof.
     pub fn challenge(
         &mut self,
@@ -363,7 +363,7 @@ impl Engine {
         }
     }
 
-    /// `rue approve <instance> [--step N]`: verify a proof, record it, and
+    /// `rescind approve <instance> [--step N]`: verify a proof, record it, and
     /// let the instance proceed if its gate is now satisfied.
     pub fn approve_proof(
         &mut self,
@@ -459,7 +459,7 @@ impl Engine {
                 let gate = rec.step_at(n).and_then(|s| s.gate.clone());
                 if let Some(g) = gate {
                     if self.gate_satisfied(rec, Scope::Step(n), &g) {
-                        self.step(rec, rue_core::states::Event::WaitSatisfied)?;
+                        self.step(rec, rescind_core::states::Event::WaitSatisfied)?;
                         rec.waiting = None;
                         self.log(rec, J::StepGateSatisfied { step: n })?;
                         self.persist(rec)?;
@@ -472,13 +472,13 @@ impl Engine {
         Ok(())
     }
 
-    /// `rue ack --step N --reason --authenticator A`: the acknowledgement a
+    /// `rescind ack --step N --reason --authenticator A`: the acknowledgement a
     /// knell waits for. The proof is verified for `authenticator` -- an id
     /// the approval binding publishes -- and `submitter` is the operator
     /// identity that sent it. They are different namespaces: an identity
     /// says who connected, an authenticator who proved. The channel passed
     /// the identity as the authenticator, so a human acknowledgement sent
-    /// with `rue ack` could verify only if an operator happened to share an
+    /// with `rescind ack` could verify only if an operator happened to share an
     /// authenticator's name -- and 8.2's manual knells could not be
     /// acknowledged at all. `approve_proof` already kept the two apart.
     pub fn ack(
@@ -500,8 +500,8 @@ impl Engine {
         // verified like any other: the reason is for the journal, the
         // token is what makes it an acknowledgement (5.11).
         let ack_gate = rec.step_at(step).and_then(|s| match &s.op.refusal {
-            rue_core::model::Refusal::Knell {
-                ack: rue_core::model::Ack::Gate(g),
+            rescind_core::model::Refusal::Knell {
+                ack: rescind_core::model::Ack::Gate(g),
                 ..
             } => Some(g.clone()),
             _ => None,
@@ -541,7 +541,7 @@ impl Engine {
             let mut proofs = self.proofs_for(&rec, Scope::Ack(step));
             proofs.push(authenticator.to_string());
             let auths = self.authenticators();
-            let elapsed = rue_core::model::Duration::new(
+            let elapsed = rescind_core::model::Duration::new(
                 self.clock
                     .now()
                     .unix_s
@@ -551,7 +551,7 @@ impl Engine {
                 .approval
                 .as_ref()
                 .is_some_and(|a| a.approves_everything())
-                || rue_core::gates::satisfied(&auths, &g, &proofs, elapsed);
+                || rescind_core::gates::satisfied(&auths, &g, &proofs, elapsed);
             if !opens {
                 // The proof is recorded; the gate is not yet open.
                 rec.proofs.push(Proof {
@@ -575,9 +575,9 @@ impl Engine {
         let cost = rec
             .step_at(step)
             .map(|s| match &s.op.refusal {
-                rue_core::model::Refusal::Knell { cost, .. } => match cost {
-                    rue_core::model::Cost::Probe(p) => p.clone(),
-                    rue_core::model::Cost::NoCost(_) => "none".into(),
+                rescind_core::model::Refusal::Knell { cost, .. } => match cost {
+                    rescind_core::model::Cost::Probe(p) => p.clone(),
+                    rescind_core::model::Cost::NoCost(_) => "none".into(),
                 },
                 _ => "none".into(),
             })
@@ -604,7 +604,7 @@ impl Engine {
         if rec.state == State::Waiting
             && rec.waiting.as_ref().map(|w| (w.step, w.reason.as_str())) == Some((step, "ack"))
         {
-            self.step(&mut rec, rue_core::states::Event::WaitSatisfied)?;
+            self.step(&mut rec, rescind_core::states::Event::WaitSatisfied)?;
             rec.waiting = None;
             self.persist(&rec)?;
             self.walk(&mut rec)?;

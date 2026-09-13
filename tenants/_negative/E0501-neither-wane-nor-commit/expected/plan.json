@@ -22,7 +22,7 @@
                 },
                 "fact": {
                   "anchor": null,
-                  "shape": "file:/etc/ssh/sshd_config.d/rue-breakglass.conf"
+                  "shape": "file:/etc/ssh/sshd_config.d/rescind-breakglass.conf"
                 }
               }
             },
@@ -45,7 +45,7 @@
               "anchor": null,
               "instance": null,
               "kind": "owned",
-              "shape": "file:/etc/ssh/sshd_config.d/rue-breakglass.conf"
+              "shape": "file:/etc/ssh/sshd_config.d/rescind-breakglass.conf"
             },
             {
               "anchor": null,
@@ -96,7 +96,7 @@
                   }
                 },
                 "fact": {
-                  "anchor": "rue-breakglass",
+                  "anchor": "rescind-breakglass",
                   "shape": "file:/root/.ssh/authorized_keys"
                 }
               }
@@ -106,7 +106,7 @@
           "exclusivity": null,
           "footprint": [
             {
-              "anchor": "rue-breakglass",
+              "anchor": "rescind-breakglass",
               "instance": null,
               "kind": "region",
               "shape": "file:/root/.ssh/authorized_keys"

@@ -22,7 +22,7 @@ There are three ways to answer, and the SDK makes the fourth unreachable:
   implement is refused for you, naming it; so is any other exception a
   handler raises (`TypeName: message`), because a refusal with a reason is
   better than a hook that died.
-- **Silence.** No reply before the engine's deadline (`rued run
+- **Silence.** No reply before the engine's deadline (`rescindd run
   --hook-deadline`, 30 seconds by default). The engine refuses the step
   and can say nothing about why. The budget below turns a slow handler
   into a refusal instead.
@@ -107,13 +107,13 @@ handler is left to the engine's deadline.
 
 ## Serving over the control socket
 
-`serve_stdio` is for a child `rued` spawns. A long-running process that
+`serve_stdio` is for a child `rescindd` spawns. A long-running process that
 connects to a daemon already running uses `serve_socket`:
 
 ```python
-from rue_hook import serve_socket
+from rescind_hook import serve_socket
 
-serve_socket("/var/run/rue/rued.sock", "audit", hooks, identity=None, budget=5.0)
+serve_socket("/var/run/rescind/rescindd.sock", "audit", hooks, identity=None, budget=5.0)
 ```
 
 It sends `hello`, then `register`, then answers requests on the same

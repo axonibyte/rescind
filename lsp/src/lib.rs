@@ -1,9 +1,9 @@
-//! `rue-lsp`: diagnostics as a text is edited, and hover on a step
+//! `rescind-lsp`: diagnostics as a text is edited, and hover on a step
 //! (ROADMAP Phase 5; `docs/issues/0006`).
 //!
 //! The server computes nothing of its own. A diagnostic here is a
-//! diagnostic `rue check` would give, from the same front end and the same
-//! checker, and a hover is what `rue explain` prints for that step. An
+//! diagnostic `rescind check` would give, from the same front end and the same
+//! checker, and a hover is what `rescind explain` prints for that step. An
 //! editor that invented its own answer -- a second opinion about a plan --
 //! would be the worst thing this could be: an operator would learn which
 //! of the two to believe, and it would not always be the right one.
@@ -22,8 +22,8 @@ use lsp_types::{
     Diagnostic, DiagnosticSeverity, Hover, HoverContents, MarkupContent, MarkupKind, Position,
     Range, Uri,
 };
-use rue_core::check::check;
-use rue_core::diagnostics::Diagnostic as RueDiagnostic;
+use rescind_core::check::check;
+use rescind_core::diagnostics::Diagnostic as RueDiagnostic;
 
 pub mod server;
 
@@ -60,7 +60,7 @@ impl Documents {
 }
 
 /// A byte offset to a line and a UTF-16 code unit, which is what LSP
-/// positions are counted in. A rue text is usually ASCII and then this is
+/// positions are counted in. A rescind text is usually ASCII and then this is
 /// the offset; it is not always, and a comment with an em dash in it would
 /// put every column after it out by one.
 pub fn position_of(text: &str, offset: usize) -> Position {
@@ -124,7 +124,7 @@ fn lsp_diagnostic(text: &str, d: &RueDiagnostic) -> Diagnostic {
         range: range_of(text, d),
         severity: Some(DiagnosticSeverity::ERROR),
         code: Some(lsp_types::NumberOrString::String(format!("{:?}", d.code))),
-        source: Some("rue".into()),
+        source: Some("rescind".into()),
         message: message_of(d),
         ..Default::default()
     }
@@ -149,7 +149,7 @@ fn message_of(d: &RueDiagnostic) -> String {
 /// a plan, and a plan's steps are numbered, not placed. An editor needs a
 /// place, so the step's own line is found in the text -- the Nth item of
 /// the plan body -- and the code and message are the checker's own.
-fn checked_diagnostic(text: &str, d: &rue_core::verdict::Diagnostic) -> Diagnostic {
+fn checked_diagnostic(text: &str, d: &rescind_core::verdict::Diagnostic) -> Diagnostic {
     let line = d.step.and_then(|n| step_line(text, n)).unwrap_or(0);
     let width = text
         .lines()
@@ -170,7 +170,7 @@ fn checked_diagnostic(text: &str, d: &rue_core::verdict::Diagnostic) -> Diagnost
         },
         severity: Some(DiagnosticSeverity::ERROR),
         code: Some(lsp_types::NumberOrString::String(format!("{:?}", d.code))),
-        source: Some("rue".into()),
+        source: Some("rescind".into()),
         message,
         ..Default::default()
     }
@@ -238,7 +238,7 @@ pub struct Judgment {
 /// so a resolve that reads the file from disk sees the last save -- which
 /// is why the parse half always runs on the buffer.
 pub fn judge(path: &Path, text: &str) -> Judgment {
-    let parsed = rue_surface::parse(text, &path.to_string_lossy());
+    let parsed = rescind_surface::parse(text, &path.to_string_lossy());
     if !parsed.diagnostics.is_empty() {
         return Judgment {
             diagnostics: parsed
@@ -293,7 +293,7 @@ pub fn judge(path: &Path, text: &str) -> Judgment {
 ///
 /// A plan whose clauses dispatch on the host cannot be resolved without
 /// one (E0112), and that is not a defect in the text -- it is an argument
-/// `rue check` is given and an editor is not. The same goes for a hook
+/// `rescind check` is given and an editor is not. The same goes for a hook
 /// inventory, which needs a record named (E0607). Rather than underline
 /// every clause-dispatched tenant in the project, the server names a host
 /// itself -- the first the file's own inventory lists -- and says so in
@@ -305,27 +305,27 @@ pub fn judge(path: &Path, text: &str) -> Judgment {
 /// would be a claim about a file that has no single answer.
 pub fn resolve_for_editor(
     path: &Path,
-) -> Result<(rue_core::ir::PlanIr, Option<String>), Vec<RueDiagnostic>> {
-    let opts = rue_surface::resolve::Options::default();
-    let first = match rue_surface::resolve::resolve(path, &opts) {
+) -> Result<(rescind_core::ir::PlanIr, Option<String>), Vec<RueDiagnostic>> {
+    let opts = rescind_surface::resolve::Options::default();
+    let first = match rescind_surface::resolve::resolve(path, &opts) {
         Ok(ir) => return Ok((ir, None)),
         Err(diags) => diags,
     };
     let needs_a_host = first
         .iter()
-        .all(|d| matches!(d.code, rue_core::diagnostics::Code::E0112));
+        .all(|d| matches!(d.code, rescind_core::diagnostics::Code::E0112));
     if !needs_a_host || first.is_empty() {
         return Err(first);
     }
-    let Ok(bindings) = rue_surface::resolve::site_bindings(path) else {
+    let Ok(bindings) = rescind_surface::resolve::site_bindings(path) else {
         return Err(first);
     };
     for host in bindings.inventory.hosts.iter().map(|h| h.name.clone()) {
-        let opts = rue_surface::resolve::Options {
+        let opts = rescind_surface::resolve::Options {
             host: Some(host.clone()),
             ..Default::default()
         };
-        if let Ok(ir) = rue_surface::resolve::resolve(path, &opts) {
+        if let Ok(ir) = rescind_surface::resolve::resolve(path, &opts) {
             return Ok((ir, Some(host)));
         }
     }
@@ -335,7 +335,7 @@ pub fn resolve_for_editor(
 /// Hover: the op under the cursor, as `explain` describes it.
 ///
 /// The name under the cursor is looked up among the file's own `defop`s
-/// through the resolved plan, so what is shown is the op rue would run --
+/// through the resolved plan, so what is shown is the op rescind would run --
 /// arguments bound, clause chosen -- and not the text of a definition that
 /// may not be the one this host takes.
 pub fn hover(path: &Path, text: &str, at: Position) -> Option<Hover> {
@@ -346,20 +346,20 @@ pub fn hover(path: &Path, text: &str, at: Position) -> Option<Hover> {
         return None;
     }
     let (ir, for_host) = resolve_for_editor(path).ok()?;
-    let op = rue_core::algebra::numbered(&ir.plan.body)
+    let op = rescind_core::algebra::numbered(&ir.plan.body)
         .into_iter()
-        .filter_map(|(_, it)| rue_core::algebra::op_of(it))
+        .filter_map(|(_, it)| rescind_core::algebra::op_of(it))
         .find(|o| o.id == word)?;
     let mut md = format!("**{}**\n\n", op.id);
     md.push_str(&format!("- locus: `{}`\n", locus_of(&op.locus)));
     md.push_str(&format!(
         "- undo: `{}`\n",
         match &op.undo {
-            rue_core::model::Undo::NoUndo => format!(
+            rescind_core::model::Undo::NoUndo => format!(
                 "NO UNDO \u{2014} knell; {}",
-                rue_core::explain::undo_line(op)
+                rescind_core::explain::undo_line(op)
             ),
-            _ => rue_core::explain::undo_line(op),
+            _ => rescind_core::explain::undo_line(op),
         }
     ));
     md.push_str(&format!("- undo locus: `{:?}`\n", op.undo_locus));
@@ -398,12 +398,14 @@ pub fn hover(path: &Path, text: &str, at: Position) -> Option<Hover> {
     })
 }
 
-fn locus_of(l: &rue_core::model::Locus) -> String {
+fn locus_of(l: &rescind_core::model::Locus) -> String {
     match l {
-        rue_core::model::Locus::Controller => "controller".into(),
-        rue_core::model::Locus::Target => "target".into(),
-        rue_core::model::Locus::Host(rue_core::model::HostRef::Static(h)) => format!("host({h})"),
-        rue_core::model::Locus::Host(rue_core::model::HostRef::Bound(b)) => {
+        rescind_core::model::Locus::Controller => "controller".into(),
+        rescind_core::model::Locus::Target => "target".into(),
+        rescind_core::model::Locus::Host(rescind_core::model::HostRef::Static(h)) => {
+            format!("host({h})")
+        }
+        rescind_core::model::Locus::Host(rescind_core::model::HostRef::Bound(b)) => {
             format!("host({b}) bound at runtime")
         }
     }

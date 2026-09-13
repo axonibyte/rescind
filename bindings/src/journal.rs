@@ -9,9 +9,9 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use rue_core::journal::Entry;
-use rue_engine::journal::Sink;
-use rue_engine::sign::Signer;
+use rescind_core::journal::Entry;
+use rescind_engine::journal::Sink;
+use rescind_engine::sign::Signer;
 
 fn line_of(e: &Entry) -> Result<Vec<u8>, String> {
     let mut line = serde_json::to_vec(e).map_err(|e| e.to_string())?;
@@ -19,7 +19,7 @@ fn line_of(e: &Entry) -> Result<Vec<u8>, String> {
     Ok(line)
 }
 
-/// `journal to: file("/var/log/rue.ndjson")`.
+/// `journal to: file("/var/log/rescind.ndjson")`.
 #[derive(Debug, Clone)]
 pub struct FileSink {
     path: PathBuf,
@@ -70,7 +70,7 @@ impl Sink for StdoutSink {
     }
 }
 
-/// `journal ... sign: key("/etc/rue/journal_ed25519")`.
+/// `journal ... sign: key("/etc/rescind/journal_ed25519")`.
 pub fn key(path: &Path) -> Result<Signer, String> {
     Signer::load(path)
 }

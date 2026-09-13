@@ -26,7 +26,7 @@
               "run": {
                 "cmd": [
                   {
-                    "lit": "New-NetFirewallRule -Name rue-mgmt -Direction Inbound -Protocol TCP -LocalPort "
+                    "lit": "New-NetFirewallRule -Name rescind-mgmt -Direction Inbound -Protocol TCP -LocalPort "
                   },
                   {
                     "lit": "8443"
@@ -47,7 +47,7 @@
               "anchor": null,
               "instance": null,
               "kind": "owned",
-              "shape": "winfw:rule:rue-mgmt"
+              "shape": "winfw:rule:rescind-mgmt"
             }
           ],
           "handoff_done": null,
@@ -69,7 +69,7 @@
                   "run": {
                     "cmd": [
                       {
-                        "lit": "Remove-NetFirewallRule -Name rue-mgmt"
+                        "lit": "Remove-NetFirewallRule -Name rescind-mgmt"
                       }
                     ],
                     "env": [],
@@ -78,7 +78,7 @@
                 }
               ],
               "undo_pre": [
-                "winfw:rule:rue-mgmt"
+                "winfw:rule:rescind-mgmt"
               ]
             }
           },

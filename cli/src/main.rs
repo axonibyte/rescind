@@ -1,7 +1,7 @@
-//! `rue`, the operator CLI (docs/ROADMAP.md section 6.8), as far as Phase 1
+//! `rescind`, the operator CLI (docs/ROADMAP.md section 6.8), as far as Phase 1
 //! takes it: `check`, `explain` and `artifact` over a plan IR document or,
-//! from Phase 2, a `.rue` file resolved for one host (`--host`,
-//! `--plan-name`, `--as`); `states`; and `fmt` over a `.rue` file. The surface verbs (`.rue` input, `--host`, `--as`) arrive with
+//! from Phase 2, a `.scind` file resolved for one host (`--host`,
+//! `--plan-name`, `--as`); `states`; and `fmt` over a `.scind` file. The surface verbs (`.scind` input, `--host`, `--as`) arrive with
 //! Phase 2; the IR is already one host's plan and carries the requester.
 //!
 //! Exit codes are the roadmap's: 0 ok; 1 refused; 2 usage, an unreadable or
@@ -17,18 +17,18 @@ use std::process::ExitCode;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use rue_core::check::{check, deferred_steps};
-use rue_core::explain::explain;
-use rue_core::ir::{parse, PlanIr};
-use rue_core::json::canonical;
-use rue_core::prose::prose;
-use rue_core::states::render_table;
-use rue_core::verdict::{to_json, Status, Verdict};
-use rue_render::{render, Bindings, Instance, RenderError};
+use rescind_core::check::{check, deferred_steps};
+use rescind_core::explain::explain;
+use rescind_core::ir::{parse, PlanIr};
+use rescind_core::json::canonical;
+use rescind_core::prose::prose;
+use rescind_core::states::render_table;
+use rescind_core::verdict::{to_json, Status, Verdict};
+use rescind_render::{render, Bindings, Instance, RenderError};
 
 #[derive(Parser)]
 #[command(
-    name = "rue",
+    name = "rescind",
     version,
     about = "A language for provably reversible operations",
     disable_help_subcommand = true
@@ -42,7 +42,7 @@ struct Cli {
 enum Verb {
     /// Check a plan and print its verdict.
     Check {
-        /// A .rue file, or a plan IR document (docs/TESTING.md, "The plan IR").
+        /// A .scind file, or a plan IR document (docs/TESTING.md, "The plan IR").
         plan: PathBuf,
         /// Print the structured verdict in canonical JSON instead of the prose.
         #[arg(long)]
@@ -50,7 +50,7 @@ enum Verb {
         /// Print the plan IR this text resolves to, instead of a verdict.
         ///
         /// This is what an embedded host sends over the control channel to
-        /// apply a plan (section 7.11): resolving `.rue` text needs the
+        /// apply a plan (section 7.11): resolving `.scind` text needs the
         /// front end, the front end is Rust, and a host in another language
         /// therefore asks for the IR here rather than linking it.
         #[arg(long, conflicts_with = "json")]
@@ -60,7 +60,7 @@ enum Verb {
     },
     /// List a plan's numbered steps with their undo lines, loci and policies.
     Explain {
-        /// A .rue file, or a plan IR document.
+        /// A .scind file, or a plan IR document.
         plan: PathBuf,
         #[command(flatten)]
         select: Select,
@@ -95,7 +95,7 @@ enum Verb {
     /// Apply a plan through the daemon (section 6.8): check, request,
     /// approve where no gate stands, run; the verdict line is last.
     Apply {
-        /// A .rue file, or a plan IR document.
+        /// A .scind file, or a plan IR document.
         plan: PathBuf,
         #[command(flatten)]
         select: Select,
@@ -123,9 +123,9 @@ enum Verb {
     /// Every host the plan touches must carry the role `canary`.
     ///
     /// A timer runs this -- cron, a systemd timer, launchd -- because a
-    /// drill needs the engine alive; rued schedules backstops, not drills.
+    /// drill needs the engine alive; rescindd schedules backstops, not drills.
     Drill {
-        /// A .rue file, or a plan IR document.
+        /// A .scind file, or a plan IR document.
         plan: PathBuf,
         #[command(flatten)]
         select: Select,
@@ -237,7 +237,7 @@ enum Verb {
         #[command(flatten)]
         channel: Channel,
     },
-    /// Admin: verify a target's rue_root; print the commands for what it
+    /// Admin: verify a target's rescind_root; print the commands for what it
     /// lacks, never running them (section 7.7).
     Bootstrap {
         host: String,
@@ -273,10 +273,10 @@ enum Verb {
         #[command(flatten)]
         channel: Channel,
     },
-    /// Format a .rue file (section 6.9): the canonical layout, comments
+    /// Format a .scind file (section 6.9): the canonical layout, comments
     /// kept; the identity on a formatted file.
     Fmt {
-        /// The .rue file.
+        /// The .scind file.
         file: PathBuf,
         /// Print nothing; exit 1 if the file is not already formatted.
         #[arg(long)]
@@ -286,18 +286,18 @@ enum Verb {
     /// (section 7.7): the scheduler-run script that undoes the covered
     /// steps when its trigger is due.
     Artifact {
-        /// A .rue file, or a plan IR document. `--host` names the record the
+        /// A .scind file, or a plan IR document. `--host` names the record the
         /// artifact is rendered for (the plan's owner when absent) and, for a
-        /// .rue file, the plan's host.
+        /// .scind file, the plan's host.
         plan: PathBuf,
         #[command(flatten)]
         select: Select,
         /// The instance id the artifact is rendered for.
         #[arg(long)]
         instance: String,
-        /// The target's rue_root; the family's default when absent.
+        /// The target's rescind_root; the family's default when absent.
         #[arg(long)]
-        rue_root: Option<String>,
+        rescind_root: Option<String>,
         /// A plan parameter the artifact bakes in, `name=value`; repeatable.
         #[arg(long = "set", value_name = "NAME=VALUE")]
         set: Vec<String>,
@@ -327,8 +327,12 @@ enum JournalVerb {
 /// How the daemon is reached (section 7.4).
 #[derive(clap::Args, Default)]
 struct Channel {
-    /// The control socket; `RUE_SOCKET` when absent, else /var/run/rue/rued.sock.
-    #[arg(long, env = "RUE_SOCKET", default_value = "/var/run/rue/rued.sock")]
+    /// The control socket; `RESCIND_SOCKET` when absent, else /var/run/rescind/rescindd.sock.
+    #[arg(
+        long,
+        env = "RESCIND_SOCKET",
+        default_value = "/var/run/rescind/rescindd.sock"
+    )]
     socket: PathBuf,
     /// The identity to connect as; the sole identity this user maps to
     /// when absent.
@@ -336,13 +340,13 @@ struct Channel {
     identity: Option<String>,
 }
 
-/// What selects one host's plan from a `.rue` file (section 6.8).
+/// What selects one host's plan from a `.scind` file (section 6.8).
 #[derive(clap::Args, Default)]
 struct Select {
-    /// The inventory host the plan runs on (a .rue input).
+    /// The inventory host the plan runs on (a .scind input).
     #[arg(long)]
     host: Option<String>,
-    /// The plan, when the file defines more than one (a .rue input).
+    /// The plan, when the file defines more than one (a .scind input).
     #[arg(long)]
     plan_name: Option<String>,
     /// The requester's identity; the first declared operator when absent.
@@ -359,7 +363,7 @@ struct Select {
 /// A diagnostic on stderr: miette's report with the source line and a
 /// caret when the diagnostic has a span in a readable file, else the
 /// one-line rendering.
-fn report(d: &rue_core::diagnostics::Diagnostic) {
+fn report(d: &rescind_core::diagnostics::Diagnostic) {
     use miette::{
         GraphicalReportHandler, GraphicalTheme, LabeledSpan, MietteDiagnostic, NamedSource, Report,
     };
@@ -403,7 +407,7 @@ fn report(d: &rue_core::diagnostics::Diagnostic) {
     eprint!("{out}");
 }
 
-/// A plan IR document, or a `.rue` file resolved for one host. A resolver
+/// A plan IR document, or a `.scind` file resolved for one host. A resolver
 /// diagnostic is a refusal (exit 1) with the diagnostics on stderr.
 fn load_input(
     path: &PathBuf,
@@ -419,15 +423,15 @@ fn load_input_opts(
     host_on_ir: bool,
     suspend_e0604: bool,
 ) -> Result<Result<PlanIr, ExitCode>> {
-    if path.extension().is_some_and(|e| e == "rue") {
-        let opts = rue_surface::resolve::Options {
+    if path.extension().is_some_and(|e| e == "scind") {
+        let opts = rescind_surface::resolve::Options {
             suspend_e0604,
             host: select.host.clone(),
             plan: select.plan_name.clone(),
             requester: select.requester.clone(),
             inventory: select.inventory.clone(),
         };
-        return Ok(match rue_surface::resolve::resolve(path, &opts) {
+        return Ok(match rescind_surface::resolve::resolve(path, &opts) {
             Ok(ir) => Ok(ir),
             Err(diags) => {
                 for d in &diags {
@@ -441,7 +445,7 @@ fn load_input_opts(
         || select.plan_name.is_some()
         || select.requester.is_some()
     {
-        anyhow::bail!("--host, --plan-name and --as select from a .rue file; a plan IR is already one host's plan");
+        anyhow::bail!("--host, --plan-name and --as select from a .scind file; a plan IR is already one host's plan");
     }
     Ok(Ok(load(path)?))
 }
@@ -502,7 +506,8 @@ fn run(cli: Cli, out: &mut dyn Write) -> Result<ExitCode> {
                 // said of it is half the document.
                 let said = prose(&v);
                 out.write_all(
-                    rue_core::explain::explain_html(&ir.plan, &deferred, Some(&said)).as_bytes(),
+                    rescind_core::explain::explain_html(&ir.plan, &deferred, Some(&said))
+                        .as_bytes(),
                 )?;
                 return Ok(status_code(&v));
             }
@@ -523,21 +528,21 @@ fn run(cli: Cli, out: &mut dyn Write) -> Result<ExitCode> {
                 },
         } => {
             let entries =
-                rue_engine::store::read_ndjson(&file).map_err(|e| anyhow::anyhow!("{e}"))?;
+                rescind_engine::store::read_ndjson(&file).map_err(|e| anyhow::anyhow!("{e}"))?;
             if entries.is_empty() {
                 eprintln!(
-                    "rue: {}: no entries; a chain with nothing in it verifies nothing",
+                    "rescind: {}: no entries; a chain with nothing in it verifies nothing",
                     file.display()
                 );
                 return Ok(ExitCode::from(1));
             }
             let pk = match &key {
                 Some(k) => {
-                    Some(rue_engine::sign::load_public(k).map_err(|e| anyhow::anyhow!("{e}"))?)
+                    Some(rescind_engine::sign::load_public(k).map_err(|e| anyhow::anyhow!("{e}"))?)
                 }
                 None => None,
             };
-            match rue_engine::sign::verify_chain(&entries, pk.as_ref()) {
+            match rescind_engine::sign::verify_chain(&entries, pk.as_ref()) {
                 Ok(()) => {
                     let signed = match &key {
                         Some(k) => format!(", every signature verified with {}", k.display()),
@@ -545,7 +550,7 @@ fn run(cli: Cli, out: &mut dyn Write) -> Result<ExitCode> {
                     };
                     writeln!(
                         out,
-                        "rue: {}: {} entries, chain verified{signed}",
+                        "rescind: {}: {} entries, chain verified{signed}",
                         file.display(),
                         entries.len()
                     )?;
@@ -553,7 +558,7 @@ fn run(cli: Cli, out: &mut dyn Write) -> Result<ExitCode> {
                         let mut drills = 0;
                         let mut unattested = 0;
                         for e in &entries {
-                            let rue_core::journal::Event::DrillAttested {
+                            let rescind_core::journal::Event::DrillAttested {
                                 plan,
                                 host,
                                 instance,
@@ -591,7 +596,7 @@ fn run(cli: Cli, out: &mut dyn Write) -> Result<ExitCode> {
                     Ok(ExitCode::SUCCESS)
                 }
                 Err(e) => {
-                    eprintln!("rue: {}: {e}", file.display());
+                    eprintln!("rescind: {}: {e}", file.display());
                     Ok(ExitCode::from(1))
                 }
             }
@@ -850,7 +855,7 @@ fn run(cli: Cli, out: &mut dyn Write) -> Result<ExitCode> {
             deadline_ms,
             json,
         } => {
-            let report = match rue_engine::conform::conform(
+            let report = match rescind_engine::conform::conform(
                 &name,
                 &command,
                 std::time::Duration::from_millis(deadline_ms),
@@ -859,7 +864,7 @@ fn run(cli: Cli, out: &mut dyn Write) -> Result<ExitCode> {
                 Err(e) => {
                     // Exit 2: the suite could not be run at all, which is a
                     // different thing from a hook that ran and failed.
-                    eprintln!("rue sdk-conform: {e}");
+                    eprintln!("rescind sdk-conform: {e}");
                     return Ok(ExitCode::from(2));
                 }
             };
@@ -892,13 +897,13 @@ fn run(cli: Cli, out: &mut dyn Write) -> Result<ExitCode> {
         Verb::Fmt { file, check } => {
             let src = fs::read_to_string(&file)
                 .with_context(|| format!("cannot read {}", file.display()))?;
-            match rue_surface::format(&src, &file.display().to_string()) {
+            match rescind_surface::format(&src, &file.display().to_string()) {
                 Ok(formatted) => {
                     if check {
                         if formatted == src {
                             Ok(ExitCode::SUCCESS)
                         } else {
-                            eprintln!("rue: {} is not formatted", file.display());
+                            eprintln!("rescind: {} is not formatted", file.display());
                             Ok(ExitCode::from(1))
                         }
                     } else {
@@ -918,7 +923,7 @@ fn run(cli: Cli, out: &mut dyn Write) -> Result<ExitCode> {
             plan,
             select,
             instance,
-            rue_root,
+            rescind_root,
             set,
         } => {
             let ir = match load_input(&plan, &select, true)? {
@@ -936,7 +941,7 @@ fn run(cli: Cli, out: &mut dyn Write) -> Result<ExitCode> {
             let host = host.unwrap_or_else(|| ir.plan.owner.clone());
             let inst = Instance {
                 id: instance,
-                rue_root,
+                rescind_root,
             };
             match render(&ir.site, &ir.plan, &host, &inst, &bindings) {
                 Ok(a) => {
@@ -946,7 +951,7 @@ fn run(cli: Cli, out: &mut dyn Write) -> Result<ExitCode> {
                 // A diagnostic or a refusal of the plan's own content is 1;
                 // a wrong call (no backstop, an unknown host) is 2.
                 Err(e) => {
-                    eprintln!("rue: {e}");
+                    eprintln!("rescind: {e}");
                     Ok(match e {
                         RenderError::NoBackstop
                         | RenderError::NotTarget
@@ -968,11 +973,15 @@ fn over_channel(
     args: serde_json::Value,
     out: &mut dyn Write,
 ) -> Result<ExitCode> {
-    use rue_engine::control::Client;
-    let mut c = Client::connect(&ch.socket)
-        .with_context(|| format!("connecting to {} (is rued running?)", ch.socket.display()))?;
+    use rescind_engine::control::Client;
+    let mut c = Client::connect(&ch.socket).with_context(|| {
+        format!(
+            "connecting to {} (is rescindd running?)",
+            ch.socket.display()
+        )
+    })?;
     if let Err(e) = c.hello(ch.identity.as_deref()) {
-        eprintln!("rue: {e}");
+        eprintln!("rescind: {e}");
         return Ok(ExitCode::from(2));
     }
     match c.call(verb, args) {
@@ -1020,7 +1029,7 @@ fn over_channel(
                         .unwrap_or("unreachable");
                     let boot = match h.get("bootstrap").and_then(|b| b.as_object()) {
                         Some(b) => {
-                            let ok = ["rue_root", "group", "instances_dir", "lock", "modes_ok"]
+                            let ok = ["rescind_root", "group", "instances_dir", "lock", "modes_ok"]
                                 .iter()
                                 .all(|k| b.get(*k).and_then(|v| v.as_bool()) == Some(true));
                             if ok {
@@ -1158,7 +1167,7 @@ fn over_channel(
             Ok(ExitCode::from(exit))
         }
         Err(e) => {
-            eprintln!("rue: {e}");
+            eprintln!("rescind: {e}");
             Ok(ExitCode::from(match e.code.as_str() {
                 "R0101" => 75,
                 "refused" => 1,
@@ -1171,12 +1180,12 @@ fn over_channel(
 /// Ask the daemon whether it runs in dry-run mode (a hello and nothing
 /// else); a connection or identity failure is reported as the verb would.
 fn daemon_dry_run(ch: &Channel) -> Result<bool, ExitCode> {
-    use rue_engine::control::Client;
+    use rescind_engine::control::Client;
     let mut c = match Client::connect(&ch.socket) {
         Ok(c) => c,
         Err(e) => {
             eprintln!(
-                "rue: connecting to {} (is rued running?): {e}",
+                "rescind: connecting to {} (is rescindd running?): {e}",
                 ch.socket.display()
             );
             return Err(ExitCode::from(2));
@@ -1185,7 +1194,7 @@ fn daemon_dry_run(ch: &Channel) -> Result<bool, ExitCode> {
     match c.hello(ch.identity.as_deref()) {
         Ok(h) => Ok(h.dry_run),
         Err(e) => {
-            eprintln!("rue: {e}");
+            eprintln!("rescind: {e}");
             Err(ExitCode::from(2))
         }
     }
@@ -1237,7 +1246,7 @@ fn parse_duration(s: &str) -> Result<u64> {
     })
 }
 
-/// A proof or token on stdin. Nothing there is not an error: `rue
+/// A proof or token on stdin. Nothing there is not an error: `rescind
 /// approve` with no token prints the challenge instead of submitting.
 fn read_stdin() -> anyhow::Result<String> {
     use std::io::IsTerminal;
@@ -1260,7 +1269,7 @@ fn main() -> ExitCode {
         }
         Err(e) => {
             let _ = lock.flush();
-            eprintln!("rue: {e:#}");
+            eprintln!("rescind: {e:#}");
             ExitCode::from(2)
         }
     }

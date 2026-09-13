@@ -6,7 +6,7 @@ module Test.Diagnostics (tests) where
 import Data.Char (isDigit)
 import Data.List (nub, sort)
 import qualified Data.Text as T
-import Rue.Proto.Diagnostics
+import Rescind.Proto.Diagnostics
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (assertBool, testCase, (@?=))
 

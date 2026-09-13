@@ -1,8 +1,8 @@
 #!/bin/sh
 # The hook protocol is frozen at v1 (docs/ROADMAP.md, Phase 4).
 #
-# docs/hook-protocol-v1.json is a golden, generated from rue-hook-proto's
-# tables by rue-goldens and compared byte for byte by the suite. That alone
+# docs/hook-protocol-v1.json is a golden, generated from rescind-hook-proto's
+# tables by rescind-goldens and compared byte for byte by the suite. That alone
 # freezes nothing: change an op, regenerate the goldens, and v1 now means
 # something it did not mean yesterday while every test is green. So this
 # guard pins each released version's DIGEST here, where changing it is a
@@ -32,8 +32,17 @@ while [ $# -gt 0 ]; do
 done
 
 # version  sha256 of docs/hook-protocol-v<version>.json
+#
+# v1's pin moved once, in v0.4.0, and the WIRE DID NOT. The rename from `rue`
+# to `rescind` rewrote one sentence inside the document -- the `frozen` note
+# saying which crate generated it -- and nothing else: parsed as JSON with
+# that note removed, the v0.3.0 and v0.4.0 documents are equal, so every op,
+# every field and every kind is unchanged and v1 is still v1. That was
+# checked rather than assumed before this line was edited. A change that
+# touches an op, a field or a kind is still a new protocol version, never a
+# new pin here.
 RELEASED='
-1 c79946e55a921135f7ae0573d4623c2d3048c0e1b567fae777858291e8b16c6b
+1 e7e240793ba20b30aa92e990eb4593b03c0c454706246371131ab4eba8592595
 '
 
 digest() {
@@ -74,7 +83,7 @@ while read -r version want; do
         echo "  now:     $got" >&2
         echo "  hook protocol v$version is frozen. A change to an op, a field or a kind is a" >&2
         echo "  new protocol version: bump HOOK_PROTOCOL in hook-proto/src/op.rs, regenerate" >&2
-        echo "  (RUE_UPDATE_GOLDENS=1 cargo run -p rue-tenants --bin rue-goldens), restore" >&2
+        echo "  (RESCIND_UPDATE_GOLDENS=1 cargo run -p rescind-tenants --bin rescind-goldens), restore" >&2
         echo "  this file from git, and say in docs/ROADMAP.md what the new version changed." >&2
         rc=1
     fi

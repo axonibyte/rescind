@@ -1,6 +1,6 @@
 # Prior art: the falsification sweep
 
-The claim under test (docs/ROADMAP.md section 1.1): rue is the first plan
+The claim under test (docs/ROADMAP.md section 1.1): rescind is the first plan
 language in which "this can be undone" is a compile-time verdict rather than
 a comment. Section 1.3's standing order is that before Phase 0 exits, one
 person spends a day trying to break the claim and records what was found.
@@ -14,7 +14,7 @@ narrowed, or falls.
 The claim survives, narrowed in one place. Two bodies of work decide
 reversibility offline and were not in the roadmap's table: action
 reversibility in AI planning, and the compensation calculi. Neither is a
-language for operations against hosts, and neither states the things rue's
+language for operations against hosts, and neither states the things rescind's
 verdict states (undo locus, cost, arming order, who must act, how long); but
 "compile-time verdict on undoability" is not new in the abstract, and the
 claim should say "for operations against a world, from declared footprints"
@@ -39,9 +39,9 @@ What was checked: the KR 2020 page and abstract; the 2008 paper's abstract;
 the 2024 and 2025 follow-ups' titles and abstracts.
 
 Delta: this is a compile-time decision about undoability, so the abstract
-idea predates rue. It decides by search over a STRIPS-like world model in
+idea predates rescind. It decides by search over a STRIPS-like world model in
 which every action's effects are fully known, and its answer is a reverse
-plan or its absence. Rue does not search: it computes from declarations
+plan or its absence. Rescind does not search: it computes from declarations
 (footprint kinds, undo body and locus, refusal mode, backstop and its arming
 order) and its verdict states where the undo runs, past which step it
 cannot, what the step of no return costs, who must acknowledge it, and how
@@ -65,7 +65,7 @@ Delta: these give semantics to compensation and prove properties of the
 calculi (expressiveness, decidability). None types the footprint an
 activity touches or decides, for a given program, whether its compensations
 compose; the "static compensation" of the calculi means the compensation is
-fixed at installation, not that anything is checked. Rue is the checker
+fixed at installation, not that anything is checked. Rescind is the checker
 these calculi lack, and its footprint algebra is what makes the check
 possible.
 
@@ -77,7 +77,7 @@ a BIP-based compositional semantics).
 
 Delta: model checking of a given process against properties someone wrote
 down, after translation. Not a language-level verdict, no footprints, no
-locus. Adjacent in spirit to rue's E-codes, different in kind.
+locus. Adjacent in spirit to rescind's E-codes, different in kind.
 
 ### Sagas and compensating transactions (in the table; survives)
 
@@ -93,14 +93,14 @@ taken effect.
 Delta unchanged: nothing about a compensation is checked before it runs;
 there is no undo that outlives the engine, no point of no return, no
 locus. The documented compensation-before-effect failure is exactly the
-class rue's LIFO interference query and step numbering exist to refuse.
+class rescind's LIFO interference query and step numbering exist to refuse.
 
 ### `commit confirmed` (in the table; survives)
 
 Junos `commit confirmed` (1 to 65535 minutes, default 10), IOS-XR
 `commit confirmed`, IOS-XE `configure terminal revert timer`.
 
-Delta unchanged: one device, one kind of change, one trigger. Rue's T3 is
+Delta unchanged: one device, one kind of change, one trigger. Rescind's T3 is
 this generalized to any op with a target-standalone undo, and the reach rule
 proves the arming order the devices get for free by being the thing they
 change.
@@ -126,8 +126,46 @@ at runtime from a captured `CurrentState()`. US 10565536 and US 11087258,
 their claims is offered.
 
 Delta: runtime pairing of forward and reverse transactions with state
-capture; no static verification of the undo is claimed. Rue's verdict is
+capture; no static verification of the undo is claimed. Rescind's verdict is
 computed before anything runs.
+
+### A programming language with a fully undoable core (added 2026-09-13; narrows the claim)
+
+US 7174481, 7203866, 7734958, 7966605 and 8112671, "Method and apparatus for
+a programming language having fully undoable, timed reactive instructions"
+(AT&T; priority 2001, grants 2007-2012; inventors Di Fabbrizio and
+Klarlund). A reactive language with "a fully undoable core language portion
+and a conventional language portion", whose programs "fully recover to any
+previous program execution state". It carries a `local protect` primitive
+that "prevents a thread from being recovered to a point before" it, and it
+notifies an external program when core-language executions are undone.
+
+Recorded for awareness; no reading of the claims is offered. What was read
+is the abstract and the description of one of the five.
+
+Delta, and it is smaller than the deltas above. **Undo is decided at run
+time** here, by event queues and checkpointing; rescind's verdict is computed
+before anything runs, from declarations. It recovers **program execution
+state** inside a language runtime, with a notification boundary to an
+external program, rather than operating on hosts it does not own from
+declared footprints; and it has no cost, no acknowledgement, no arming order
+and no bound.
+
+**What it takes away.** A point past which undo cannot reach is NOT rescind's
+idea: `local protect` is exactly that, in a language, from a 2001 priority
+date. What survives is computing and reporting that point **statically,
+before execution**, which is narrower than section 1.1's "past which step it
+cannot" invites a reader to assume. And "a language whose core is fully
+undoable" is a quarter of a century old.
+
+**How it was found, because the method matters more than the entry.** Not by
+the falsification sweep, which searched the section 1.2 table and adjacent
+fields and recorded three infrastructure-workflow patents while missing a
+five-patent family whose title is literally a programming language with
+undoable instructions. It surfaced in a single plain-language web search run
+for an unrelated reason -- checking what a candidate project NAME already
+meant. The sweep's structured queries over an author-chosen list could not
+see it; one sentence typed the way a stranger would type it did.
 
 ### Reversible DSLs outside operations (new; survives)
 
@@ -159,10 +197,10 @@ ones on abort. Squidie, an Elixir workflow runtime with steps marked
 `:irreversible`.
 
 Delta: Agentproof verifies reachability and temporal safety, not
-reversibility, footprints or locus. Atomix's commit gate is rue's `knell`
+reversibility, footprints or locus. Atomix's commit gate is rescind's `knell`
 and `commit()` discipline at runtime, with no verdict beforehand. Squidie
 marks a step irreversible and does nothing with the mark statically. The
-vocabulary is converging on rue's from a different direction, which is
+vocabulary is converging on rescind's from a different direction, which is
 evidence the problem is real and the verdict is the missing piece.
 
 ### Ansible, Terraform, Kubernetes, NixOS (in the table; survive)
@@ -178,7 +216,7 @@ Delta unchanged.
 Policy satisfiability, minimum-satisfaction analysis and refusal of mixed
 timelocks at compile time.
 
-Delta unchanged: policy, not operations. It is the model rue's gates borrow,
+Delta unchanged: policy, not operations. It is the model rescind's gates borrow,
 including the refusal of a policy the compiler cannot reason about (E0508,
 E0509).
 
@@ -189,7 +227,7 @@ that changes the delta.
 
 ## Proposed rewording of the claim
 
-"Rue is the first language for operations against hosts in which 'this can
+"Rescind is the first language for operations against hosts in which 'this can
 be undone' is a compile-time verdict rather than a comment: computed from
 declared footprints, undo loci and refusal modes rather than by search over
 a world model, and stating where the undo runs, past which step it cannot,
@@ -229,82 +267,123 @@ declarations, with locus and cost in the answer, is."
 
 ---
 
-# The name sweep
+# The name sweep, and the rename it caused
 
 ROADMAP section 12 requires a search of crates.io, PyPI, npm and GitHub for
-`rue`, `rued` and `rue-core`, and for the SDKs' publishing names, recorded
-here **before anything is public**; it is one of Phase 5's exit criteria.
-Swept 2026-09-12.
+the project's name and the SDKs' publishing names, recorded here **before
+anything is public**. Swept for `rue` on 2026-09-12; swept again for
+`rescind` on 2026-09-13, after the first sweep's finding was acted on.
 
-## Verdict
+## What the first sweep found, and what it missed
 
-**The name `rue` is taken for a programming language, twice, and the two
-package names rue would publish first are held by one of them.** Nothing is
-blocked today -- rue publishes nothing and its repository is private -- and
-renaming is the owner's decision and nobody else's. What the sweep can say
-is what a public rue would walk into.
+**`rue` was taken for a programming language, twice**, and the two package
+names it would have published first were held by one of them:
+`github.com/xch-dev/rue` (a typed Chia language targeting CLVM, holding
+`rue` and `rue-lsp` on crates.io) and `github.com/rue-language/rue` (an
+experimental systems language implemented in Rust, ~1,200 stars, its own
+domain, actively developed).
 
-## What is taken
+**It understated the collision, and the method is why.** The sweep queried a
+FIXED LIST of six names -- the three ROADMAP section 12 named, plus the SDK
+names -- and reported that `rue`, `rue-core` and `rue-lsp` were taken. It
+never enumerated the namespace. Enumerating it on 2026-09-13 found
+**seventeen `rue*` crates, fourteen of them one language's toolchain**:
+`rue-parser`, `rue-lexer`, `rue-compiler`, `rue-ast`, `rue-hir`, `rue-lir`,
+`rue-types`, `rue-diagnostic`, `rue-options`, `rue-cli`, `rue-lsp`,
+`rue-clvm`, `rue-typing`, `rue-formatter`, and `rue` itself. With one
+instance of each name checked, "this name is taken" and "this entire
+namespace is another language's toolchain" give the same answer.
 
-| Registry | Name | Held by | Evidence |
-|---|---|---|---|
-| crates.io | `rue` | "The Rue programming language", 0.1.0, 2025-12-21, 35 downloads | `github.com/xch-dev/rue`, homepage `rue-lang.com` — a typed language for Chia targeting CLVM bytecode |
-| crates.io | `rue-lsp` | the same project's language server, 0.10.0, 2026-07-26, 4202 downloads | `github.com/xch-dev/rue` |
-| crates.io | `rue-core` | "A Vue 3-like reactive UI framework", 0.1.0, 2026-05-15, 21 downloads | unrelated |
-| PyPI | `rue` | "Testing Framework for AI Software", 0.1.0 | unrelated |
-| npm | `rue` | "nodejs dependency injection container", 0.9.2 | unrelated |
-| GitHub | `rue-language/rue` | a second language called Rue, 1193 stars | "higher level than Rust but lower level than…" |
-| GitHub | `xch-dev/rue` | the crates.io holder, 47 stars | as above |
-| GitHub | `fasterthanlime/rue` | "a bad version of strace in Rust", 51 stars | unrelated |
+**And it never ran the search a stranger runs.** Registry APIs answer *is
+the name taken*. They do not answer *what does this name already mean*, and
+those are different questions: searching `rue crate rust` returns a
+definition -- "Rue is a typed programming language which gets compiled to
+CLVM bytecode" -- not a list of links. The first sweep reasoned about
+discovery in a paragraph instead of observing it. The owner found the
+collision in one search, which is the whole of the argument for running one.
 
-## What is free
+## The rename
 
-`rued` (crates.io, PyPI, npm); `rue-hook`, `rue-hook-sdk` (crates.io);
-`rue-hook`, `rue_hook` (PyPI); `rue-hook`, `tree-sitter-rue` (npm);
-`dev.rue` (Maven Central, no group); `Rue` and `Rue.Hook` (NuGet); `rue`
-and `rue_hook` (Hex).
+The project was renamed **`rue` -> `rescind`** on 2026-09-13, at v0.4.0,
+with the repository renamed in place so no history was lost. The name is a
+legal verb -- to annul an order, restoring what it disturbed -- and the
+language's file extension `.scind` is its root: *scindere*, to cut;
+*re-scind*, to cut back. The file describes the cut and the tool takes it
+back.
 
-So every name the SDKs need is available under every ecosystem's own
-convention. What is not available is the one name the project is called.
+`rue` survives in exactly two places on purpose, and both are recorded
+where they live: the version keyword, which is accepted and answered with
+**E0610** naming the change, so the frozen upgrade vectors still check; and
+the journal and request **domain separators**, which are mixed into every
+hash and signature ever written and whose stability is the only property
+that matters about them.
 
-## What this does and does not mean
+## The sweep for `rescind`, 2026-09-13
 
-It is not a legal question — no trademark search was done, and none is
-being claimed here. It is a collision question, and it has two halves.
+Checked the way the first sweep should have been: namespace enumeration, the
+shape names a toolchain reaches for, every registry the project would ever
+publish to, and the plain-language searches.
 
-The **discovery** half: someone searching "rue language" today finds two
-other languages, one with a domain of its own. A third would be hard to
-find and easy to confuse, and every answer to "does rue do X?" would have to
-begin by asking which rue.
+| where | result |
+|---|---|
+| crates.io | **zero crates** in the whole `rescind*` namespace; `rescindd`, `rescind-cli`, `rescind-lsp`, `rescind-core`, `rescind-hook`, `rescind-engine` all free |
+| PyPI | free, with `rescind-hook` and `rescind_hook` free |
+| npm | `tree-sitter-rescind` and `rescind-cli` free; the bare name is a tombstone (see below) |
+| Hex, RubyGems, Packagist | free, with `rescind_hook` free |
+| Maven Central | `dev.rescind` free |
+| NuGet | `rescind`, `rescind.hook` free |
+| Go proxy, Homebrew, Debian, AUR, FreeBSD ports | free |
+| Docker Hub | no images |
+| GitHub | 25 repositories mention the word in total; the largest has 4 stars; none is a language or a developer tool |
+| DNS | `rescind.dev`, `rescind.sh`, `rescind-lang.dev` unregistered; `.com/.io/.org/.net/.app` registered and parked with no content |
+| plain search | no language, no tool, no company. `rescind programming language` returns the CATEGORY -- reversible programming languages -- rather than a competitor |
 
-The **publishing** half is narrower than it looks. A private repository and
-a tarball need no registry at all. What a registry name is needed for is
-`cargo install rue`, and that name is gone; `rued` is free, and a project
-whose daemon is `rued` could publish the pair as `rued` and `rued-cli`
-without touching `rue` — the binary an operator types would still be `rue`.
+**Four things that are not clean, recorded rather than smoothed over.**
 
-## The owner's options, for the record
+1. **ReScript.** A real, well-known language (compiles to JavaScript).
+   `rescind` and `rescript` differ by two letters and share the `resc-`
+   prefix. This is a mishearing and autocorrect risk, not a namespace or
+   legal one, and the owner accepted it deliberately. No registry, GitHub or
+   DNS check would have surfaced it; the plain search did.
+2. **The npm bare name cannot be published.** It is a tombstone: version
+   `10.0.0`, published 2014-04-05 with the description "v. To make void",
+   unpublished eighty-two minutes later by npm's own founder. Zero versions
+   remain. It does not matter -- what this project publishes to npm is
+   `tree-sitter-rescind`.
+3. **The GitHub handle `Rescind` is taken** by an account with no
+   repositories and no followers, untouched since 2022. The organisation
+   name is unavailable; `axonibyte/rescind` was free and is what is used.
+4. **No trademark search was done.** The USPTO's search is not publicly
+   queryable and a web search is not a clearance. Nothing here claims a
+   mark, and searching the word returns trademark *cancellation* law,
+   because "rescind" is a legal verb -- which is also a mild permanent
+   search headwind: `rescind <technical term>` pulls in documentation about
+   removing things.
 
-1. **Keep the name, publish under `rued`.** Nothing in the repository
-   changes. The collision stays a discovery problem, and the README's first
-   line has to disambiguate.
-2. **Keep the name privately, decide at publication.** The sweep is done;
-   the decision waits for the decision to go public, which is the owner's
-   anyway.
-3. **Rename.** The cost is not the code — the seam guard would find every
-   occurrence in a morning — it is every document, every tenant, the
-   protocol's own field names (`rue_root`, `rue-region`, `# rue-region`
-   markers written into strangers' files, `dev.rue`), and the store's
-   on-disk paths. That cost rises with every release, and it is lowest now.
+## What the method changed
 
-Recorded, not decided.
+The first sweep's two defects are now the rule for the next one, whatever it
+is for: **enumerate the namespace rather than a list of names you thought
+of**, and **run the search a stranger would run**, because it answers a
+different question than a registry API does. Section 1.3's standing order
+carries both.
 
 ## Sources
 
-- crates.io: `https://crates.io/api/v1/crates/{rue,rued,rue-core,rue-hook,rue-hook-sdk,rue-lsp}`
-- PyPI: `https://pypi.org/pypi/{rue,rued,rue-hook,rue_hook,rue-core}/json`
-- npm: `https://registry.npmjs.org/{rue,rued,rue-hook,tree-sitter-rue}`
-- GitHub: `https://api.github.com/search/repositories?q=rue+in:name&sort=stars`
-- Maven Central: `https://search.maven.org/solrsearch/select?q=g:dev.rue`
-- NuGet: `https://azuresearch-usnc.nuget.org/query?q=packageid:{Rue,Rue.Hook}`
-- Hex: `https://hex.pm/api/packages/{rue,rue_hook}`
+- crates.io: `https://crates.io/api/v1/crates?q=<name>` (namespace), and
+  `/api/v1/crates/<name>` per shape name
+- PyPI: `https://pypi.org/pypi/<name>/json`
+- npm: `https://registry.npmjs.org/<name>`
+- Hex: `https://hex.pm/api/packages/<name>`; RubyGems:
+  `https://rubygems.org/api/v1/gems/<name>.json`
+- Maven Central: `https://search.maven.org/solrsearch/select?q=g:dev.rescind`
+- NuGet: `https://azuresearch-usnc.nuget.org/query?q=packageid:<name>`
+- Go: `https://proxy.golang.org/<module>/@v/list`; Homebrew:
+  `https://formulae.brew.sh/api/formula/<name>.json`
+- Debian: `https://sources.debian.org/api/search/<name>/`; AUR:
+  `https://aur.archlinux.org/rpc/v5/info?arg[]=<name>`
+- GitHub: `https://api.github.com/search/repositories?q=<name>`
+- Linguist, for the file extension:
+  `https://raw.githubusercontent.com/github-linguist/linguist/main/lib/linguist/languages.yml`
+- Plain-language web search, which is the one that found both the collision
+  and, separately, the patent family in the section above

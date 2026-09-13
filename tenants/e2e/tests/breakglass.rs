@@ -12,9 +12,9 @@
 
 use std::path::PathBuf;
 
-use rue_e2e::{
-    e2e_root, expect_exit, instance_of, must, python, repo_root, require_provisioned_host, rue,
-    rue_with_stdin, target_read, token_from, Daemon, Site,
+use rescind_e2e::{
+    e2e_root, expect_exit, instance_of, must, python, repo_root, require_provisioned_host, rescind,
+    rescind_with_stdin, target_read, token_from, Daemon, Site,
 };
 
 /// The plan: T1's shape, with the parts a guest can carry.
@@ -36,8 +36,8 @@ defop :bmc_enable, %{os: :appliance} do
 end
 
 defop :keys_block, _ do
-  footprint region: file("/root/.ssh/authorized_keys", anchor: "rue-e2e-t1")
-  do: region_set(file("/root/.ssh/authorized_keys", anchor: "rue-e2e-t1"), content: "# rue e2e t1")
+  footprint region: file("/root/.ssh/authorized_keys", anchor: "rescind-e2e-t1")
+  do: region_set(file("/root/.ssh/authorized_keys", anchor: "rescind-e2e-t1"), content: "# rescind e2e t1")
   undo: :restore
   undo_locus: :target
 end
@@ -99,21 +99,21 @@ fn a_break_glass_plan_opens_on_two_proofs_escrows_its_secret_and_reverts() {
         })
         .collect();
     // The hooks keep their state where the harness can read it.
-    std::env::set_var("RUE_T1_STATE", &state);
+    std::env::set_var("RESCIND_T1_STATE", &state);
     let d = Daemon::start_with(&site, &spawn);
 
     // The plan is refused entry until two humans have proved themselves.
-    let out = rue(
+    let out = rescind(
         &d.socket,
         &["apply", site.file.to_str().unwrap(), "--host", "fw-01"],
     );
     let line = expect_exit("apply", &out, 6);
     let id = instance_of(&line);
     assert!(line.contains("pending"), "{line}");
-    assert!(!target_read("/root/.ssh/authorized_keys").contains("rue-e2e-t1"));
+    assert!(!target_read("/root/.ssh/authorized_keys").contains("rescind-e2e-t1"));
 
     // The challenge the authority renders, and the proof it accepts.
-    let out = rue(&d.socket, &["approve", &id]);
+    let out = rescind(&d.socket, &["approve", &id]);
     let challenge = must("approve (challenge)", &out);
     let token = token_from(&challenge);
     assert!(
@@ -123,7 +123,7 @@ fn a_break_glass_plan_opens_on_two_proofs_escrows_its_secret_and_reverts() {
 
     // One proof is not two: the instance is still pending, which is exit
     // 6 and not a failure of the verb.
-    let out = rue_with_stdin(
+    let out = rescind_with_stdin(
         &d.socket,
         &["approve", &id, "--authenticator", "oncall"],
         &token,
@@ -132,7 +132,7 @@ fn a_break_glass_plan_opens_on_two_proofs_escrows_its_secret_and_reverts() {
     assert!(line.contains("pending"), "one proof is not two: {line}");
 
     // The second opens it, and the plan runs to the end.
-    let out = rue_with_stdin(
+    let out = rescind_with_stdin(
         &d.socket,
         &["approve", &id, "--authenticator", "second"],
         &token,
@@ -141,7 +141,7 @@ fn a_break_glass_plan_opens_on_two_proofs_escrows_its_secret_and_reverts() {
     assert!(line.contains("applied"), "{line}");
     // The region is on the target, and the account is enabled on the
     // appliance, which has no filesystem and never had a directory.
-    assert!(target_read("/root/.ssh/authorized_keys").contains("rue-e2e-t1"));
+    assert!(target_read("/root/.ssh/authorized_keys").contains("rescind-e2e-t1"));
     assert_eq!(
         std::fs::read_to_string(state.join("bmc-account")).unwrap_or_default(),
         "enabled\n"
@@ -163,9 +163,9 @@ fn a_break_glass_plan_opens_on_two_proofs_escrows_its_secret_and_reverts() {
     );
 
     // Recanted: the region goes and the account is disabled again.
-    let out = rue(&d.socket, &["recant", &id]);
+    let out = rescind(&d.socket, &["recant", &id]);
     must("recant", &out);
-    assert!(!target_read("/root/.ssh/authorized_keys").contains("rue-e2e-t1"));
+    assert!(!target_read("/root/.ssh/authorized_keys").contains("rescind-e2e-t1"));
     assert_eq!(
         std::fs::read_to_string(state.join("bmc-account")).unwrap_or_default(),
         ""

@@ -1,7 +1,7 @@
 # Reverts: a plan with both wane and commit(), or neither, has no intent (E0501)
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/proto/src/Rue/Proto/Intent.hs
-+++ b/proto/src/Rue/Proto/Intent.hs
+--- a/proto/src/Rescind/Proto/Intent.hs
++++ b/proto/src/Rescind/Proto/Intent.hs
 @@ -26,7 +26,7 @@
    | planFiresByConstruction p = if hasWane || hasCommit then Nothing else Just Temporary
    | hasWane && not hasCommit = Just Temporary

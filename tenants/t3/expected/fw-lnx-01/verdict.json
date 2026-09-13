@@ -64,7 +64,7 @@
       "conditional": "foreign region in file:/etc/nftables.conf",
       "drift": "clobber",
       "footprint": [
-        "region: file:/etc/nftables.conf anchor rue-mgmt"
+        "region: file:/etc/nftables.conf anchor rescind-mgmt"
       ],
       "gate": null,
       "knell": null,
@@ -72,7 +72,7 @@
       "n": 1,
       "op": "nft_allow",
       "refusal": "revert",
-      "undo": "strip anchor rue-mgmt from file:/etc/nftables.conf",
+      "undo": "strip anchor rescind-mgmt from file:/etc/nftables.conf",
       "undo_locus": "target"
     },
     {

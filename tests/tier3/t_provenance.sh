@@ -20,7 +20,7 @@ command -v git > /dev/null 2>&1 || {
     exit 2
 }
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-t-prov.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-t-prov.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 rc=0
@@ -32,7 +32,7 @@ bad() { echo "not ok  $1" >&2; rc=1; }
 g() { # g <dir> <args...>
     d=$1
     shift
-    git -C "$d" -c user.name=rue-selftest -c user.email=selftest@example.invalid \
+    git -C "$d" -c user.name=rescind-selftest -c user.email=selftest@example.invalid \
         -c commit.gpgsign=false -c init.defaultBranch=main "$@"
 }
 
@@ -57,7 +57,7 @@ make_tree() { # make_tree <dir>
     cat > "$d/tenants/_upgrade/PROVENANCE" <<EOF
 [v0.1.0]
 kind = tag
-repo = example.invalid/selftest/rue
+repo = example.invalid/selftest/rescind
 ref = v0.1.0
 commit = $commit
 prefix = tenants
@@ -78,7 +78,7 @@ EOF
     cat > "$d/engine/tests/fixtures/PROVENANCE" <<EOF
 [store-v0.1.0]
 kind = committed
-repo = example.invalid/selftest/rue
+repo = example.invalid/selftest/rescind
 commit = $fx
 made = 2026-09-12
 written_by = v0.1.0
@@ -191,7 +191,7 @@ g "$d" show "v0.1.0:tenants/t1/plan.rue" > "$d/tenants/_upgrade/v0.2.0/t1/plan.r
 cat > "$d/tenants/_upgrade/PROVENANCE" <<EOF
 [v0.1.0]
 kind = tag
-repo = example.invalid/selftest/rue
+repo = example.invalid/selftest/rescind
 ref = v0.2.0
 commit = $two
 prefix = tenants
@@ -199,7 +199,7 @@ made = 2026-09-12
 
 [v0.2.0]
 kind = tag
-repo = example.invalid/selftest/rue
+repo = example.invalid/selftest/rescind
 ref = v0.1.0
 commit = $one
 prefix = tenants

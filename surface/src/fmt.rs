@@ -1,4 +1,4 @@
-//! `rue fmt` (docs/ROADMAP.md 6.9): the canonical layout, which is the
+//! `rescind fmt` (docs/ROADMAP.md 6.9): the canonical layout, which is the
 //! tenant corpus's own. Two spaces per block depth; one space after a
 //! comma and after a keyword's colon; none inside brackets or around a
 //! dot; a call's parenthesis touches its name; binary operators spaced;

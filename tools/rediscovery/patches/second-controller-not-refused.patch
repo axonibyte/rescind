@@ -15,8 +15,8 @@
 -                    {
 -                        return Ok(Err(format!(
 -                            "R0409: {} holds instance {} of controller {other}, armed and \
--                             not fired; rue is single-controller per host. Its backstop is \
--                             live: read it, then `rue reclaim {} {} --force --reason ...` \
+-                             not fired; rescind is single-controller per host. Its backstop is \
+-                             live: read it, then `rescind reclaim {} {} --force --reason ...` \
 -                             if it is spent",
 -                            host.name(),
 -                            d.instance,

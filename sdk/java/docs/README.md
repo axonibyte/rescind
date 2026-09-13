@@ -1,6 +1,6 @@
-# rue-hook for Java
+# rescind-hook for Java
 
-A hook is a process that `rued` calls on a site's behalf: to record journal
+A hook is a process that `rescindd` calls on a site's behalf: to record journal
 entries, run steps on hosts it cannot reach itself, answer probes, approve
 gates, resolve and receive secrets, deliver notifications, or schedule
 backstops. The protocol is newline-delimited JSON ([hook-protocol.md]).
@@ -10,15 +10,15 @@ for you.
 
 - **No dependencies.** Java 17 or later; the JSON codec is the library's
   own, so the jar is all a host application takes on.
-- **Conformance-tested.** `rue sdk-conform` drives every op of every kind
+- **Conformance-tested.** `rescind sdk-conform` drives every op of every kind
   through this library's own serve loop ([sdk-conformance.md]).
 - **Protocol v1**, which is frozen: a hook written against it keeps working
   until a new protocol version says otherwise.
 
 ## Install
 
-The artifact is `dev.rue:rue-hook`. It is not on Maven Central; install it
-from a checkout of rue into your local repository:
+The artifact is `dev.rescind:rescind-hook`. It is not on Maven Central; install it
+from a checkout of rescind into your local repository:
 
 ```sh
 mvn -f sdk/java/pom.xml install
@@ -28,29 +28,29 @@ and depend on it:
 
 ```xml
 <dependency>
-  <groupId>dev.rue</groupId>
-  <artifactId>rue-hook</artifactId>
+  <groupId>dev.rescind</groupId>
+  <artifactId>rescind-hook</artifactId>
   <version>0.2.0</version>
 </dependency>
 ```
 
-Or put `sdk/java/target/rue-hook-0.2.0.jar` (from `mvn package`) on the
+Or put `sdk/java/target/rescind-hook-0.2.0.jar` (from `mvn package`) on the
 classpath.
 
 ## Quick start
 
 An audit hook: a journal sink that keeps every entry the engine chains,
 and a notifier. This file is
-`src/main/java/dev/rue/hook/example/AuditHook.java`, and ships in the jar;
+`src/main/java/dev/rescind/hook/example/AuditHook.java`, and ships in the jar;
 the library's own tests drive it (`AuditHookTest`).
 
-<!-- example: src/main/java/dev/rue/hook/example/AuditHook.java -->
+<!-- example: src/main/java/dev/rescind/hook/example/AuditHook.java -->
 ```java
-package dev.rue.hook.example;
+package dev.rescind.hook.example;
 
-import dev.rue.hook.Hooks;
-import dev.rue.hook.Json;
-import dev.rue.hook.Serve;
+import dev.rescind.hook.Hooks;
+import dev.rescind.hook.Json;
+import dev.rescind.hook.Serve;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -61,11 +61,11 @@ import java.nio.file.StandardOpenOption;
  * An audit hook: a journal sink that keeps every entry, and a notifier.
  *
  * <p>Bind it in a site with {@code journal to: local(), hook(:audit)} and
- * {@code notify via: hook(:audit)}, and have rued spawn it:
+ * {@code notify via: hook(:audit)}, and have rescindd spawn it:
  *
- * <pre>rued run --spawn audit="java -cp rue-hook.jar dev.rue.hook.example.AuditHook" ...</pre>
+ * <pre>rescindd run --spawn audit="java -cp rescind-hook.jar dev.rescind.hook.example.AuditHook" ...</pre>
  *
- * <p>Each journal entry is appended to $RUE_AUDIT_LOG (default audit.ndjson)
+ * <p>Each journal entry is appended to $RESCIND_AUDIT_LOG (default audit.ndjson)
  * as one line of JSON. A sink that cannot record an entry must say so: the
  * engine then refuses to proceed (R0304) rather than run a step nobody
  * recorded. Notifications go to stderr, because stdout carries the protocol.
@@ -89,7 +89,7 @@ public final class AuditHook {
     }
 
     public static void main(String[] args) throws Exception {
-        String log = System.getenv().getOrDefault("RUE_AUDIT_LOG", "audit.ndjson");
+        String log = System.getenv().getOrDefault("RESCIND_AUDIT_LOG", "audit.ndjson");
         Serve.stdio("audit", hooks(Path.of(log)));
     }
 }
@@ -104,7 +104,7 @@ $ mvn -q compile
 $ printf '%s\n' '{"register":{"ok":true}}' \
     '{"id":1,"kind":"journal","op":"append","entry":{"seq":1}}' \
     '{"id":2,"kind":"probe","op":"observe","host":"h","probe":"p"}' |
-  java -cp target/classes dev.rue.hook.example.AuditHook
+  java -cp target/classes dev.rescind.hook.example.AuditHook
 {"register":{"name":"audit","kinds":["journal","notify"],"protocol":1,"filesystem":false,"stdin_preamble":false}}
 {"id":1,"ok":true}
 {"id":2,"ok":false,"error":"this hook does not serve probe.observe"}
@@ -126,18 +126,18 @@ site do
 end
 ```
 
-Then `rued` starts it as a child and talks to it over its stdin and
+Then `rescindd` starts it as a child and talks to it over its stdin and
 stdout:
 
 ```sh
-rued run --site site.rue --store /var/db/rue --socket /var/run/rue/rued.sock \
-  --spawn audit="java -cp /opt/rue/rue-hook-0.2.0.jar dev.rue.hook.example.AuditHook"
+rescindd run --site site.scind --store /var/db/rescind --socket /var/run/rescind/rescindd.sock \
+  --spawn audit="java -cp /opt/rescind/rescind-hook-0.2.0.jar dev.rescind.hook.example.AuditHook"
 ```
 
 Four names have to agree: the one the hook registers with (the first
 argument of `Serve.stdio`), the `NAME` of `--spawn NAME=COMMAND`, the
 `hook(:audit)` the site binds, and one in a registrar's `may_register`.
-`rued` refuses a child that registers under any other name. A child `rued`
+`rescindd` refuses a child that registers under any other name. A child `rescindd`
 spawned is the socket owner, so its registrar says `user: :socket_owner`.
 
 ## Next
@@ -145,7 +145,7 @@ spawned is the socket owner, so its registrar says `user: :socket_owner`.
 - [guide.md](guide.md): every kind and its interface, refusing, secrets,
   and the budget.
 - [testing.md](testing.md): testing a hook, and judging it with
-  `rue sdk-conform`.
+  `rescind sdk-conform`.
 
 [hook-protocol.md]: ../../../docs/hook-protocol.md
 [sdk-conformance.md]: ../../../docs/sdk-conformance.md

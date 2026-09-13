@@ -1,7 +1,7 @@
 # Reverts: commit() must be the last item on its path (E0502)
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/proto/src/Rue/Proto/Intent.hs
-+++ b/proto/src/Rue/Proto/Intent.hs
+--- a/proto/src/Rescind/Proto/Intent.hs
++++ b/proto/src/Rescind/Proto/Intent.hs
 @@ -81,7 +81,7 @@
  commitNotLast items = any bad (paths items)
    where

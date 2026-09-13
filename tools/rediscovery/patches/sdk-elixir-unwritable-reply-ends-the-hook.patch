@@ -1,7 +1,7 @@
 # Reverts: a reply JSON cannot encode is answered with a refusal naming why, rather than an exception that ends the serve loop or the host's connection
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/sdk/elixir/lib/rue_hook/serve.ex
-+++ b/sdk/elixir/lib/rue_hook/serve.ex
+--- a/sdk/elixir/lib/rescind_hook/serve.ex
++++ b/sdk/elixir/lib/rescind_hook/serve.ex
 @@ -87,14 +87,7 @@
    handler put in it -- is refused by name rather than ending the loop, or
    the connection of the host that holds it.
@@ -17,4 +17,4 @@
 +  def encode(frame), do: JSON.encode!(frame)
  
    defp refuse(why) do
-     IO.puts(:stderr, "rue_hook: " <> why)
+     IO.puts(:stderr, "rescind_hook: " <> why)

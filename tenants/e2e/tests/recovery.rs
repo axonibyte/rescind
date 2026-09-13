@@ -8,9 +8,9 @@
 
 use std::time::Duration;
 
-use rue_e2e::{
-    bin, instance_of, must, require_provisioned_host, rue, rue_root, target_exists, target_read,
-    target_run, target_write, Daemon, Site,
+use rescind_e2e::{
+    bin, instance_of, must, require_provisioned_host, rescind, rescind_root, target_exists,
+    target_read, target_run, target_write, Daemon, Site,
 };
 
 /// Two owned files on the target: the second step is slow enough that a
@@ -44,7 +44,7 @@ end
 #[test]
 fn a_daemon_killed_mid_apply_reverts_what_it_had_applied_when_it_comes_back() {
     require_provisioned_host();
-    let (a, b) = ("/etc/rue-e2e-kill-a", "/etc/rue-e2e-kill-b");
+    let (a, b) = ("/etc/rescind-e2e-kill-a", "/etc/rescind-e2e-kill-b");
     for f in [a, b] {
         let _ = std::process::Command::new("rm").arg("-f").arg(f).status();
     }
@@ -55,7 +55,7 @@ fn a_daemon_killed_mid_apply_reverts_what_it_had_applied_when_it_comes_back() {
     let socket = d.socket.clone();
     let file = site.file.clone();
     let applying = std::thread::spawn(move || {
-        std::process::Command::new(bin("rue"))
+        std::process::Command::new(bin("rescind"))
             .arg("apply")
             .arg(&file)
             .arg("--host")
@@ -89,7 +89,7 @@ fn a_daemon_killed_mid_apply_reverts_what_it_had_applied_when_it_comes_back() {
     while target_exists(a) {
         if start.elapsed() >= Duration::from_secs(60) {
             panic!(
-                "boot recovery never reverted the applied step.\n--- rued said ---\n{}\n--- journal ---\n{}",
+                "boot recovery never reverted the applied step.\n--- rescindd said ---\n{}\n--- journal ---\n{}",
                 d.said(),
                 std::fs::read_to_string(site.dir.join("journal.ndjson")).unwrap_or_default()
             );
@@ -108,7 +108,7 @@ fn a_daemon_killed_mid_apply_reverts_what_it_had_applied_when_it_comes_back() {
 #[test]
 fn a_backstop_armed_by_a_daemon_that_dies_still_fires_from_the_target_s_own_cron() {
     require_provisioned_host();
-    let f = "/etc/rue-e2e-canary";
+    let f = "/etc/rescind-e2e-canary";
     let _ = std::process::Command::new("rm").arg("-f").arg(f).status();
     // A temporary plan whose wane is already in the past by the time cron
     // next runs: the artifact fires on its own, with no engine anywhere.
@@ -130,14 +130,14 @@ end
     );
     let site = Site::new("recovery-canary", &plans);
     let d = Daemon::start(&site);
-    let out = rue(
+    let out = rescind(
         &d.socket,
         &["apply", site.file.to_str().unwrap(), "--host", "fw-01"],
     );
     let id = instance_of(&must("apply", &out));
     assert!(target_exists(f), "the step applied");
     // The artifact and its deadline are on the target.
-    let dir = rue_root().join("instances").join(&id);
+    let dir = rescind_root().join("instances").join(&id);
     assert!(
         target_exists(dir.join("artifact.sh").to_str().unwrap()),
         "the artifact is installed at {}",
@@ -169,7 +169,7 @@ end
 #[test]
 fn a_recant_and_a_fired_artifact_do_not_undo_the_same_step_twice() {
     require_provisioned_host();
-    let f = "/etc/rue-e2e-race";
+    let f = "/etc/rescind-e2e-race";
     target_write(f, "before\n");
     // The step modifies a file; both the engine and the artifact restore
     // it from the same snapshot under the same host lock, so whichever
@@ -192,7 +192,7 @@ end
     );
     let site = Site::new("recovery-race", &plans);
     let d = Daemon::start(&site);
-    let out = rue(
+    let out = rescind(
         &d.socket,
         &["apply", site.file.to_str().unwrap(), "--host", "fw-01"],
     );
@@ -200,7 +200,7 @@ end
     assert_eq!(target_read(f), "after\n");
     // Recant while the artifact's deadline is passing: the host lock is
     // the only thing between them.
-    let out = rue(&d.socket, &["recant", &id]);
+    let out = rescind(&d.socket, &["recant", &id]);
     must("recant", &out);
     assert_eq!(target_read(f), "before\n", "restored once, not twice");
     // Give cron a chance to fire the artifact if it was left armed; the
@@ -217,12 +217,12 @@ end
 #[test]
 fn doctor_with_a_canary_proves_a_real_backstop_fires() {
     require_provisioned_host();
-    // The one proof no unit test can give: this host's cron runs what rue
+    // The one proof no unit test can give: this host's cron runs what rescind
     // installs. A throwaway artifact, armed with a deadline already past,
     // and removed whatever happens.
     let site = Site::new("recovery-canary-doctor", "");
     let d = Daemon::start(&site);
-    let out = rue(&d.socket, &["doctor", "--canary", "--canary-wait", "200"]);
+    let out = rescind(&d.socket, &["doctor", "--canary", "--canary-wait", "200"]);
     let text = String::from_utf8_lossy(&out.stdout).to_string();
     assert!(
         text.contains("fired"),
@@ -237,10 +237,10 @@ fn doctor_with_a_canary_proves_a_real_backstop_fires() {
     // It left nothing behind: no instance directory of its own.
     let dirs = target_run(&format!(
         "ls {} 2>/dev/null || true",
-        rue_root().join("instances").display()
+        rescind_root().join("instances").display()
     ));
     assert!(
-        !dirs.contains("rue-canary-"),
+        !dirs.contains("rescind-canary-"),
         "the canary cleaned up after itself: {dirs}"
     );
     d.stop();
@@ -251,7 +251,7 @@ fn doctor_reports_the_host_the_bindings_and_the_bootstrap() {
     require_provisioned_host();
     let site = Site::new("recovery-doctor", "");
     let d = Daemon::start(&site);
-    let out = rue(&d.socket, &["doctor"]);
+    let out = rescind(&d.socket, &["doctor"]);
     let text = String::from_utf8_lossy(&out.stdout).to_string();
     assert!(
         out.status.success(),

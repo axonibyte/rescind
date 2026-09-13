@@ -1,4 +1,4 @@
-//! The shim against `rue sdk-conform`, driving a hook that is a POSIX
+//! The shim against `rescind sdk-conform`, driving a hook that is a POSIX
 //! shell script. What this proves is the claim 7.11 makes for the shim: a
 //! hook needs no SDK and no JSON parser, only the ability to read a line
 //! and write one.
@@ -10,15 +10,15 @@
 
 use std::time::Duration;
 
-use rue_engine::conform::conform;
-use rue_hook_proto::OPS;
+use rescind_engine::conform::conform;
+use rescind_hook_proto::OPS;
 
 const KINDS: &str = "journal,inventory,execute,probe,approval,secrets,notify,scheduler";
 
-fn suite(kinds: &str) -> rue_engine::conform::Report {
+fn suite(kinds: &str) -> rescind_engine::conform::Report {
     let command = format!(
         "{} --name shim --kinds {kinds} --command {}/tests/fixtures/conformance-command.sh",
-        env!("CARGO_BIN_EXE_rue-hook"),
+        env!("CARGO_BIN_EXE_rescind-hook"),
         env!("CARGO_MANIFEST_DIR"),
     );
     conform("shim", &command, Duration::from_millis(1500)).expect("the shim starts and registers")

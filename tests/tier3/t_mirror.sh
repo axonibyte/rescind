@@ -16,7 +16,7 @@ for tool in bash git; do
     fi
 done
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-t-mirror.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-t-mirror.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 rc=0
@@ -30,7 +30,7 @@ git init -q -b main "$tmp/src" && (
 ) || exit 2
 git init -q --bare "$tmp/dst" || exit 2
 
-if RUE_MIRROR_PAUSE=0 bash "$script" "$tmp/src" "$tmp/dst" > "$tmp/out" 2>&1; then
+if RESCIND_MIRROR_PAUSE=0 bash "$script" "$tmp/src" "$tmp/dst" > "$tmp/out" 2>&1; then
     ok "mirror succeeds"
 else
     bad "mirror succeeds"; cat "$tmp/out" >&2
@@ -41,7 +41,7 @@ if [ "$(git -C "$tmp/dst" rev-parse refs/heads/main)" = "$(git -C "$tmp/src" rev
 else
     bad "the branch and the tag landed"
 fi
-if RUE_MIRROR_PAUSE=0 bash "$script" "$tmp/src" "$tmp/dst" > "$tmp/out" 2>&1; then
+if RESCIND_MIRROR_PAUSE=0 bash "$script" "$tmp/src" "$tmp/dst" > "$tmp/out" 2>&1; then
     ok "a second mirror is a no-op"
 else
     bad "a second mirror is a no-op"; cat "$tmp/out" >&2
@@ -49,7 +49,7 @@ fi
 
 # A destination that refuses every push (a plain directory, not a repository).
 mkdir -p "$tmp/refuse"
-if RUE_MIRROR_PAUSE=0 RUE_MIRROR_ATTEMPTS=2 bash "$script" "$tmp/src" "$tmp/refuse" > "$tmp/out" 2>&1; then
+if RESCIND_MIRROR_PAUSE=0 RESCIND_MIRROR_ATTEMPTS=2 bash "$script" "$tmp/src" "$tmp/refuse" > "$tmp/out" 2>&1; then
     bad "a refusing destination fails"
 else
     ok "a refusing destination fails"
@@ -60,7 +60,7 @@ else
     bad "every attempt is made and reported"; cat "$tmp/out" >&2
 fi
 
-if RUE_MIRROR_PAUSE=0 RUE_MIRROR_ATTEMPTS=1 bash "$script" "$tmp/nope" "$tmp/dst" > "$tmp/out" 2>&1; then
+if RESCIND_MIRROR_PAUSE=0 RESCIND_MIRROR_ATTEMPTS=1 bash "$script" "$tmp/nope" "$tmp/dst" > "$tmp/out" 2>&1; then
     bad "a missing source fails"
 else
     ok "a missing source fails"

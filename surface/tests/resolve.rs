@@ -5,8 +5,8 @@
 use std::fs;
 use std::path::PathBuf;
 
-use rue_core::diagnostics::Code;
-use rue_surface::resolve::{resolve, Options};
+use rescind_core::diagnostics::Code;
+use rescind_surface::resolve::{resolve, Options};
 
 const INVENTORY: &str = r#"
 [[host]]
@@ -42,7 +42,7 @@ struct Dir(PathBuf);
 
 impl Dir {
     fn new(name: &str) -> Dir {
-        let d = std::env::temp_dir().join(format!("rue-resolve-{name}-{}", std::process::id()));
+        let d = std::env::temp_dir().join(format!("rescind-resolve-{name}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&d);
         fs::create_dir_all(&d).unwrap();
         fs::write(d.join("inventory.toml"), INVENTORY).unwrap();
@@ -50,7 +50,7 @@ impl Dir {
     }
     fn file(&self, name: &str, body: &str) -> PathBuf {
         let p = self.0.join(name);
-        fs::write(&p, format!("rue 0\n{SITE}\n{body}")).unwrap();
+        fs::write(&p, format!("rescind 0\n{SITE}\n{body}")).unwrap();
         p
     }
     fn raw(&self, name: &str, text: &str) -> PathBuf {
@@ -100,7 +100,7 @@ end
 fn a_clean_file_resolves() {
     let d = Dir::new("clean");
     let f = d.file(
-        "plan.rue",
+        "plan.scind",
         &format!("{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"),
     );
     assert!(codes(&f, "db-01").is_empty());
@@ -110,7 +110,7 @@ fn a_clean_file_resolves() {
 fn an_unknown_name_is_e0102_with_the_nearest_suggestion() {
     let d = Dir::new("e0102");
     let f = d.file(
-        "plan.rue",
+        "plan.scind",
         &format!("{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  postrue()\nend\n"),
     );
     let cs = codes(&f, "db-01");
@@ -118,11 +118,11 @@ fn an_unknown_name_is_e0102_with_the_nearest_suggestion() {
     assert_eq!(cs[0].0, Code::E0102);
     assert!(cs[0].1.contains("did you mean posture"), "{}", cs[0].1);
     // An unknown probe, and an unknown primitive.
-    let f = d.file("plan2.rue", &format!("{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  observe reach() as r\n  posture()\nend\n"));
+    let f = d.file("plan2.scind", &format!("{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  observe reach() as r\n  posture()\nend\n"));
     assert!(
         matches!(codes(&f, "db-01").as_slice(), [(Code::E0102, m)] if m.contains("unknown probe"))
     );
-    let f = d.file("plan3.rue", "defop :o, _ do\n  footprint owned: file(\"/etc/a\")\n  do: wrte(file(\"/etc/a\"), content: \"x\")\n  undo: :restore\nend\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  o()\nend\n");
+    let f = d.file("plan3.scind", "defop :o, _ do\n  footprint owned: file(\"/etc/a\")\n  do: wrte(file(\"/etc/a\"), content: \"x\")\n  undo: :restore\nend\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  o()\nend\n");
     assert!(
         matches!(codes(&f, "db-01").as_slice(), [(Code::E0102, m)] if m.contains("did you mean write"))
     );
@@ -131,7 +131,7 @@ fn an_unknown_name_is_e0102_with_the_nearest_suggestion() {
 #[test]
 fn two_clauses_with_one_pattern_are_e0103() {
     let d = Dir::new("e0103");
-    let f = d.file("plan.rue", &format!("{POSTURE}\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"));
+    let f = d.file("plan.scind", &format!("{POSTURE}\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"));
     let cs = codes(&f, "db-01");
     assert!(cs.iter().any(|(c, _)| *c == Code::E0103), "{cs:?}");
 }
@@ -139,16 +139,16 @@ fn two_clauses_with_one_pattern_are_e0103() {
 #[test]
 fn an_import_cycle_is_e0104_and_a_missing_import_too() {
     let d = Dir::new("e0104");
-    d.raw("a.rue", "rue 0\nimport \"b.rue\" as b\n");
-    let a = d.raw("a.rue", "rue 0\nimport \"b.rue\" as b\n");
-    d.raw("b.rue", "rue 0\nimport \"a.rue\" as a\n");
+    d.raw("a.scind", "rescind 0\nimport \"b.scind\" as b\n");
+    let a = d.raw("a.scind", "rescind 0\nimport \"b.scind\" as b\n");
+    d.raw("b.scind", "rescind 0\nimport \"a.scind\" as a\n");
     let cs = codes(&a, "db-01");
     assert!(
         cs.iter()
             .any(|(c, m)| *c == Code::E0104 && m.contains("cycle")),
         "{cs:?}"
     );
-    let f = d.raw("c.rue", "rue 0\nimport \"nope.rue\" as n\n");
+    let f = d.raw("c.scind", "rescind 0\nimport \"nope.scind\" as n\n");
     let cs = codes(&f, "db-01");
     assert!(
         cs.iter()
@@ -160,13 +160,13 @@ fn an_import_cycle_is_e0104_and_a_missing_import_too() {
 #[test]
 fn an_unbounded_repeat_is_e0106_and_a_repeated_member_is_e0113() {
     let d = Dir::new("e0106");
-    let f = d.file("plan.rue", &format!("{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  repeat over: guests, as g do\n    posture()\n  end\nend\n"));
+    let f = d.file("plan.scind", &format!("{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  repeat over: guests, as g do\n    posture()\n  end\nend\n"));
     let cs = codes(&f, "db-01");
     assert!(
         matches!(cs.as_slice(), [(Code::E0106, m)] if m.contains("unbounded")),
         "{cs:?}"
     );
-    let f = d.file("plan2.rue", &format!("{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  repeat over: [:a, :b, :a], as g, max: 3 do\n    posture()\n  end\nend\n"));
+    let f = d.file("plan2.scind", &format!("{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  repeat over: [:a, :b, :a], as g, max: 3 do\n    posture()\n  end\nend\n"));
     let cs = codes(&f, "db-01");
     assert!(matches!(cs.as_slice(), [(Code::E0113, _)]), "{cs:?}");
 }
@@ -174,7 +174,7 @@ fn an_unbounded_repeat_is_e0106_and_a_repeated_member_is_e0113() {
 #[test]
 fn a_comparison_against_unknown_is_e0108() {
     let d = Dir::new("e0108");
-    let f = d.file("plan.rue", &format!("{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  assert peer == :unknown\n  posture()\nend\n"));
+    let f = d.file("plan.scind", &format!("{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  assert peer == :unknown\n  posture()\nend\n"));
     let cs = codes(&f, "db-01");
     assert!(matches!(cs.as_slice(), [(Code::E0108, _)]), "{cs:?}");
 }
@@ -182,7 +182,7 @@ fn a_comparison_against_unknown_is_e0108() {
 #[test]
 fn an_output_read_before_its_step_is_e0110() {
     let d = Dir::new("e0110");
-    let f = d.file("plan.rue", "defop :o, _ do\n  footprint owned: file(\"/etc/a\")\n  do: write(file(\"/etc/a\"), content: pw)\n  undo: :restore\nend\ndefop :issue, _ do\n  footprint modified: api.token\n  do: hook(:issue)\n  undo: hook(:revoke, idempotent: true)\n  undo_pre api.token\n  outputs pw, secret: true\n  locus: :controller\nend\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  o(pw: tok.pw)\n  issue() as tok\nend\n");
+    let f = d.file("plan.scind", "defop :o, _ do\n  footprint owned: file(\"/etc/a\")\n  do: write(file(\"/etc/a\"), content: pw)\n  undo: :restore\nend\ndefop :issue, _ do\n  footprint modified: api.token\n  do: hook(:issue)\n  undo: hook(:revoke, idempotent: true)\n  undo_pre api.token\n  outputs pw, secret: true\n  locus: :controller\nend\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  o(pw: tok.pw)\n  issue() as tok\nend\n");
     let cs = codes(&f, "db-01");
     assert!(
         matches!(cs.as_slice(), [(Code::E0110, m)] if m.contains("tok.pw")),
@@ -193,21 +193,21 @@ fn an_output_read_before_its_step_is_e0110() {
 #[test]
 fn a_clause_on_a_non_contract_fact_is_e0111_and_no_matching_clause_is_e0112() {
     let d = Dir::new("e0111");
-    let f = d.file("plan.rue", "defop :o, %{load: :high} do\n  footprint owned: file(\"/etc/a\")\n  do: write(file(\"/etc/a\"), content: \"x\")\n  undo: :restore\nend\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  o()\nend\n");
+    let f = d.file("plan.scind", "defop :o, %{load: :high} do\n  footprint owned: file(\"/etc/a\")\n  do: write(file(\"/etc/a\"), content: \"x\")\n  undo: :restore\nend\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  o()\nend\n");
     let cs = codes(&f, "db-01");
     assert!(
         cs.iter()
             .any(|(c, m)| *c == Code::E0111 && m.contains("load")),
         "{cs:?}"
     );
-    let f = d.file("plan2.rue", "defop :o, %{os: :windows} do\n  footprint owned: file(\"/etc/a\")\n  do: write(file(\"/etc/a\"), content: \"x\")\n  undo: :restore\nend\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  o()\nend\n");
+    let f = d.file("plan2.scind", "defop :o, %{os: :windows} do\n  footprint owned: file(\"/etc/a\")\n  do: write(file(\"/etc/a\"), content: \"x\")\n  undo: :restore\nend\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  o()\nend\n");
     let cs = codes(&f, "db-01");
     assert!(
         matches!(cs.as_slice(), [(Code::E0112, m)] if m.contains("db-01")),
         "{cs:?}"
     );
     // A list pattern matches any member; a static host locus dispatches on it.
-    let f = d.file("plan3.rue", "defop :o, %{os: [:linux, :freebsd]} do\n  footprint owned: file(\"/etc/a\")\n  do: write(file(\"/etc/a\"), content: \"x\")\n  undo: :restore\nend\ndefop :b, %{os: :appliance} do\n  footprint modified: bmc.account(\"x\")\n  do: hook(:enable)\n  undo: hook(:disable, idempotent: true)\n  undo_pre bmc.account(\"x\")\n  locus: host(\"api-01\")\nend\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  o()\n  b()\nend\n");
+    let f = d.file("plan3.scind", "defop :o, %{os: [:linux, :freebsd]} do\n  footprint owned: file(\"/etc/a\")\n  do: write(file(\"/etc/a\"), content: \"x\")\n  undo: :restore\nend\ndefop :b, %{os: :appliance} do\n  footprint modified: bmc.account(\"x\")\n  do: hook(:enable)\n  undo: hook(:disable, idempotent: true)\n  undo_pre bmc.account(\"x\")\n  locus: host(\"api-01\")\nend\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  o()\n  b()\nend\n");
     assert!(codes(&f, "db-01").is_empty());
 }
 
@@ -215,14 +215,14 @@ fn a_clause_on_a_non_contract_fact_is_e0111_and_no_matching_clause_is_e0112() {
 fn the_version_marker_and_a_parse_error_reach_the_caller() {
     let d = Dir::new("parse");
     let f = d.raw(
-        "plan.rue",
+        "plan.scind",
         "defplan :p, %{name: \"db-01\"} do\n  wane 1h\nend\n",
     );
     let cs = codes(&f, "db-01");
     assert!(cs.iter().any(|(c, _)| *c == Code::E0105), "{cs:?}");
     let f = d.raw(
-        "plan2.rue",
-        "rue 0\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  posture(\nend\n",
+        "plan2.scind",
+        "rescind 0\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  posture(\nend\n",
     );
     let cs = codes(&f, "db-01");
     assert!(cs.iter().any(|(c, _)| *c == Code::E0101), "{cs:?}");
@@ -242,7 +242,7 @@ const SITE_FULL: &str = r#"site do
 end
 "#;
 
-fn ir(path: &std::path::Path, host: &str) -> rue_core::ir::PlanIr {
+fn ir(path: &std::path::Path, host: &str) -> rescind_core::ir::PlanIr {
     let opts = Options {
         suspend_e0604: false,
         host: Some(host.into()),
@@ -261,15 +261,15 @@ fn ir(path: &std::path::Path, host: &str) -> rue_core::ir::PlanIr {
 #[test]
 fn roles_fill_slots_by_priority_then_name_and_an_unfilled_slot_stays() {
     let d = Dir::new("roles");
-    let f = d.raw("plan.rue", &format!("rue 0\n{SITE}\n{POSTURE}\ndefop :snapshot, _ do\n  footprint modified: db.snapshot\n  do: hook(:snap)\n  undo: hook(:unsnap, idempotent: true)\n  undo_pre db.snapshot\n  locus: :controller\nend\ndefop :fence, _ do\n  footprint\n  do: hook(:fence)\n  undo_locus: :none\n  refusal: knell, guard: off, cost: :none, reason: \"x\", ack: :none, reason: \"y\"\nend\ndefrole :db do\n  :before 50 snapshot()\n  :before knell fence()\nend\ndefrole :primary do\n  :before 50 posture()\nend\ndefrole :web do\n  :before posture()\nend\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  slot :before\n  slot :after\n  posture()\nend\n"));
+    let f = d.raw("plan.scind", &format!("rescind 0\n{SITE}\n{POSTURE}\ndefop :snapshot, _ do\n  footprint modified: db.snapshot\n  do: hook(:snap)\n  undo: hook(:unsnap, idempotent: true)\n  undo_pre db.snapshot\n  locus: :controller\nend\ndefop :fence, _ do\n  footprint\n  do: hook(:fence)\n  undo_locus: :none\n  refusal: knell, guard: off, cost: :none, reason: \"x\", ack: :none, reason: \"y\"\nend\ndefrole :db do\n  :before 50 snapshot()\n  :before knell fence()\nend\ndefrole :primary do\n  :before 50 posture()\nend\ndefrole :web do\n  :before posture()\nend\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  slot :before\n  slot :after\n  posture()\nend\n"));
     let plan = ir(&f, "db-01").plan;
     let ids: Vec<String> = plan
         .body
         .iter()
         .map(|it| match it {
-            rue_core::model::Item::Step(s) => s.op.id.clone(),
-            rue_core::model::Item::Knell(s) => format!("knell {}", s.op.id),
-            rue_core::model::Item::Slot { name } => format!("slot {name}"),
+            rescind_core::model::Item::Step(s) => s.op.id.clone(),
+            rescind_core::model::Item::Knell(s) => format!("knell {}", s.op.id),
+            rescind_core::model::Item::Slot { name } => format!("slot {name}"),
             other => format!("{other:?}"),
         })
         .collect();
@@ -285,13 +285,13 @@ fn roles_fill_slots_by_priority_then_name_and_an_unfilled_slot_stays() {
 fn a_protocol_expands_to_the_role_impl_or_its_default_and_needs_its_inverse() {
     let d = Dir::new("protocol");
     let body = format!("{POSTURE}\ndefop :pg_quiesce, _ do\n  footprint modified: pg.state\n  do: hook(:pg)\n  undo: hook(:pg_resume, idempotent: true)\n  undo_pre pg.state\n  locus: :controller\nend\ndefop :pg_resume, _ do\n  footprint modified: pg.state\n  do: hook(:pg_resume)\n  undo: hook(:pg, idempotent: true)\n  undo_pre pg.state\n  locus: :controller\nend\n");
-    let f = d.raw("plan.rue", &format!("rue 0\n{SITE}\n{body}defprotocol :quiesce, inverse: :resume do\n  default posture()\nend\ndefprotocol :resume do\n  default posture()\nend\ndefimpl :quiesce, for: :db do\n  pg_quiesce()\n  posture()\nend\ndefimpl :resume, for: :db do\n  pg_resume()\nend\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  quiesce()\nend\n"));
+    let f = d.raw("plan.scind", &format!("rescind 0\n{SITE}\n{body}defprotocol :quiesce, inverse: :resume do\n  default posture()\nend\ndefprotocol :resume do\n  default posture()\nend\ndefimpl :quiesce, for: :db do\n  pg_quiesce()\n  posture()\nend\ndefimpl :resume, for: :db do\n  pg_resume()\nend\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  quiesce()\nend\n"));
     let plan = ir(&f, "db-01").plan;
     let ids: Vec<&str> = plan
         .body
         .iter()
         .filter_map(|it| match it {
-            rue_core::model::Item::Step(s) => Some(s.op.id.as_str()),
+            rescind_core::model::Item::Step(s) => Some(s.op.id.as_str()),
             _ => None,
         })
         .collect();
@@ -301,19 +301,19 @@ fn a_protocol_expands_to_the_role_impl_or_its_default_and_needs_its_inverse() {
         "the db impl, spliced in place"
     );
     // No impl for the host's roles: the default.
-    let f = d.raw("plan2.rue", &format!("rue 0\n{SITE}\n{body}defprotocol :quiesce do\n  default posture()\nend\ndefimpl :quiesce, for: :web do\n  pg_quiesce()\nend\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  quiesce()\nend\n"));
+    let f = d.raw("plan2.scind", &format!("rescind 0\n{SITE}\n{body}defprotocol :quiesce do\n  default posture()\nend\ndefimpl :quiesce, for: :web do\n  pg_quiesce()\nend\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  quiesce()\nend\n"));
     let plan = ir(&f, "db-01").plan;
     let ids: Vec<&str> = plan
         .body
         .iter()
         .filter_map(|it| match it {
-            rue_core::model::Item::Step(s) => Some(s.op.id.as_str()),
+            rescind_core::model::Item::Step(s) => Some(s.op.id.as_str()),
             _ => None,
         })
         .collect();
     assert_eq!(ids, vec!["posture"]);
     // An impl without its paired inverse is E0103.
-    let f = d.raw("plan3.rue", &format!("rue 0\n{SITE}\n{body}defprotocol :quiesce, inverse: :resume do\n  default posture()\nend\ndefprotocol :resume do\n  default posture()\nend\ndefimpl :quiesce, for: :db do\n  pg_quiesce()\nend\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  quiesce()\nend\n"));
+    let f = d.raw("plan3.scind", &format!("rescind 0\n{SITE}\n{body}defprotocol :quiesce, inverse: :resume do\n  default posture()\nend\ndefprotocol :resume do\n  default posture()\nend\ndefimpl :quiesce, for: :db do\n  pg_quiesce()\nend\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  quiesce()\nend\n"));
     let cs = codes(&f, "db-01");
     assert!(
         matches!(cs.as_slice(), [(Code::E0103, m)] if m.contains("inverse")),
@@ -324,12 +324,12 @@ fn a_protocol_expands_to_the_role_impl_or_its_default_and_needs_its_inverse() {
 #[test]
 fn a_defprim_call_is_a_classed_run_template() {
     let d = Dir::new("defprim");
-    let f = d.raw("plan.rue", &format!("rue 0\n{SITE}\ndefprim :svc, name: name, action: action do\n  run \"service #{{name}} #{{action}}\", classes: %{{name: :target_local, action: :controller}}\nend\ndefop :restart, _ do\n  footprint modified: svc.sshd\n  do: svc(name: \"sshd\", action: verb)\n  undo: svc(name: \"sshd\", action: \"start\")\n  undo_pre svc.sshd\nend\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  restart(verb: \"restart\")\nend\n"));
+    let f = d.raw("plan.scind", &format!("rescind 0\n{SITE}\ndefprim :svc, name: name, action: action do\n  run \"service #{{name}} #{{action}}\", classes: %{{name: :target_local, action: :controller}}\nend\ndefop :restart, _ do\n  footprint modified: svc.sshd\n  do: svc(name: \"sshd\", action: verb)\n  undo: svc(name: \"sshd\", action: \"start\")\n  undo_pre svc.sshd\nend\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  restart(verb: \"restart\")\nend\n"));
     let plan = ir(&f, "db-01").plan;
-    let rue_core::model::Item::Step(s) = &plan.body[0] else {
+    let rescind_core::model::Item::Step(s) = &plan.body[0] else {
         panic!()
     };
-    let rue_core::body::Prim::Call(c) = &s.op.do_[0] else {
+    let rescind_core::body::Prim::Call(c) = &s.op.do_[0] else {
         panic!("{:?}", s.op.do_)
     };
     assert_eq!(c.prim, "svc");
@@ -340,10 +340,10 @@ fn a_defprim_call_is_a_classed_run_template() {
     assert_eq!(
         c.run,
         vec![
-            rue_core::body::text("service "),
-            rue_core::body::text("sshd"),
-            rue_core::body::text(" "),
-            rue_core::body::text("restart")
+            rescind_core::body::text("service "),
+            rescind_core::body::text("sshd"),
+            rescind_core::body::text(" "),
+            rescind_core::body::text("restart")
         ]
     );
     assert_eq!(
@@ -352,8 +352,8 @@ fn a_defprim_call_is_a_classed_run_template() {
             .map(|a| (a.name.as_str(), a.class))
             .collect::<Vec<_>>(),
         vec![
-            ("action", rue_core::body::ArgClass::Controller),
-            ("name", rue_core::body::ArgClass::TargetLocal)
+            ("action", rescind_core::body::ArgClass::Controller),
+            ("name", rescind_core::body::ArgClass::TargetLocal)
         ]
     );
 }
@@ -361,19 +361,19 @@ fn a_defprim_call_is_a_classed_run_template() {
 #[test]
 fn a_kind_mismatch_is_e0107_and_when_arms_binding_an_alias_differently_is_e0114() {
     let d = Dir::new("e0107");
-    let f = d.file("plan.rue", "defop :o, _, drift: :defer do\n  footprint owned: file(\"/etc/a\")\n  do: write(file(\"/etc/a\"), content: \"x\")\n  undo: :restore\nend\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  o(drift: 5)\nend\n");
+    let f = d.file("plan.scind", "defop :o, _, drift: :defer do\n  footprint owned: file(\"/etc/a\")\n  do: write(file(\"/etc/a\"), content: \"x\")\n  undo: :restore\nend\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  o(drift: 5)\nend\n");
     let cs = codes(&f, "db-01");
     assert!(
         matches!(cs.as_slice(), [(Code::E0107, m)] if m.contains("expects atom, got int")),
         "{cs:?}"
     );
     let f = d.file(
-        "plan2.rue",
+        "plan2.scind",
         &format!("{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 4\n  posture()\nend\n"),
     );
     let cs = codes(&f, "db-01");
     assert!(matches!(cs.as_slice(), [(Code::E0107, _)]), "{cs:?}");
-    let f = d.file("plan3.rue", "defop :a, _ do\n  footprint modified: api.a\n  do: hook(:a)\n  undo: hook(:ua, idempotent: true)\n  undo_pre api.a\n  outputs tok, secret: true\n  locus: :controller\nend\ndefop :b, _ do\n  footprint modified: api.b\n  do: hook(:b)\n  undo: hook(:ub, idempotent: true)\n  undo_pre api.b\n  outputs tok\n  locus: :controller\nend\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  when healthy do\n    a() as t\n  else\n    b() as t\n  end\nend\n");
+    let f = d.file("plan3.scind", "defop :a, _ do\n  footprint modified: api.a\n  do: hook(:a)\n  undo: hook(:ua, idempotent: true)\n  undo_pre api.a\n  outputs tok, secret: true\n  locus: :controller\nend\ndefop :b, _ do\n  footprint modified: api.b\n  do: hook(:b)\n  undo: hook(:ub, idempotent: true)\n  undo_pre api.b\n  outputs tok\n  locus: :controller\nend\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n  when healthy do\n    a() as t\n  else\n    b() as t\n  end\nend\n");
     let cs = codes(&f, "db-01");
     assert!(matches!(cs.as_slice(), [(Code::E0114, _)]), "{cs:?}");
 }
@@ -382,7 +382,7 @@ fn a_kind_mismatch_is_e0107_and_when_arms_binding_an_alias_differently_is_e0114(
 fn the_site_is_validated() {
     let d = Dir::new("site");
     // A binding kind the line does not admit.
-    let f = d.raw("plan.rue", &format!("rue 0\nsite do\n  inventory from: ldap(\"x\")\n  journal to: local()\n  operators do\n    identity :requester, user: \"ops\", operator_for: :all, admin: true\n  end\nend\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"));
+    let f = d.raw("plan.scind", &format!("rescind 0\nsite do\n  inventory from: ldap(\"x\")\n  journal to: local()\n  operators do\n    identity :requester, user: \"ops\", operator_for: :all, admin: true\n  end\nend\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"));
     let cs = codes(&f, "db-01");
     assert!(
         cs.iter()
@@ -390,7 +390,7 @@ fn the_site_is_validated() {
         "{cs:?}"
     );
     // A contract violation: file() without a path; hold without until:.
-    let f = d.raw("plan2.rue", &format!("rue 0\nsite do\n  inventory from: file(\"inventory.toml\")\n  journal to: file()\n  secrets deliver_to: [hold()]\n  operators do\n    identity :requester, user: \"ops\", operator_for: :all, admin: true\n  end\nend\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"));
+    let f = d.raw("plan2.scind", &format!("rescind 0\nsite do\n  inventory from: file(\"inventory.toml\")\n  journal to: file()\n  secrets deliver_to: [hold()]\n  operators do\n    identity :requester, user: \"ops\", operator_for: :all, admin: true\n  end\nend\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"));
     let cs = codes(&f, "db-01");
     assert_eq!(
         cs.iter().filter(|(c, _)| *c == Code::E0602).count(),
@@ -398,27 +398,27 @@ fn the_site_is_validated() {
         "{cs:?}"
     );
     // A hook without its atom.
-    let f = d.raw("plan2b.rue", &format!("rue 0\nsite do\n  inventory from: file(\"inventory.toml\")\n  journal to: local()\n  approval via: hook(\"authority\")\n  operators do\n    identity :requester, user: \"ops\", operator_for: :all, admin: true\n  end\n  hooks do\n    registrar :authority, user: \"approvald\", may_register: [:authority]\n  end\nend\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"));
+    let f = d.raw("plan2b.scind", &format!("rescind 0\nsite do\n  inventory from: file(\"inventory.toml\")\n  journal to: local()\n  approval via: hook(\"authority\")\n  operators do\n    identity :requester, user: \"ops\", operator_for: :all, admin: true\n  end\n  hooks do\n    registrar :authority, user: \"approvald\", may_register: [:authority]\n  end\nend\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"));
     let cs = codes(&f, "db-01");
     assert!(
         matches!(cs.as_slice(), [(Code::E0602, m)] if m.contains("hook")),
         "{cs:?}"
     );
     // No journal; no operators; a hook no registrar may register.
-    let f = d.raw("plan3.rue", &format!("rue 0\nsite do\n  inventory from: file(\"inventory.toml\")\nend\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"));
+    let f = d.raw("plan3.scind", &format!("rescind 0\nsite do\n  inventory from: file(\"inventory.toml\")\nend\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"));
     let cs = codes(&f, "db-01");
     assert!(
         cs.iter().any(|(c, _)| *c == Code::E0603) && cs.iter().any(|(c, _)| *c == Code::E0604),
         "{cs:?}"
     );
-    let f = d.raw("plan4.rue", &format!("rue 0\nsite do\n  inventory from: file(\"inventory.toml\")\n  journal to: local()\n  approval via: hook(:authority)\n  operators do\n    identity :requester, user: \"ops\", operator_for: :all, admin: true\n  end\nend\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"));
+    let f = d.raw("plan4.scind", &format!("rescind 0\nsite do\n  inventory from: file(\"inventory.toml\")\n  journal to: local()\n  approval via: hook(:authority)\n  operators do\n    identity :requester, user: \"ops\", operator_for: :all, admin: true\n  end\nend\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"));
     let cs = codes(&f, "db-01");
     assert!(
         matches!(cs.as_slice(), [(Code::E0605, m)] if m.contains("authority")),
         "{cs:?}"
     );
     // The full block is clean.
-    let f = d.raw("plan5.rue", &format!("rue 0\n{SITE_FULL}\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"));
+    let f = d.raw("plan5.scind", &format!("rescind 0\n{SITE_FULL}\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"));
     assert!(codes(&f, "db-01").is_empty());
 }
 
@@ -426,14 +426,14 @@ fn the_site_is_validated() {
 
 #[test]
 fn a_site_may_declare_more_than_one_journal_sink_and_keeps_all_of_them() {
-    use rue_surface::resolve::site_bindings;
+    use rescind_surface::resolve::site_bindings;
     let d = Dir::new("site-two-sinks");
     // 5.10 delivers to every declared sink and all must acknowledge, so a
     // second sink is redundancy a site asked for and is entitled to. While
     // this was one binding the resolver kept the first and dropped the
     // rest without a word, which turned a two-sink site into a one-sink
     // site that still looked right in its own text.
-    let text = r#"rue 0
+    let text = r#"rescind 0
 site do
   inventory from: file("inventory.toml")
   journal to: file("journal.ndjson"), hook(:host_log), stdout(), sign: key("keys/journal")
@@ -446,7 +446,7 @@ site do
   end
 end
 "#;
-    let f = d.raw("site.rue", text);
+    let f = d.raw("site.scind", text);
     let sb = site_bindings(&f).unwrap();
     let kinds: Vec<&str> = sb.decl.journal.iter().map(|b| b.kind.as_str()).collect();
     assert_eq!(kinds, vec!["file", "hook", "stdout"], "in declared order");
@@ -462,9 +462,9 @@ end
 #[test]
 fn site_bindings_carry_operators_registrars_and_the_inventory_and_refuse_an_identity_with_no_user()
 {
-    use rue_surface::resolve::site_bindings;
+    use rescind_surface::resolve::site_bindings;
     let d = Dir::new("site-bindings");
-    let text = r#"rue 0
+    let text = r#"rescind 0
 site do
   inventory from: file("inventory.toml")
   journal to: file("journal.ndjson")
@@ -479,7 +479,7 @@ site do
   end
 end
 "#;
-    let f = d.raw("site.rue", text);
+    let f = d.raw("site.scind", text);
     let sb = site_bindings(&f).unwrap();
     assert_eq!(sb.dir, d.0);
     assert_eq!(sb.inventory.hosts.len(), 2);
@@ -512,7 +512,7 @@ end
 
     // An identity or a registrar with no OS user is E0602.
     let bad = d.raw(
-        "bad.rue",
+        "bad.scind",
         &text.replace("identity :ops, user: \"ops\", ", "identity :ops, "),
     );
     let diags = site_bindings(&bad).unwrap_err();
@@ -523,7 +523,7 @@ end
         "{diags:?}"
     );
     let bad = d.raw(
-        "bad2.rue",
+        "bad2.scind",
         &text.replace(
             "registrar :host, user: :socket_owner, ",
             "registrar :host, ",
@@ -537,7 +537,10 @@ end
         "{diags:?}"
     );
     // A missing inventory file is E0602 at the binding.
-    let bad = d.raw("bad3.rue", &text.replace("inventory.toml", "nowhere.toml"));
+    let bad = d.raw(
+        "bad3.scind",
+        &text.replace("inventory.toml", "nowhere.toml"),
+    );
     let diags = site_bindings(&bad).unwrap_err();
     assert!(
         diags
@@ -550,7 +553,7 @@ end
 // --- probes across files ---------------------------------------------------
 
 /// The IR a file resolves to, for the one plan it has.
-fn ir_of(path: &std::path::Path, host: &str) -> rue_core::ir::PlanIr {
+fn ir_of(path: &std::path::Path, host: &str) -> rescind_core::ir::PlanIr {
     let opts = Options {
         suspend_e0604: false,
         host: Some(host.into()),
@@ -572,20 +575,20 @@ fn an_imported_probe_is_declared_by_the_name_every_reference_uses() {
     // engine found no declaration and sent the host an empty body.
     let d = Dir::new("probe-names");
     d.raw(
-        "lib.rue",
-        "rue 0\ndefprobe :ready do\n  run \"true\"\n  locus :target\nend\n\
+        "lib.scind",
+        "rescind 0\ndefprobe :ready do\n  run \"true\"\n  locus :target\nend\n\
          defop :guarded, _ do\n  footprint owned: file(\"/etc/g\")\n  do: write(file(\"/etc/g\"), content: \"x\")\n  undo: :restore\n  post ready\nend\n",
     );
     let f = d.file(
-        "plan.rue",
-        "import \"lib.rue\" as lib\n\
+        "plan.scind",
+        "import \"lib.scind\" as lib\n\
          defplan :p, %{name: \"db-01\"} do\n  wane 1h\n  lib.guarded()\n  observe lib.ready() as r\nend\n",
     );
     let ir = ir_of(&f, "db-01");
     let declared: Vec<&str> = ir.plan.probes.iter().map(|p| p.name.as_str()).collect();
     assert_eq!(declared, vec!["ready"], "declared by its bare name");
     let observed = ir.plan.body.iter().find_map(|it| match it {
-        rue_core::model::Item::Observe { probe, .. } => Some(probe.as_str()),
+        rescind_core::model::Item::Observe { probe, .. } => Some(probe.as_str()),
         _ => None,
     });
     assert_eq!(
@@ -598,7 +601,7 @@ fn an_imported_probe_is_declared_by_the_name_every_reference_uses() {
         .body
         .iter()
         .find_map(|it| match it {
-            rue_core::model::Item::Step(s) => {
+            rescind_core::model::Item::Step(s) => {
                 Some(s.op.post.iter().map(|g| g.name.clone()).collect())
             }
             _ => None,
@@ -618,12 +621,12 @@ fn an_open_import_s_probe_is_declared_too() {
     // nothing the engine could find.
     let d = Dir::new("probe-open");
     d.raw(
-        "lib.rue",
-        "rue 0\ndefprobe :ready do\n  run \"true\"\n  locus :target\nend\n",
+        "lib.scind",
+        "rescind 0\ndefprobe :ready do\n  run \"true\"\n  locus :target\nend\n",
     );
     let f = d.file(
-        "plan.rue",
-        &format!("import \"lib.rue\"\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  assert ready\n  posture()\nend\n"),
+        "plan.scind",
+        &format!("import \"lib.scind\"\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  assert ready\n  posture()\nend\n"),
     );
     let ir = ir_of(&f, "db-01");
     assert!(
@@ -641,12 +644,12 @@ fn two_different_probes_with_one_bare_name_are_e0103() {
     // precedence.
     let d = Dir::new("probe-clash");
     d.raw(
-        "lib.rue",
-        "rue 0\ndefprobe :ready do\n  run \"true\"\n  locus :target\nend\n",
+        "lib.scind",
+        "rescind 0\ndefprobe :ready do\n  run \"true\"\n  locus :target\nend\n",
     );
     let f = d.file(
-        "plan.rue",
-        &format!("import \"lib.rue\" as lib\ndefprobe :ready do\n  run \"false\"\n  locus :target\nend\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"),
+        "plan.scind",
+        &format!("import \"lib.scind\" as lib\ndefprobe :ready do\n  run \"false\"\n  locus :target\nend\n{POSTURE}\ndefplan :p, %{{name: \"db-01\"}} do\n  wane 1h\n  posture()\nend\n"),
     );
     let cs = codes(&f, "db-01");
     assert!(
@@ -658,8 +661,8 @@ fn two_different_probes_with_one_bare_name_are_e0103() {
 // --- what a call binds -----------------------------------------------------
 
 /// A value as text, each reference marked with where it resolves.
-fn shown(v: &rue_core::body::Value) -> String {
-    use rue_core::body::{Part, Ref, Value};
+fn shown(v: &rescind_core::body::Value) -> String {
+    use rescind_core::body::{Part, Ref, Value};
     let r = |r: &Ref| match r {
         Ref::Param(n) => format!("{{param {n}}}"),
         Ref::Controller(n) => format!("{{controller {n}}}"),
@@ -682,8 +685,8 @@ fn shown(v: &rue_core::body::Value) -> String {
 }
 
 /// The first step anywhere in a plan body, repeats included.
-fn first_step(items: &[rue_core::model::Item]) -> Option<&rue_core::model::StepI> {
-    use rue_core::model::Item;
+fn first_step(items: &[rescind_core::model::Item]) -> Option<&rescind_core::model::StepI> {
+    use rescind_core::model::Item;
     items.iter().find_map(|it| match it {
         Item::Step(s) | Item::Knell(s) => Some(s),
         Item::Repeat { body, .. } => first_step(body),
@@ -704,7 +707,7 @@ fn a_call_s_arguments_reach_the_body_as_what_they_were_bound_to() {
     // value nothing held. Every tenant checked clean; T2 found it by running.
     let d = Dir::new("call-bindings");
     let f = d.file(
-        "plan.rue",
+        "plan.scind",
         "defop :note, _ do\n  footprint append_only: file(\"/var/log/n\"), modified: slot.state(n), modified: slot.state(greeting)\n  \
          do: [append(file(\"/var/log/n\"), line: \"#{greeting} #{who} #{where} #{n}\"), run(\"echo #{greeting} #{count}\"), hook(:tally, as: who, mode: mode)]\n  \
          undo: compensate: append(file(\"/var/log/n\"), line: \"undone\")\n  undo_pre file(\"/var/log/n\")\nend\n\
@@ -713,7 +716,7 @@ fn a_call_s_arguments_reach_the_body_as_what_they_were_bound_to() {
     );
     let plan = ir(&f, "db-01").plan;
     let s = first_step(&plan.body).expect("the repeat holds the step");
-    use rue_core::body::Prim;
+    use rescind_core::body::Prim;
     let Prim::Append(a) = &s.op.do_[0] else {
         panic!("{:?}", s.op.do_)
     };
@@ -728,7 +731,7 @@ fn a_call_s_arguments_reach_the_body_as_what_they_were_bound_to() {
         panic!("{:?}", s.op.do_)
     };
     assert_eq!(
-        shown(&rue_core::body::Value::Template(r.cmd.clone())),
+        shown(&rescind_core::body::Value::Template(r.cmd.clone())),
         "echo hello 3"
     );
     let Prim::Hook(h) = &s.op.do_[2] else {
@@ -755,7 +758,7 @@ fn a_call_s_arguments_reach_the_body_as_what_they_were_bound_to() {
     );
 }
 
-const START_GUEST: &str = "defop :start, _, g: g do\n  footprint modified: guest.state(g)\n  do: run(\"jail -c name=rue-#{g} persist\")\n  undo: run(\"jail -r rue-#{g}\", idempotent: true)\n  undo_pre guest.state(g)\n  undo_locus: :controller\nend\n\
+const START_GUEST: &str = "defop :start, _, g: g do\n  footprint modified: guest.state(g)\n  do: run(\"jail -c name=rescind-#{g} persist\")\n  undo: run(\"jail -r rescind-#{g}\", idempotent: true)\n  undo_pre guest.state(g)\n  undo_locus: :controller\nend\n\
 defplan :p, %{name: \"db-01\"} do\n  wane 1h\n  start(g: \"g1\")\nend\n";
 
 #[test]
@@ -766,8 +769,8 @@ fn a_probe_that_reads_a_fact_binds_its_instance_for_its_run_line() {
     // the run line is a value the engine supplies, not a plan parameter.
     let d = Dir::new("probe-reads");
     let f = d.file(
-        "plan.rue",
-        &format!("defprobe :guest_state do\n  run \"jls -j rue-#{{g}} jid\"\n  reads guest.state(g)\nend\n{START_GUEST}"),
+        "plan.scind",
+        &format!("defprobe :guest_state do\n  run \"jls -j rescind-#{{g}} jid\"\n  reads guest.state(g)\nend\n{START_GUEST}"),
     );
     let ir = ir_of(&f, "db-01");
     let probe = ir
@@ -777,12 +780,12 @@ fn a_probe_that_reads_a_fact_binds_its_instance_for_its_run_line() {
         .find(|p| p.name == "guest_state")
         .expect("declared");
     assert_eq!(probe.reads.as_deref(), Some("guest:state:{g}"));
-    use rue_core::body::{Part, Prim, Ref};
+    use rescind_core::body::{Part, Prim, Ref};
     match probe.body.as_slice() {
         [Prim::Run(r)] => assert_eq!(
             r.cmd,
             vec![
-                Part::Lit("jls -j rue-".into()),
+                Part::Lit("jls -j rescind-".into()),
                 Part::Ref(Ref::Controller("g".into())),
                 Part::Lit(" jid".into()),
             ]
@@ -797,7 +800,7 @@ fn a_probe_that_reads_a_fact_binds_its_instance_for_its_run_line() {
 fn reads_names_one_fact_shape_with_its_instance() {
     let d = Dir::new("probe-reads-bad");
     let twice = d.file(
-        "twice.rue",
+        "twice.scind",
         &format!("defprobe :guest_state do\n  run \"jls -j #{{g}}\"\n  reads guest.state(g)\n  reads guest.mode(g)\nend\n{START_GUEST}"),
     );
     assert!(
@@ -808,7 +811,7 @@ fn reads_names_one_fact_shape_with_its_instance() {
         codes(&twice, "db-01")
     );
     let bare = d.file(
-        "bare.rue",
+        "bare.scind",
         &format!(
             "defprobe :guest_state do\n  run \"jls\"\n  reads guest.state\nend\n{START_GUEST}"
         ),

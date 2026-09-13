@@ -4,7 +4,7 @@
 //! build's engine. v0.1.0's holds an instance applied across a repeat
 //! (store.rs holds its migration in detail); v0.2.0's, written by v0.2.0's
 //! engine for this test, an instance of two steps restored by footprint,
-//! with their snapshots and markers. `rued migrate` is what an operator runs
+//! with their snapshots and markers. `rescindd migrate` is what an operator runs
 //! between releases; this is what it has to leave behind.
 
 mod common;
@@ -13,8 +13,8 @@ use std::path::{Path, PathBuf};
 
 use common::world::World;
 use common::TempDir;
-use rue_core::states::State;
-use rue_engine::store::{migrate, schema_of, Store, SCHEMA};
+use rescind_core::states::State;
+use rescind_engine::store::{migrate, schema_of, Store, SCHEMA};
 
 fn fixture(release: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -84,7 +84,7 @@ fn a_released_store_migrates_and_drives(release: &str, schema: u32, id: &str) {
         chain.len() > before,
         "this build appended to the release's journal"
     );
-    rue_core::journal::verify(&chain).unwrap_or_else(|e| panic!("{release}: {e:?}"));
+    rescind_core::journal::verify(&chain).unwrap_or_else(|e| panic!("{release}: {e:?}"));
 }
 
 #[test]

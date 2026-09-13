@@ -1,9 +1,9 @@
-# Reverts: rue bootstrap verifies and prints, never runs (7.7: rue has no elevation mechanism); here it runs the commands through the executor.
+# Reverts: rescind bootstrap verifies and prints, never runs (7.7: rescind has no elevation mechanism); here it runs the commands through the executor.
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
 --- a/engine/src/lifecycle.rs
 +++ b/engine/src/lifecycle.rs
 @@ -1982,10 +1982,17 @@
-             rue_render::Instance::default_root(rue_core::artifact::shell_of(&h.record.os))
+             rescind_render::Instance::default_root(rescind_core::artifact::shell_of(&h.record.os))
                  .to_string()
          });
 -        Ok((
@@ -23,4 +23,4 @@
 +        Ok((state.clone(), commands))
      }
  
-     /// `rue doctor`: every host's reach and bootstrap, the sinks, signing,
+     /// `rescind doctor`: every host's reach and bootstrap, the sinks, signing,

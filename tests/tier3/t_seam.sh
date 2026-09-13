@@ -11,7 +11,7 @@ root=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd) || exit 2
 guard=$root/tools/lint-seam.sh
 list=$root/tools/seam-denylist.txt
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-t-seam.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-t-seam.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 rc=0

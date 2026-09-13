@@ -6,7 +6,7 @@
 # `-mmacosx-version-min`. A workspace member whose build script compiles C
 # therefore cannot be cross-built, and must be named in `ci/build-target.sh`'s
 # `NOT_CROSS_BUILT` -- or the pipeline finds out for us, four steps and
-# twenty minutes after the gate said yes, which is how `tree-sitter-rue`
+# twenty minutes after the gate said yes, which is how `tree-sitter-rescind`
 # was found.
 #
 # So: every member with a `cc` build dependency is excluded, and every name
@@ -37,7 +37,7 @@ manifest=$root/Cargo.toml
 [ -r "$script" ] || { echo "lint-cross-build: cannot read $script" >&2; exit 2; }
 [ -r "$manifest" ] || { echo "lint-cross-build: cannot read $manifest" >&2; exit 2; }
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-cross.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-cross.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 # The workspace's members, one directory per line.

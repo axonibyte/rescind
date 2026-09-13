@@ -1,0 +1,1 @@
+tenants/_negative/E0610-old-version-keyword/plan.scind:1:1: E0610: the version line names `rue`, which is what this language was called before v0.4.0 (new in v0.4.0: write `rescind` where the version line says `rue`); expected `rescind 0`, found `rue`

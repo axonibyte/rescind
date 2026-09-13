@@ -1,11 +1,11 @@
 //! An audit hook: a journal sink that keeps every entry, and a notifier.
 //!
 //! Bind it in a site with `journal to: local(), hook(:audit)` and
-//! `notify via: hook(:audit)`, and have rued spawn it:
+//! `notify via: hook(:audit)`, and have rescindd spawn it:
 //!
-//!     rued run --spawn audit=/usr/local/libexec/audit_hook ...
+//!     rescindd run --spawn audit=/usr/local/libexec/audit_hook ...
 //!
-//! Each journal entry is appended to $RUE_AUDIT_LOG (default audit.ndjson)
+//! Each journal entry is appended to $RESCIND_AUDIT_LOG (default audit.ndjson)
 //! as one line of JSON. A sink that cannot record an entry must say so: the
 //! engine then refuses to proceed (R0304) rather than run a step nobody
 //! recorded. Notifications go to stderr, because stdout carries the protocol.
@@ -14,7 +14,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
 
-use rue_hook_sdk::{serve_stdio, Answer, Hooks, Journal, Notify, Refusal, ServeOptions};
+use rescind_hook_sdk::{serve_stdio, Answer, Hooks, Journal, Notify, Refusal, ServeOptions};
 use serde_json::Value;
 
 pub struct AuditLog {
@@ -54,6 +54,6 @@ pub fn hooks(path: PathBuf) -> Hooks {
 // `pub` only so that the SDK's own tests can include this file and name it.
 pub fn main() -> std::io::Result<()> {
     let path =
-        std::env::var_os("RUE_AUDIT_LOG").map_or_else(|| "audit.ndjson".into(), PathBuf::from);
+        std::env::var_os("RESCIND_AUDIT_LOG").map_or_else(|| "audit.ndjson".into(), PathBuf::from);
     serve_stdio(hooks(path), ServeOptions::new("audit"))
 }

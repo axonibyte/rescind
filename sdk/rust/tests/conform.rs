@@ -1,9 +1,9 @@
-//! This SDK against `rue sdk-conform`'s own suite: the reference hook is
-//! spawned exactly as `rued` spawns a `--spawn` child and driven through
+//! This SDK against `rescind sdk-conform`'s own suite: the reference hook is
+//! spawned exactly as `rescindd` spawns a `--spawn` child and driven through
 //! every op of docs/ROADMAP.md 7.5.
 //!
 //! The second test is the one that keeps the suite honest: the ops the
-//! runner actually drove must be exactly the ops of `rue-hook-proto`'s
+//! runner actually drove must be exactly the ops of `rescind-hook-proto`'s
 //! table. An op added to the protocol with no case is a hole nothing else
 //! would notice -- `tools/lint-hook-ops.sh` binds the table to the
 //! document, and this binds it to the cases.
@@ -11,13 +11,13 @@
 use std::collections::BTreeSet;
 use std::time::Duration;
 
-use rue_engine::conform::conform;
-use rue_hook_proto::OPS;
+use rescind_engine::conform::conform;
+use rescind_hook_proto::OPS;
 
-fn suite() -> rue_engine::conform::Report {
+fn suite() -> rescind_engine::conform::Report {
     conform(
         "conform",
-        &format!("{} conform", env!("CARGO_BIN_EXE_rue-conform-hook")),
+        &format!("{} conform", env!("CARGO_BIN_EXE_rescind-conform-hook")),
         Duration::from_millis(1500),
     )
     .expect("the reference hook starts and registers")
@@ -76,7 +76,7 @@ fn the_conformance_hook_skips_a_line_that_is_not_json() {
     use std::io::{BufRead, BufReader, Write};
     use std::process::{Command, Stdio};
 
-    let mut child = Command::new(env!("CARGO_BIN_EXE_rue-conform-hook"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_rescind-conform-hook"))
         .arg("conform")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

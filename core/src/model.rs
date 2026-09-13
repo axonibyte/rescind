@@ -651,7 +651,7 @@ pub struct Site {
 
 /// The names a probe's `reads` pattern binds when it matches a concrete
 /// fact shape: `guest:state:{g}` against `guest:state:g1` is `g = g1`, and
-/// `guest:state:rue-{g}` against `guest:state:rue-g1` is too. A `{name}`
+/// `guest:state:rescind-{g}` against `guest:state:rescind-g1` is too. A `{name}`
 /// takes what lies between the literal text around it; a shape the
 /// pattern's literal text does not fit is `None`, and so is a binder that
 /// would take nothing.
@@ -709,7 +709,7 @@ mod tests {
             vars(&[("g", "g1")])
         );
         assert_eq!(
-            one("guest:state:rue-{g}", "guest:state:rue-g1"),
+            one("guest:state:rescind-{g}", "guest:state:rescind-g1"),
             vars(&[("g", "g1")])
         );
         assert_eq!(

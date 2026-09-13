@@ -1,9 +1,9 @@
-//! rued: the standalone engine daemon (docs/ROADMAP.md section 7).
+//! rescindd: the standalone engine daemon (docs/ROADMAP.md section 7).
 //!
-//! `rued run` reads a site block (7.3, 7.4), opens the store, binds the
+//! `rescindd run` reads a site block (7.3, 7.4), opens the store, binds the
 //! control socket and serves it (docs/control-protocol.md), reaps on an
 //! interval (7.8), and hosts the hooks that register (docs/hook-protocol.md).
-//! `rued migrate` is the store's migration (7.13). Daemon dry-run mode
+//! `rescindd migrate` is the store's migration (7.13). Daemon dry-run mode
 //! (`--dry-run`, 7.9) registers no executors, suspends E0604, and makes
 //! every apply a rehearsal.
 //!
@@ -14,7 +14,7 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use clap::{Parser, Subcommand};
-use rue_engine::store::{migrate, StoreError};
+use rescind_engine::store::{migrate, StoreError};
 
 mod run;
 #[cfg(windows)]
@@ -22,9 +22,9 @@ mod service;
 
 #[derive(Parser)]
 #[command(
-    name = "rued",
+    name = "rescindd",
     version,
-    about = "rue's engine daemon",
+    about = "rescind's engine daemon",
     disable_help_subcommand = true
 )]
 struct Cli {
@@ -36,7 +36,7 @@ struct Cli {
 enum Verb {
     /// Serve the control socket over a site until stopped.
     Run {
-        /// The .rue file whose site block declares the bindings, operators
+        /// The .scind file whose site block declares the bindings, operators
         /// and registrars (a plan file or a file that only holds a site).
         #[arg(long)]
         site: PathBuf,
@@ -48,7 +48,7 @@ enum Verb {
         socket: PathBuf,
         /// The group the socket belongs to (a name or a numeric gid);
         /// mode 0660.
-        #[arg(long, default_value = "rue")]
+        #[arg(long, default_value = "rescind")]
         group: String,
         /// Daemon dry-run mode (7.9): no executors, E0604 suspended,
         /// every apply a rehearsal.
@@ -81,7 +81,7 @@ enum Verb {
     },
     /// Migrate the instance store's schema to this build's, explicitly.
     /// Runs with the daemon stopped; refuses a store owned by another
-    /// account or written by a newer rued.
+    /// account or written by a newer rescindd.
     Migrate {
         /// The store directory.
         #[arg(long)]
@@ -99,7 +99,7 @@ fn main() -> ExitCode {
         Verb::Service { args: _ } => match service::dispatch() {
             Ok(()) => ExitCode::SUCCESS,
             Err(e) => {
-                eprintln!("rued: service: {e}");
+                eprintln!("rescindd: service: {e}");
                 ExitCode::from(1)
             }
         },
@@ -113,7 +113,7 @@ fn main() -> ExitCode {
                         "migrated"
                     };
                     println!(
-                        "rued: {verb} {} from schema {} to {}",
+                        "rescindd: {verb} {} from schema {} to {}",
                         store.display(),
                         m.from,
                         m.to
@@ -128,11 +128,11 @@ fn main() -> ExitCode {
                     | StoreError::NotOwned { .. }
                     | StoreError::Locked(_)),
                 ) => {
-                    eprintln!("rued: {e}");
+                    eprintln!("rescindd: {e}");
                     ExitCode::from(1)
                 }
                 Err(e) => {
-                    eprintln!("rued: {e}");
+                    eprintln!("rescindd: {e}");
                     ExitCode::from(2)
                 }
             }
@@ -160,11 +160,11 @@ fn main() -> ExitCode {
         }) {
             Ok(()) => ExitCode::SUCCESS,
             Err(run::Refusal::Usage(m)) => {
-                eprintln!("rued: {m}");
+                eprintln!("rescindd: {m}");
                 ExitCode::from(2)
             }
             Err(run::Refusal::Refused(m)) => {
-                eprintln!("rued: {m}");
+                eprintln!("rescindd: {m}");
                 ExitCode::from(1)
             }
         },

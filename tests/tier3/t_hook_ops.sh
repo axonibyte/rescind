@@ -7,7 +7,7 @@ set -u
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd) || exit 2
 guard=$root/tools/lint-hook-ops.sh
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-t-hook-ops.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-t-hook-ops.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 rc=0
@@ -17,10 +17,10 @@ bad() { echo "not ok  $1" >&2; rc=1; }
 reset_tree() {
     rm -rf "$tmp/tree"
     mkdir -p "$tmp/tree/docs" "$tmp/tree/hook-proto/src" \
-             "$tmp/tree/sdk/python/rue_hook" || exit 2
+             "$tmp/tree/sdk/python/rescind_hook" || exit 2
     cp "$root/docs/hook-protocol.md" "$tmp/tree/docs/" || exit 2
     cp "$root/hook-proto/src/op.rs" "$tmp/tree/hook-proto/src/" || exit 2
-    cp "$root/sdk/python/rue_hook/proto.py" "$tmp/tree/sdk/python/rue_hook/" || exit 2
+    cp "$root/sdk/python/rescind_hook/proto.py" "$tmp/tree/sdk/python/rescind_hook/" || exit 2
 }
 
 expect() { # expect <status> <label>
@@ -77,19 +77,19 @@ expect 2 "an unreadable document refuses with exit 2"
 #    the leg that rots quietly: an SDK's own tests pass against its own
 #    idea of the protocol, so nothing else would notice.
 reset_tree
-printf '    Op("notify", "page"),\n' >> "$tmp/tree/sdk/python/rue_hook/proto.py"
+printf '    Op("notify", "page"),\n' >> "$tmp/tree/sdk/python/rescind_hook/proto.py"
 expect 1 "an op in an SDK's table and absent from OPS is caught"
 
 reset_tree
-grep -v '"host_lock"' "$root/sdk/python/rue_hook/proto.py" \
-    > "$tmp/tree/sdk/python/rue_hook/proto.py"
+grep -v '"host_lock"' "$root/sdk/python/rescind_hook/proto.py" \
+    > "$tmp/tree/sdk/python/rescind_hook/proto.py"
 expect 1 "an op in OPS and absent from an SDK's table is caught"
 
 # 6. A row written over several lines counts the same as one on a single
 #    line: how a table is formatted is not the guard's business.
 reset_tree
 sed 's/Op("probe", "observe"/Op(\n        "probe",\n        "observe"/' \
-    "$root/sdk/python/rue_hook/proto.py" > "$tmp/tree/sdk/python/rue_hook/proto.py"
+    "$root/sdk/python/rescind_hook/proto.py" > "$tmp/tree/sdk/python/rescind_hook/proto.py"
 expect 0 "a row spread over several lines is still read"
 
 # 7. An SDK that is present with no table at all refuses with exit 2,
@@ -97,7 +97,7 @@ expect 0 "a row spread over several lines is still read"
 #    leg that reports success is the failure every guard here exists to
 #    avoid.
 reset_tree
-rm -f "$tmp/tree/sdk/python/rue_hook/proto.py"
+rm -f "$tmp/tree/sdk/python/rescind_hook/proto.py"
 expect 2 "an SDK present with no table refuses with exit 2"
 
 exit "$rc"

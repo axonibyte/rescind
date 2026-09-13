@@ -1,7 +1,7 @@
 # Reverts: a request reserves its umbra at Pending (section 5.12)
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/proto/src/Rue/Proto/Ledger.hs
-+++ b/proto/src/Rue/Proto/Ledger.hs
+--- a/proto/src/Rescind/Proto/Ledger.hs
++++ b/proto/src/Rescind/Proto/Ledger.hs
 @@ -47,7 +47,7 @@
        h : _ -> Left (R0101, "exclusivity class held by " <> instId h)
        [] -> case [h | h <- sameHost, any (\f -> any (touches f) (instUmbra h)) (instUmbra inst)] of

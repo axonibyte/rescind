@@ -1,7 +1,7 @@
 # Reverts: wane bounds Held in a temporary plan (section 5.9 rules 2 and 3)
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/proto/src/Rue/Proto/States.hs
-+++ b/proto/src/Rue/Proto/States.hs
+--- a/proto/src/Rescind/Proto/States.hs
++++ b/proto/src/Rescind/Proto/States.hs
 @@ -180,6 +180,7 @@
        | s == DriftHeld || s == Stuck = Stay
        | s == Pending || s == Unchecked || s == Checked || s == ApprovalExpired = NotApplicable

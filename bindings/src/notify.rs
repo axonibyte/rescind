@@ -5,8 +5,8 @@
 
 use std::io::Write;
 
-use rue_engine::executor::ExecError;
-use rue_engine::notify::{Level, Notify};
+use rescind_engine::executor::ExecError;
+use rescind_engine::notify::{Level, Notify};
 
 #[derive(Debug, Default)]
 pub struct Stdout;
@@ -18,7 +18,7 @@ impl Notify for Stdout {
 
     fn deliver(&mut self, level: Level, subject: &str, body: &str) -> Result<(), ExecError> {
         let mut out = std::io::stdout().lock();
-        writeln!(out, "rue {}: {subject}: {body}", level.word())
+        writeln!(out, "rescind {}: {subject}: {body}", level.word())
             .and_then(|()| out.flush())
             .map_err(|e| ExecError::Io(e.to_string()))
     }

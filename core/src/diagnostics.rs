@@ -108,6 +108,7 @@ codes! {
     E0607 => "inventory from: hook() has no record at check time; name one with --inventory",
     E0608 => "an action the host's executor cannot perform: a hook() action, or a probe with no run body, on a host reached by local() or ssh()",
     E0609 => "a computed undo on a fact the host's executor cannot read: a fact that is no file, on a host reached by local() or ssh(), with no probe that reads it",
+    E0610 => "the version line says `rue`, the name this language had before v0.4.0; write `rescind`",
 }
 
 impl Code {
@@ -119,6 +120,7 @@ impl Code {
         match self {
             Code::E0607 | Code::E0608 => Some("v0.2.0"),
             Code::E0609 => Some("v0.3.0"),
+            Code::E0610 => Some("v0.4.0"),
             _ => None,
         }
     }
@@ -134,6 +136,12 @@ impl Code {
             Code::E0609 => {
                 Some("declare a probe that `reads` the fact, or undo it with `:restore`")
             }
+            // The language was called `rue` until v0.4.0, when the name was
+            // found to be taken by two other programming languages. A text
+            // written before the rename is not wrong about anything except
+            // its first word, so it is told exactly that rather than left to
+            // read "language version marker missing" and wonder.
+            Code::E0610 => Some("write `rescind` where the version line says `rue`"),
             _ => None,
         }
     }

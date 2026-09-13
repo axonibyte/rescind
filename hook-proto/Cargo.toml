@@ -1,5 +1,5 @@
 [package]
-name = "rue-hook-proto"
+name = "rescind-hook-proto"
 description = "The hook protocol's wire, docs/hook-protocol.md v1: the ops of docs/ROADMAP.md 7.5 as data, the registration frame, the resolved body an execute.run carries, and the records a reply returns"
 version.workspace = true
 edition.workspace = true
@@ -10,6 +10,6 @@ repository.workspace = true
 [dependencies]
 # The journal entry a `journal.append` carries and the three-valued reading
 # a probe answers with; core depends on nothing and does no I/O.
-rue-core = { path = "../core" }
+rescind-core = { path = "../core" }
 serde.workspace = true
 serde_json.workspace = true

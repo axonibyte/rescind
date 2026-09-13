@@ -6,7 +6,7 @@
                      }
                  }
              }
-+            Frame::Register(_) if std::env::var_os("RUE_NEVER_SET").is_none() => {
++            Frame::Register(_) if std::env::var_os("RESCIND_NEVER_SET").is_none() => {
 +                let _ = write_line(
 +                    &mut *writer.lock().unwrap_or_else(|e| e.into_inner()),
 +                    &json!({ "register": { "ok": true } }),

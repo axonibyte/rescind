@@ -27,10 +27,10 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use rue_core::journal::Entry;
-use rue_core::journal::Scope;
-use rue_core::model::{Authenticator, HostRecord, Instant, Tri};
-use rue_hook_proto::{Direction, InventoryHost, Op};
+use rescind_core::journal::Entry;
+use rescind_core::journal::Scope;
+use rescind_core::model::{Authenticator, HostRecord, Instant, Tri};
+use rescind_hook_proto::{Direction, InventoryHost, Op};
 use serde_json::{json, Value};
 
 use crate::executor::{
@@ -44,7 +44,7 @@ use crate::notify::{Level, Notify};
 use crate::scheduler::{Job, Presence, Scheduler};
 use crate::secrets::Acceptor;
 
-pub use rue_hook_proto::{host_shell, Registration, HOOK_PROTOCOL};
+pub use rescind_hook_proto::{host_shell, Registration, HOOK_PROTOCOL};
 
 /// The default deadline a hook has to answer a request.
 pub const DEFAULT_DEADLINE: Duration = Duration::from_secs(30);
@@ -240,7 +240,7 @@ impl HookLink for LineLink {
         let dropped = guard_secrets(&mut request);
         if !dropped.is_empty() {
             eprintln!(
-                "rue: R0305: {} dropped from a {} message to hook {}",
+                "rescind: R0305: {} dropped from a {} message to hook {}",
                 dropped.join(", "),
                 request
                     .get("kind")
@@ -381,8 +381,8 @@ impl HookRegistry {
 
 /// A hook running as a child process, its registration read and validated.
 ///
-/// The caller decides whether to accept it -- `rued` checks that the socket
-/// owner is a declared registrar (R0505), `rue sdk-conform` accepts any
+/// The caller decides whether to accept it -- `rescindd` checks that the socket
+/// owner is a declared registrar (R0505), `rescind sdk-conform` accepts any
 /// hook it was pointed at -- and only then [`acknowledge`](Self::acknowledge)s
 /// it, because the acknowledgement is what tells the child to start
 /// serving.
@@ -520,10 +520,10 @@ pub fn spawn_stdio_hook(name: &str, command: &str) -> Result<StdioHook, HookErro
 // ---------------------------------------------------------------------------
 // Requests
 
-// One constructor per op of 7.5, in `rue-hook-proto` so the engine, the
+// One constructor per op of 7.5, in `rescind-hook-proto` so the engine, the
 // SDKs and the conformance runner build the same frames from the same
 // table.
-pub use rue_hook_proto::request::*;
+pub use rescind_hook_proto::request::*;
 
 // ---------------------------------------------------------------------------
 // Adapters
@@ -743,7 +743,7 @@ pub fn hook_inventory(
     Ok(records.into_iter().map(into_host).collect())
 }
 
-/// A host as a hook lists it (`rue_hook_proto::InventoryHost`, the
+/// A host as a hook lists it (`rescind_hook_proto::InventoryHost`, the
 /// roadmap's Appendix C record) as the engine's own [`Host`]. The roles go
 /// in as a fact so a clause dispatches on them exactly as it does for a
 /// file inventory.
@@ -763,7 +763,7 @@ fn into_host(h: InventoryHost) -> Host {
         },
         address: h.address,
         scheduler: h.scheduler,
-        rue_root: h.rue_root,
+        rescind_root: h.rescind_root,
         facts,
     }
 }
@@ -855,7 +855,7 @@ impl Scheduler for HookScheduler {
 
 /// `approval via: hook(:name)`: the hook as the approval binding (7.5).
 /// It publishes the authenticators, renders the challenge and returns the
-/// verdict; the digest and its scope are rue's, so a proof it accepts is
+/// verdict; the digest and its scope are rescind's, so a proof it accepts is
 /// bound to one request and one scope.
 pub struct HookApproval {
     pub name: String,

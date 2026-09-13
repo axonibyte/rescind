@@ -1,4 +1,4 @@
-//! rue-sim: the shadow world of docs/ROADMAP.md 10 (tier 7).
+//! rescind-sim: the shadow world of docs/ROADMAP.md 10 (tier 7).
 //!
 //! A run is a seed and a number of steps. The seed makes an event list;
 //! the events are fed to a real engine over the fake executor, the fake
@@ -15,7 +15,7 @@
 //! reach: an approval and a wane in the wrong order, a boot in the middle
 //! of an undo, an artifact firing while an operator recants.
 //!
-//! `RUE_SIM_SEED` and `RUE_SIM_STEPS` set the seed and the length; with
+//! `RESCIND_SIM_SEED` and `RESCIND_SIM_STEPS` set the seed and the length; with
 //! neither, the tests run a fixed sweep so the suite is deterministic.
 
 pub mod invariants;
@@ -26,7 +26,7 @@ use std::fmt;
 pub use invariants::{check_all, Violation};
 pub use world::{Sim, INVARIANTS};
 
-/// xorshift32, the generator every seeded test in rue uses, so a run is
+/// xorshift32, the generator every seeded test in rescind uses, so a run is
 /// replayable from its seed on any platform.
 pub struct Rng(pub u32);
 
@@ -36,7 +36,7 @@ impl Rng {
     }
     /// The next word. Named for what it is; the lint that reads it as
     /// `Iterator::next` is answered here rather than by renaming the
-    /// generator every other seeded test in rue already calls `next`.
+    /// generator every other seeded test in rescind already calls `next`.
     #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> u32 {
         let mut x = self.0;

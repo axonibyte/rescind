@@ -58,6 +58,6 @@ nohup.out
 
 # Deliberately NOT ignored:
 #   proto/cabal.project.freeze -- the freeze IS the reproducibility pin.
-#   Cargo.lock (Phase 1 on)    -- rue ships binaries; the lock is source.
+#   Cargo.lock (Phase 1 on)    -- rescind ships binaries; the lock is source.
 #   *.patch                    -- tools/rediscovery/patches are the battery.
 #   *.log in general           -- fixtures may be logs.

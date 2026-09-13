@@ -6,10 +6,10 @@
 //! holder is the host family's tool; the client's own connection failure is
 //! Unreachable.
 
-use rue_bindings::ssh::{octal, Exit, FakeTransportHandle, OpenSsh, SshExecutor, Transport};
-use rue_core::model::{HostRecord, Tri};
-use rue_engine::executor::{ExecError, Executor, ProbeRun, RPrim, Resolved};
-use rue_engine::host::Host;
+use rescind_bindings::ssh::{octal, Exit, FakeTransportHandle, OpenSsh, SshExecutor, Transport};
+use rescind_core::model::{HostRecord, Tri};
+use rescind_engine::executor::{ExecError, Executor, ProbeRun, RPrim, Resolved};
+use rescind_engine::host::Host;
 
 fn host(os: &str) -> Host {
     Host {
@@ -23,7 +23,7 @@ fn host(os: &str) -> Host {
         },
         address: "10.0.1.1".into(),
         scheduler: Some("cron".into()),
-        rue_root: None,
+        rescind_root: None,
         facts: Default::default(),
     }
 }
@@ -36,7 +36,7 @@ fn executor() -> (SshExecutor, FakeTransportHandle) {
 #[test]
 fn a_run_s_env_and_stdin_travel_inside_the_script_decoded_by_printf_never_on_a_command_line() {
     let (mut x, t) = executor();
-    t.reply(0, "rue-output token=t-1\nhello\n");
+    t.reply(0, "rescind-output token=t-1\nhello\n");
     let body = vec![RPrim::Run {
         cmd: Resolved::plain("service sshd reload"),
         env: vec![(
@@ -105,12 +105,12 @@ fn file_primitives_become_the_helpers_and_atomic_writes() {
         },
         RPrim::RegionSet {
             shape: "file:/etc/pf.conf".into(),
-            anchor: Some("rue-mgmt".into()),
+            anchor: Some("rescind-mgmt".into()),
             content: Resolved::plain("pass in proto tcp to port 8443"),
         },
         RPrim::RegionClear {
             shape: "file:/etc/pf.conf".into(),
-            anchor: Some("rue-mgmt".into()),
+            anchor: Some("rescind-mgmt".into()),
         },
         RPrim::Append {
             shape: "file:/var/log/x".into(),
@@ -128,15 +128,15 @@ fn file_primitives_become_the_helpers_and_atomic_writes() {
     x.run(&host("linux"), "i-2", &body).unwrap();
     let s = t.scripts().pop().unwrap();
     assert!(
-        s.contains("> '/etc/pf.conf'.rue-tmp && mv '/etc/pf.conf'.rue-tmp '/etc/pf.conf'"),
+        s.contains("> '/etc/pf.conf'.rescind-tmp && mv '/etc/pf.conf'.rescind-tmp '/etc/pf.conf'"),
         "{s}"
     );
     assert!(
-        s.contains("region_set '/etc/pf.conf' 'rue-mgmt' \"$(printf '%b' '"),
+        s.contains("region_set '/etc/pf.conf' 'rescind-mgmt' \"$(printf '%b' '"),
         "{s}"
     );
     assert!(
-        s.contains("strip_region '/etc/pf.conf' 'rue-mgmt'\n"),
+        s.contains("strip_region '/etc/pf.conf' 'rescind-mgmt'\n"),
         "{s}"
     );
     assert!(
@@ -212,14 +212,14 @@ fn a_probe_answers_by_status_and_the_lock_holder_is_the_family_s_tool() {
     assert!(
         holds[0]
             .1
-            .contains("lockf -k -t 60 '/var/db/rue/lock' sh -c 'echo ready; cat'"),
+            .contains("lockf -k -t 60 '/var/db/rescind/lock' sh -c 'echo ready; cat'"),
         "{}",
         holds[0].1
     );
     assert!(
         holds[1]
             .1
-            .contains("flock -w 60 '/var/db/rue/lock' sh -c 'echo ready; cat'"),
+            .contains("flock -w 60 '/var/db/rescind/lock' sh -c 'echo ready; cat'"),
         "{}",
         holds[1].1
     );
@@ -300,7 +300,7 @@ fn instance_directory_ops_read_fact_and_bootstrap_state_go_through_scripts() {
         scripts[0]
     );
     assert!(
-        scripts[1].contains("chmod 640 \"$INST\"/'markers/1'.rue-tmp && mv"),
+        scripts[1].contains("chmod 640 \"$INST\"/'markers/1'.rescind-tmp && mv"),
         "{}",
         scripts[1]
     );

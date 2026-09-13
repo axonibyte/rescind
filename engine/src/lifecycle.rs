@@ -2,7 +2,7 @@
 //! to a terminal state, over the store, the journal, the clock and the
 //! executors.
 //!
-//! The state machine is core's (`rue_core::states::transition`); this
+//! The state machine is core's (`rescind_core::states::transition`); this
 //! module derives the events. An event comes from a verb (`apply`,
 //! `recant`, `renew`, `confirm`, `commit`, `resume`, `handoff-done`,
 //! `abandon`, `cancel`), from a step's outcome (a refusal, a guard, a
@@ -26,22 +26,22 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::sync::Arc;
 
-use rue_core::algebra::{numbered, op_of};
-use rue_core::body::{Body, Ref};
-use rue_core::check;
-use rue_core::explain::undo_line;
-use rue_core::intent::{effective_wane, infer_intent, Intent};
-use rue_core::interference::{maywrite, step_facts, writes};
-use rue_core::ir::PlanIr;
-use rue_core::journal::{Event as J, Scope};
-use rue_core::ledger::{Instance as Held, Ledger, LedgerCode};
-use rue_core::model::{
+use rescind_core::algebra::{numbered, op_of};
+use rescind_core::body::{Body, Ref};
+use rescind_core::check;
+use rescind_core::explain::undo_line;
+use rescind_core::intent::{effective_wane, infer_intent, Intent};
+use rescind_core::interference::{maywrite, step_facts, writes};
+use rescind_core::ir::PlanIr;
+use rescind_core::journal::{Event as J, Scope};
+use rescind_core::ledger::{Instance as Held, Ledger, LedgerCode};
+use rescind_core::model::{
     Ack, Drift, Duration, FootprintEntry, ForceName, Guard, HostRef, Instant, Item, Kind, Locus,
     Mode, OnLapse, Op, Plan, Refusal, RepeatForm, StepI, Tri, Undo, UndoLocus,
 };
-use rue_core::request::hash_json;
-use rue_core::states::{self, Ctx, Event as E, Outcome as Verdict_, RCode, State};
-use rue_core::verdict::{Status, Verdict};
+use rescind_core::request::hash_json;
+use rescind_core::states::{self, Ctx, Event as E, Outcome as Verdict_, RCode, State};
+use rescind_core::verdict::{Status, Verdict};
 use serde::{Deserialize, Serialize};
 
 use crate::backstop::{BackstopState, Disarm, DEFAULT_SKEW_TOLERANCE};
@@ -305,7 +305,7 @@ impl InstanceRecord {
         numbered(&self.plan().body)
             .into_iter()
             .find(|(n, _)| *n == step)
-            .and_then(|(_, it)| rue_core::algebra::step_of(it))
+            .and_then(|(_, it)| rescind_core::algebra::step_of(it))
     }
 
     pub fn about(&self) -> About {
@@ -355,7 +355,7 @@ pub enum EngineError {
 impl fmt::Display for EngineError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            EngineError::Refused(v) => write!(f, "refused: {}", rue_core::prose::prose(v)),
+            EngineError::Refused(v) => write!(f, "refused: {}", rescind_core::prose::prose(v)),
             EngineError::Ledger(c, m) => write!(f, "{c:?}: {m}"),
             EngineError::NotAdmitted(c, m) => write!(f, "{c:?}: {m}"),
             EngineError::NoSuchInstance(id) => write!(f, "no such instance: {id}"),
@@ -462,7 +462,7 @@ pub(crate) enum Flow {
 }
 
 /// One transition the machine made (or refused), as the engine observed
-/// it: what `rue status` reports as history and what the tier-4 table test
+/// it: what `rescind status` reports as history and what the tier-4 table test
 /// reads.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Transition {
@@ -509,7 +509,7 @@ impl fmt::Debug for Engine {
     }
 }
 
-/// One host in `rue doctor`'s report.
+/// One host in `rescind doctor`'s report.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HostDoctor {
     pub name: String,
@@ -552,42 +552,42 @@ impl DoctorReport {
     }
 }
 
-/// The commands `rue bootstrap` prints for what a target lacks (7.7),
-/// per OS family; rue never runs them.
+/// The commands `rescind bootstrap` prints for what a target lacks (7.7),
+/// per OS family; rescind never runs them.
 pub fn bootstrap_commands(os: &str, root: &str, state: &BootstrapState) -> Vec<String> {
     let mut v = Vec::new();
     if os == "windows" {
         if !state.group {
-            v.push("New-LocalGroup -Name rue".into());
+            v.push("New-LocalGroup -Name rescind".into());
         }
-        if !state.rue_root || !state.instances_dir || !state.lock || !state.modes_ok {
+        if !state.rescind_root || !state.instances_dir || !state.lock || !state.modes_ok {
             v.push(format!(
                 "New-Item -ItemType Directory -Force {root}\\instances"
             ));
             v.push(format!("New-Item -ItemType File -Force {root}\\lock"));
             v.push(format!(
-                "icacls {root}\\instances /grant rue:(OI)(CI)M; icacls {root}\\lock /grant rue:M"
+                "icacls {root}\\instances /grant rescind:(OI)(CI)M; icacls {root}\\lock /grant rescind:M"
             ));
         }
         return v;
     }
     if !state.group {
         v.push(match os {
-            "freebsd" | "dragonfly" => "pw groupadd rue".to_string(),
-            _ => "groupadd rue".to_string(),
+            "freebsd" | "dragonfly" => "pw groupadd rescind".to_string(),
+            _ => "groupadd rescind".to_string(),
         });
     }
-    if !state.rue_root {
+    if !state.rescind_root {
         v.push(format!("install -d -o root -m 0755 {root}"));
     }
     if !state.instances_dir || !state.modes_ok {
         v.push(format!(
-            "install -d -o root -g rue -m 2770 {root}/instances"
+            "install -d -o root -g rescind -m 2770 {root}/instances"
         ));
     }
     if !state.lock || !state.modes_ok {
         v.push(format!(
-            "install -o root -g rue -m 0664 /dev/null {root}/lock"
+            "install -o root -g rescind -m 0664 /dev/null {root}/lock"
         ));
     }
     v
@@ -602,7 +602,7 @@ pub fn controller_host() -> Host {
         _ => "linux",
     };
     Host {
-        record: rue_core::model::HostRecord {
+        record: rescind_core::model::HostRecord {
             name: "controller".into(),
             os: os.into(),
             reach: vec!["local".into()],
@@ -612,7 +612,7 @@ pub fn controller_host() -> Host {
         },
         address: "127.0.0.1".into(),
         scheduler: None,
-        rue_root: None,
+        rescind_root: None,
         facts: BTreeMap::new(),
     }
 }
@@ -659,7 +659,10 @@ impl Engine {
 
     /// A site-level journal entry (an operator connected, a hook registered):
     /// about no plan and no instance.
-    pub fn journal_site_event(&mut self, ev: J) -> Result<rue_core::journal::Entry, EngineError> {
+    pub fn journal_site_event(
+        &mut self,
+        ev: J,
+    ) -> Result<rescind_core::journal::Entry, EngineError> {
         let at = self.clock.now();
         let about = About {
             plan: String::new(),
@@ -939,7 +942,7 @@ impl Engine {
             // A `transport: :controller` hook, when the site binds one, and
             // `local()` otherwise: the same list the checker's E0608 reads,
             // so a plan it passes is one this can place.
-            rue_core::check::CONTROLLER_REACH.to_vec()
+            rescind_core::check::CONTROLLER_REACH.to_vec()
         } else {
             host.record.reach.iter().map(String::as_str).collect()
         };
@@ -1395,7 +1398,7 @@ impl Engine {
         rec: &mut InstanceRecord,
         n: u32,
     ) -> Result<Option<Flow>, EngineError> {
-        let Some(cov) = rue_core::backstop::coverage(rec.plan()) else {
+        let Some(cov) = rescind_core::backstop::coverage(rec.plan()) else {
             return Ok(None);
         };
         if cov.covered.is_empty() {
@@ -1418,7 +1421,7 @@ impl Engine {
     /// armed once the covered steps are done and the verdict states the
     /// engine-only window.
     fn backstop_after_walk(&mut self, rec: &mut InstanceRecord) -> Result<Flow, EngineError> {
-        let Some(cov) = rue_core::backstop::coverage(rec.plan()) else {
+        let Some(cov) = rescind_core::backstop::coverage(rec.plan()) else {
             return Ok(Flow::Continue);
         };
         if cov.covered.is_empty() || rec.backstop.as_ref().is_some_and(|b| b.armed) {
@@ -1678,7 +1681,7 @@ impl Engine {
                     // step: a knell is not acknowledged blind. A rehearsal
                     // calls no executor, and states the probe by name.
                     let cost_text = match cost {
-                        rue_core::model::Cost::Probe(p) if !rec.rehearsal => {
+                        rescind_core::model::Cost::Probe(p) if !rec.rehearsal => {
                             let owner = self.owner_host(rec)?;
                             match self.observe_text(rec, &owner, p) {
                                 Ok(text) => format!("{p}: {}", text.trim()),
@@ -1693,8 +1696,8 @@ impl Engine {
                                 }
                             }
                         }
-                        rue_core::model::Cost::Probe(p) => p.clone(),
-                        rue_core::model::Cost::NoCost(_) => "none".into(),
+                        rescind_core::model::Cost::Probe(p) => p.clone(),
+                        rescind_core::model::Cost::NoCost(_) => "none".into(),
                     };
                     if rec.acks.contains(&n) {
                         self.log(
@@ -1827,7 +1830,7 @@ impl Engine {
                     return self.fail_after_do(rec, &at, &op, &pre, why);
                 }
                 for p in &op.do_ {
-                    if let rue_core::body::Prim::Stage(st) = p {
+                    if let rescind_core::body::Prim::Stage(st) = p {
                         rec.staged.push(Staged {
                             host: host.name().to_string(),
                             step: n,
@@ -2010,9 +2013,9 @@ impl Engine {
             Ok(st) if st.ready() => {}
             Ok(st) => {
                 return Ok(Err(format!(
-                    "R0407: {} is not bootstrapped (rue_root {}, group {}, instances {}, lock {}, modes {}); run `rue bootstrap {}`",
+                    "R0407: {} is not bootstrapped (rescind_root {}, group {}, instances {}, lock {}, modes {}); run `rescind bootstrap {}`",
                     host.name(),
-                    st.rue_root,
+                    st.rescind_root,
                     st.group,
                     st.instances_dir,
                     st.lock,
@@ -2051,8 +2054,8 @@ impl Engine {
                     {
                         return Ok(Err(format!(
                             "R0409: {} holds instance {} of controller {other}, armed and \
-                             not fired; rue is single-controller per host. Its backstop is \
-                             live: read it, then `rue reclaim {} {} --force --reason ...` \
+                             not fired; rescind is single-controller per host. Its backstop is \
+                             live: read it, then `rescind reclaim {} {} --force --reason ...` \
                              if it is spent",
                             host.name(),
                             d.instance,
@@ -2685,7 +2688,7 @@ impl Engine {
 
     // --- verbs ---------------------------------------------------------------
 
-    /// `rue bootstrap <host>` (7.7): what the target has and, for what it
+    /// `rescind bootstrap <host>` (7.7): what the target has and, for what it
     /// lacks, the exact commands for its OS family. Nothing is run.
     pub fn bootstrap(&mut self, host: &str) -> Result<(BootstrapState, Vec<String>), EngineError> {
         let h = self
@@ -2697,8 +2700,8 @@ impl Engine {
         let state = ex
             .bootstrap_state(&h)
             .map_err(|e| EngineError::Internal(format!("{host}: {e}")))?;
-        let root = h.rue_root.clone().unwrap_or_else(|| {
-            rue_render::Instance::default_root(rue_core::artifact::shell_of(&h.record.os))
+        let root = h.rescind_root.clone().unwrap_or_else(|| {
+            rescind_render::Instance::default_root(rescind_core::artifact::shell_of(&h.record.os))
                 .to_string()
         });
         Ok((
@@ -2707,7 +2710,7 @@ impl Engine {
         ))
     }
 
-    /// `rue doctor`: every host's reach and bootstrap, the sinks, signing,
+    /// `rescind doctor`: every host's reach and bootstrap, the sinks, signing,
     /// settle, and the instances.
     pub fn doctor(&mut self) -> Result<DoctorReport, EngineError> {
         let mut hosts = Vec::new();
@@ -3558,8 +3561,8 @@ fn leaf_count(items: &[Item]) -> u32 {
 
 /// The umbra each host reserves at request (5.12): the facts every leaf
 /// writes or may write, grouped by the leaf's host.
-fn umbras(p: &Plan) -> Vec<(String, Vec<rue_core::interference::Fact>)> {
-    let mut by_host: BTreeMap<String, Vec<rue_core::interference::Fact>> = BTreeMap::new();
+fn umbras(p: &Plan) -> Vec<(String, Vec<rescind_core::interference::Fact>)> {
+    let mut by_host: BTreeMap<String, Vec<rescind_core::interference::Fact>> = BTreeMap::new();
     for leaf in step_facts(&p.owner, &p.body) {
         let e = by_host.entry(leaf.host.clone()).or_default();
         e.extend(writes(leaf.op));
@@ -3612,7 +3615,7 @@ pub fn restore_body(
     Ok(body)
 }
 
-/// The steps a record has applied, for tests and `rue status`.
+/// The steps a record has applied, for tests and `rescind status`.
 pub fn applied_steps(rec: &InstanceRecord) -> BTreeSet<u32> {
     rec.applied.iter().map(|a| a.step).collect()
 }

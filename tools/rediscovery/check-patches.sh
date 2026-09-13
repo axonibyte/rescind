@@ -39,7 +39,7 @@ else
     dry=-C
 fi
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-check-patches.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-check-patches.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 awk -F "$tab" '

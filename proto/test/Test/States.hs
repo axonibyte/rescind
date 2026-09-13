@@ -2,9 +2,9 @@
 -- state and event the machine admits. The table itself is a golden.
 module Test.States (tests) where
 
-import Rue.Proto.Intent (Intent (..))
-import Rue.Proto.Model (Mode (..), OnLapse (..))
-import Rue.Proto.States
+import Rescind.Proto.Intent (Intent (..))
+import Rescind.Proto.Model (Mode (..), OnLapse (..))
+import Rescind.Proto.States
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (assertBool, testCase, (@?=))
 

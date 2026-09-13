@@ -1,0 +1,17 @@
+{
+  "name": "tree-sitter-rescind",
+  "version": "0.3.0",
+  "description": "rescind's tree-sitter grammar",
+  "license": "BSD-2-Clause",
+  "repository": "https://bitbucket.org/axonibyte/rescind",
+  "main": "bindings/node",
+  "keywords": ["parser", "tree-sitter", "rescind"],
+  "files": ["grammar.js", "queries/*", "src/**"],
+  "devDependencies": {
+    "tree-sitter-cli": "^0.25.10"
+  },
+  "scripts": {
+    "generate": "tree-sitter generate",
+    "test": "tree-sitter test"
+  }
+}

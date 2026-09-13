@@ -65,7 +65,7 @@
       "conditional": null,
       "drift": "clobber",
       "footprint": [
-        "owned: winfw:rule:rue-mgmt"
+        "owned: winfw:rule:rescind-mgmt"
       ],
       "gate": null,
       "knell": null,
@@ -73,7 +73,7 @@
       "n": 1,
       "op": "winfw_allow",
       "refusal": "revert",
-      "undo": "Remove-NetFirewallRule -Name rue-mgmt",
+      "undo": "Remove-NetFirewallRule -Name rescind-mgmt",
       "undo_locus": "target"
     },
     {

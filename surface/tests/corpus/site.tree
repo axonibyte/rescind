@@ -1,302 +1,302 @@
-FILE@0..856
-  VERSION@0..6
-    NAME@0..3 "rue"
-    INT@4..5 "0"
-    NEWLINE@5..6 "\n"
-  COMMENT@6..77 "# Every site declaration of section 6.3, with a hook binding carrying a"
-  NEWLINE@77..78 "\n"
-  COMMENT@78..112 "# keyword and a list of acceptors."
-  NEWLINE@112..113 "\n"
-  NEWLINE@113..114 "\n"
-  BLOCK@114..856
-    NAME@114..118 "site"
-    NAME@119..121 "do"
-    NEWLINE@121..122 "\n"
-    BODY@124..852
-      LINE@124..163
-        NAME@124..133 "inventory"
-        ARGS@134..162
-          KW@134..162
-            NAME@134..138 "from"
-            COLON@138..139 ":"
-            CALL@140..162
-              REF@140..144
-                NAME@140..144 "file"
-              L_PAREN@144..145 "("
-              ARGS@145..161
-                LITERAL@145..161
-                  STRING@145..161 "\"inventory.toml\""
-              R_PAREN@161..162 ")"
-        NEWLINE@162..163 "\n"
-      LINE@165..185
-        NAME@165..172 "journal"
-        ARGS@173..184
-          KW@173..184
-            NAME@173..175 "to"
-            COLON@175..176 ":"
-            CALL@177..184
-              REF@177..182
-                NAME@177..182 "local"
-              L_PAREN@182..183 "("
-              R_PAREN@183..184 ")"
-        NEWLINE@184..185 "\n"
-      LINE@187..218
-        NAME@187..195 "approval"
-        ARGS@196..217
-          KW@196..217
-            NAME@196..199 "via"
-            COLON@199..200 ":"
-            CALL@201..217
-              REF@201..205
-                NAME@201..205 "hook"
-              L_PAREN@205..206 "("
-              ARGS@206..216
-                LITERAL@206..216
-                  ATOM@206..216 ":authority"
-              R_PAREN@216..217 ")"
-        NEWLINE@217..218 "\n"
-      LINE@220..255
-        NAME@220..227 "secrets"
-        ARGS@228..254
-          KW@228..254
-            NAME@228..232 "from"
-            COLON@232..233 ":"
-            CALL@234..254
-              REF@234..238
-                NAME@234..238 "file"
-              L_PAREN@238..239 "("
-              ARGS@239..253
-                LITERAL@239..253
-                  STRING@239..253 "\"secrets.toml\""
-              R_PAREN@253..254 ")"
-        NEWLINE@254..255 "\n"
-      LINE@257..326
-        NAME@257..264 "secrets"
-        ARGS@265..325
-          KW@265..325
-            NAME@265..275 "deliver_to"
-            COLON@275..276 ":"
-            LIST@277..325
-              L_BRACK@277..278 "["
-              CALL@278..289
-                REF@278..287
-                  NAME@278..287 "requester"
-                L_PAREN@287..288 "("
-                R_PAREN@288..289 ")"
-              COMMA@289..290 ","
-              CALL@291..309
-                REF@291..295
-                  NAME@291..295 "hold"
-                L_PAREN@295..296 "("
-                ARGS@296..308
-                  KW@296..308
-                    NAME@296..301 "until"
-                    COLON@301..302 ":"
-                    LITERAL@303..308
-                      ATOM@303..308 ":wane"
-                R_PAREN@308..309 ")"
-              COMMA@309..310 ","
-              CALL@311..324
-                REF@311..315
-                  NAME@311..315 "hook"
-                L_PAREN@315..316 "("
-                ARGS@316..323
-                  LITERAL@316..323
-                    ATOM@316..323 ":escrow"
-                R_PAREN@323..324 ")"
-              R_BRACK@324..325 "]"
-        NEWLINE@325..326 "\n"
-      LINE@328..353
-        NAME@328..334 "notify"
-        ARGS@335..352
-          KW@335..352
-            NAME@335..338 "via"
-            COLON@338..339 ":"
-            CALL@340..352
-              REF@340..344
-                NAME@340..344 "hook"
-              L_PAREN@344..345 "("
-              ARGS@345..351
-                LITERAL@345..351
-                  ATOM@345..351 ":pager"
-              R_PAREN@351..352 ")"
-        NEWLINE@352..353 "\n"
-      LINE@355..418
-        NAME@355..362 "execute"
-        ARGS@363..417
-          KW@363..417
-            NAME@363..366 "via"
-            COLON@366..367 ":"
-            LIST@368..417
-              L_BRACK@368..369 "["
-              CALL@369..376
-                REF@369..374
-                  NAME@369..374 "local"
-                L_PAREN@374..375 "("
-                R_PAREN@375..376 ")"
-              COMMA@376..377 ","
-              CALL@378..383
-                REF@378..381
-                  NAME@378..381 "ssh"
-                L_PAREN@381..382 "("
-                R_PAREN@382..383 ")"
-              COMMA@383..384 ","
-              CALL@385..416
-                REF@385..389
-                  NAME@385..389 "hook"
-                L_PAREN@389..390 "("
-                ARGS@390..415
-                  LITERAL@390..398
-                    ATOM@390..398 ":bmc_api"
-                  COMMA@398..399 ","
-                  KW@400..415
-                    NAME@400..409 "transport"
-                    COLON@409..410 ":"
-                    LITERAL@411..415
-                      ATOM@411..415 ":api"
-                R_PAREN@415..416 ")"
-              R_BRACK@416..417 "]"
-        NEWLINE@417..418 "\n"
-      LINE@420..447
-        NAME@420..428 "backstop"
-        ARGS@429..446
-          KW@429..446
-            NAME@429..438 "scheduler"
-            COLON@438..439 ":"
-            CALL@440..446
-              REF@440..444
-                NAME@440..444 "cron"
-              L_PAREN@444..445 "("
-              R_PAREN@445..446 ")"
-        NEWLINE@446..447 "\n"
-      LINE@449..462
-        NAME@449..457 "max_wait"
-        ARGS@458..461
-          LITERAL@458..461
-            DURATION@458..461 "30m"
-        NEWLINE@461..462 "\n"
-      LINE@464..484
-        NAME@464..478 "skew_tolerance"
-        ARGS@479..483
-          LITERAL@479..483
-            DURATION@479..483 "120s"
-        NEWLINE@483..484 "\n"
-      BLOCK@486..754
-        NAME@486..495 "operators"
-        NAME@496..498 "do"
-        NEWLINE@498..499 "\n"
-        BODY@503..750
-          LINE@503..584
-            NAME@503..511 "identity"
-            ARGS@512..583
-              LITERAL@512..516
-                ATOM@512..516 ":ops"
-              COMMA@516..517 ","
-              KW@518..529
-                NAME@518..522 "user"
-                COLON@522..523 ":"
-                LITERAL@524..529
-                  STRING@524..529 "\"ops\""
-              COMMA@529..530 ","
-              KW@531..549
-                NAME@531..543 "operator_for"
-                COLON@543..544 ":"
-                LITERAL@545..549
-                  ATOM@545..549 ":all"
-              COMMA@549..550 ","
-              KW@551..562
-                NAME@551..556 "admin"
-                COLON@556..557 ":"
-                LITERAL@558..562
-                  NAME@558..562 "true"
-              COMMA@562..563 ","
-              KW@564..583
-                NAME@564..573 "subscribe"
-                COLON@573..574 ":"
-                LIST@575..583
-                  L_BRACK@575..576 "["
-                  LITERAL@576..582
-                    ATOM@576..582 ":pager"
-                  R_BRACK@582..583 "]"
-            NEWLINE@583..584 "\n"
-          LINE@588..657
-            NAME@588..596 "identity"
-            ARGS@597..656
-              LITERAL@597..604
-                ATOM@597..604 ":second"
-              COMMA@604..605 ","
-              KW@606..618
-                NAME@606..610 "user"
-                COLON@610..611 ":"
-                LITERAL@612..618
-                  STRING@612..618 "\"ops2\""
-              COMMA@618..619 ","
-              KW@620..656
-                NAME@620..632 "operator_for"
-                COLON@632..633 ":"
-                LIST@634..656
-                  L_BRACK@634..635 "["
-                  LITERAL@635..643
-                    ATOM@635..643 ":promote"
-                  COMMA@643..644 ","
-                  LITERAL@645..655
-                    ATOM@645..655 ":shed_load"
-                  R_BRACK@655..656 "]"
-            NEWLINE@656..657 "\n"
-          LINE@661..748
-            NAME@661..669 "identity"
-            ARGS@670..724
-              LITERAL@670..675
-                ATOM@670..675 ":host"
-              COMMA@675..676 ","
-              KW@677..696
-                NAME@677..681 "user"
-                COLON@681..682 ":"
-                LITERAL@683..696
-                  ATOM@683..696 ":socket_owner"
-              COMMA@696..697 ","
-              KW@698..724
-                NAME@698..710 "operator_for"
-                COLON@710..711 ":"
-                LIST@712..724
-                  L_BRACK@712..713 "["
-                  LITERAL@713..723
-                    ATOM@713..723 ":shed_load"
-                  R_BRACK@723..724 "]"
-            COMMENT@727..747 "# the embedding host"
-            NEWLINE@747..748 "\n"
-        NAME@750..753 "end"
-        NEWLINE@753..754 "\n"
-      BLOCK@756..852
-        NAME@756..761 "hooks"
-        NAME@762..764 "do"
-        NEWLINE@764..765 "\n"
-        BODY@769..848
-          LINE@769..846
-            NAME@769..778 "registrar"
-            ARGS@779..845
-              LITERAL@779..789
-                ATOM@779..789 ":authority"
-              COMMA@789..790 ","
-              KW@791..808
-                NAME@791..795 "user"
-                COLON@795..796 ":"
-                LITERAL@797..808
-                  STRING@797..808 "\"approvald\""
-              COMMA@808..809 ","
-              KW@810..845
-                NAME@810..822 "may_register"
-                COLON@822..823 ":"
-                LIST@824..845
-                  L_BRACK@824..825 "["
-                  LITERAL@825..835
-                    ATOM@825..835 ":authority"
-                  COMMA@835..836 ","
-                  LITERAL@837..844
-                    ATOM@837..844 ":escrow"
-                  R_BRACK@844..845 "]"
-            NEWLINE@845..846 "\n"
-        NAME@848..851 "end"
-        NEWLINE@851..852 "\n"
-    NAME@852..855 "end"
-    NEWLINE@855..856 "\n"
+FILE@0..860
+  VERSION@0..10
+    NAME@0..7 "rescind"
+    INT@8..9 "0"
+    NEWLINE@9..10 "\n"
+  COMMENT@10..81 "# Every site declaration of section 6.3, with a hook binding carrying a"
+  NEWLINE@81..82 "\n"
+  COMMENT@82..116 "# keyword and a list of acceptors."
+  NEWLINE@116..117 "\n"
+  NEWLINE@117..118 "\n"
+  BLOCK@118..860
+    NAME@118..122 "site"
+    NAME@123..125 "do"
+    NEWLINE@125..126 "\n"
+    BODY@128..856
+      LINE@128..167
+        NAME@128..137 "inventory"
+        ARGS@138..166
+          KW@138..166
+            NAME@138..142 "from"
+            COLON@142..143 ":"
+            CALL@144..166
+              REF@144..148
+                NAME@144..148 "file"
+              L_PAREN@148..149 "("
+              ARGS@149..165
+                LITERAL@149..165
+                  STRING@149..165 "\"inventory.toml\""
+              R_PAREN@165..166 ")"
+        NEWLINE@166..167 "\n"
+      LINE@169..189
+        NAME@169..176 "journal"
+        ARGS@177..188
+          KW@177..188
+            NAME@177..179 "to"
+            COLON@179..180 ":"
+            CALL@181..188
+              REF@181..186
+                NAME@181..186 "local"
+              L_PAREN@186..187 "("
+              R_PAREN@187..188 ")"
+        NEWLINE@188..189 "\n"
+      LINE@191..222
+        NAME@191..199 "approval"
+        ARGS@200..221
+          KW@200..221
+            NAME@200..203 "via"
+            COLON@203..204 ":"
+            CALL@205..221
+              REF@205..209
+                NAME@205..209 "hook"
+              L_PAREN@209..210 "("
+              ARGS@210..220
+                LITERAL@210..220
+                  ATOM@210..220 ":authority"
+              R_PAREN@220..221 ")"
+        NEWLINE@221..222 "\n"
+      LINE@224..259
+        NAME@224..231 "secrets"
+        ARGS@232..258
+          KW@232..258
+            NAME@232..236 "from"
+            COLON@236..237 ":"
+            CALL@238..258
+              REF@238..242
+                NAME@238..242 "file"
+              L_PAREN@242..243 "("
+              ARGS@243..257
+                LITERAL@243..257
+                  STRING@243..257 "\"secrets.toml\""
+              R_PAREN@257..258 ")"
+        NEWLINE@258..259 "\n"
+      LINE@261..330
+        NAME@261..268 "secrets"
+        ARGS@269..329
+          KW@269..329
+            NAME@269..279 "deliver_to"
+            COLON@279..280 ":"
+            LIST@281..329
+              L_BRACK@281..282 "["
+              CALL@282..293
+                REF@282..291
+                  NAME@282..291 "requester"
+                L_PAREN@291..292 "("
+                R_PAREN@292..293 ")"
+              COMMA@293..294 ","
+              CALL@295..313
+                REF@295..299
+                  NAME@295..299 "hold"
+                L_PAREN@299..300 "("
+                ARGS@300..312
+                  KW@300..312
+                    NAME@300..305 "until"
+                    COLON@305..306 ":"
+                    LITERAL@307..312
+                      ATOM@307..312 ":wane"
+                R_PAREN@312..313 ")"
+              COMMA@313..314 ","
+              CALL@315..328
+                REF@315..319
+                  NAME@315..319 "hook"
+                L_PAREN@319..320 "("
+                ARGS@320..327
+                  LITERAL@320..327
+                    ATOM@320..327 ":escrow"
+                R_PAREN@327..328 ")"
+              R_BRACK@328..329 "]"
+        NEWLINE@329..330 "\n"
+      LINE@332..357
+        NAME@332..338 "notify"
+        ARGS@339..356
+          KW@339..356
+            NAME@339..342 "via"
+            COLON@342..343 ":"
+            CALL@344..356
+              REF@344..348
+                NAME@344..348 "hook"
+              L_PAREN@348..349 "("
+              ARGS@349..355
+                LITERAL@349..355
+                  ATOM@349..355 ":pager"
+              R_PAREN@355..356 ")"
+        NEWLINE@356..357 "\n"
+      LINE@359..422
+        NAME@359..366 "execute"
+        ARGS@367..421
+          KW@367..421
+            NAME@367..370 "via"
+            COLON@370..371 ":"
+            LIST@372..421
+              L_BRACK@372..373 "["
+              CALL@373..380
+                REF@373..378
+                  NAME@373..378 "local"
+                L_PAREN@378..379 "("
+                R_PAREN@379..380 ")"
+              COMMA@380..381 ","
+              CALL@382..387
+                REF@382..385
+                  NAME@382..385 "ssh"
+                L_PAREN@385..386 "("
+                R_PAREN@386..387 ")"
+              COMMA@387..388 ","
+              CALL@389..420
+                REF@389..393
+                  NAME@389..393 "hook"
+                L_PAREN@393..394 "("
+                ARGS@394..419
+                  LITERAL@394..402
+                    ATOM@394..402 ":bmc_api"
+                  COMMA@402..403 ","
+                  KW@404..419
+                    NAME@404..413 "transport"
+                    COLON@413..414 ":"
+                    LITERAL@415..419
+                      ATOM@415..419 ":api"
+                R_PAREN@419..420 ")"
+              R_BRACK@420..421 "]"
+        NEWLINE@421..422 "\n"
+      LINE@424..451
+        NAME@424..432 "backstop"
+        ARGS@433..450
+          KW@433..450
+            NAME@433..442 "scheduler"
+            COLON@442..443 ":"
+            CALL@444..450
+              REF@444..448
+                NAME@444..448 "cron"
+              L_PAREN@448..449 "("
+              R_PAREN@449..450 ")"
+        NEWLINE@450..451 "\n"
+      LINE@453..466
+        NAME@453..461 "max_wait"
+        ARGS@462..465
+          LITERAL@462..465
+            DURATION@462..465 "30m"
+        NEWLINE@465..466 "\n"
+      LINE@468..488
+        NAME@468..482 "skew_tolerance"
+        ARGS@483..487
+          LITERAL@483..487
+            DURATION@483..487 "120s"
+        NEWLINE@487..488 "\n"
+      BLOCK@490..758
+        NAME@490..499 "operators"
+        NAME@500..502 "do"
+        NEWLINE@502..503 "\n"
+        BODY@507..754
+          LINE@507..588
+            NAME@507..515 "identity"
+            ARGS@516..587
+              LITERAL@516..520
+                ATOM@516..520 ":ops"
+              COMMA@520..521 ","
+              KW@522..533
+                NAME@522..526 "user"
+                COLON@526..527 ":"
+                LITERAL@528..533
+                  STRING@528..533 "\"ops\""
+              COMMA@533..534 ","
+              KW@535..553
+                NAME@535..547 "operator_for"
+                COLON@547..548 ":"
+                LITERAL@549..553
+                  ATOM@549..553 ":all"
+              COMMA@553..554 ","
+              KW@555..566
+                NAME@555..560 "admin"
+                COLON@560..561 ":"
+                LITERAL@562..566
+                  NAME@562..566 "true"
+              COMMA@566..567 ","
+              KW@568..587
+                NAME@568..577 "subscribe"
+                COLON@577..578 ":"
+                LIST@579..587
+                  L_BRACK@579..580 "["
+                  LITERAL@580..586
+                    ATOM@580..586 ":pager"
+                  R_BRACK@586..587 "]"
+            NEWLINE@587..588 "\n"
+          LINE@592..661
+            NAME@592..600 "identity"
+            ARGS@601..660
+              LITERAL@601..608
+                ATOM@601..608 ":second"
+              COMMA@608..609 ","
+              KW@610..622
+                NAME@610..614 "user"
+                COLON@614..615 ":"
+                LITERAL@616..622
+                  STRING@616..622 "\"ops2\""
+              COMMA@622..623 ","
+              KW@624..660
+                NAME@624..636 "operator_for"
+                COLON@636..637 ":"
+                LIST@638..660
+                  L_BRACK@638..639 "["
+                  LITERAL@639..647
+                    ATOM@639..647 ":promote"
+                  COMMA@647..648 ","
+                  LITERAL@649..659
+                    ATOM@649..659 ":shed_load"
+                  R_BRACK@659..660 "]"
+            NEWLINE@660..661 "\n"
+          LINE@665..752
+            NAME@665..673 "identity"
+            ARGS@674..728
+              LITERAL@674..679
+                ATOM@674..679 ":host"
+              COMMA@679..680 ","
+              KW@681..700
+                NAME@681..685 "user"
+                COLON@685..686 ":"
+                LITERAL@687..700
+                  ATOM@687..700 ":socket_owner"
+              COMMA@700..701 ","
+              KW@702..728
+                NAME@702..714 "operator_for"
+                COLON@714..715 ":"
+                LIST@716..728
+                  L_BRACK@716..717 "["
+                  LITERAL@717..727
+                    ATOM@717..727 ":shed_load"
+                  R_BRACK@727..728 "]"
+            COMMENT@731..751 "# the embedding host"
+            NEWLINE@751..752 "\n"
+        NAME@754..757 "end"
+        NEWLINE@757..758 "\n"
+      BLOCK@760..856
+        NAME@760..765 "hooks"
+        NAME@766..768 "do"
+        NEWLINE@768..769 "\n"
+        BODY@773..852
+          LINE@773..850
+            NAME@773..782 "registrar"
+            ARGS@783..849
+              LITERAL@783..793
+                ATOM@783..793 ":authority"
+              COMMA@793..794 ","
+              KW@795..812
+                NAME@795..799 "user"
+                COLON@799..800 ":"
+                LITERAL@801..812
+                  STRING@801..812 "\"approvald\""
+              COMMA@812..813 ","
+              KW@814..849
+                NAME@814..826 "may_register"
+                COLON@826..827 ":"
+                LIST@828..849
+                  L_BRACK@828..829 "["
+                  LITERAL@829..839
+                    ATOM@829..839 ":authority"
+                  COMMA@839..840 ","
+                  LITERAL@841..848
+                    ATOM@841..848 ":escrow"
+                  R_BRACK@848..849 "]"
+            NEWLINE@849..850 "\n"
+        NAME@852..855 "end"
+        NEWLINE@855..856 "\n"
+    NAME@856..859 "end"
+    NEWLINE@859..860 "\n"

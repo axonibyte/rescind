@@ -25,7 +25,7 @@ There are three ways to answer, and the SDK makes the fourth unreachable:
   does not define with its `UndefinedFunctionError`, and a return that is
   none of the above with a refusal saying so -- a refusal with a reason is
   better than a hook that died.
-- **Silence.** No reply before the engine's deadline (`rued run
+- **Silence.** No reply before the engine's deadline (`rescindd run
   --hook-deadline`, 30 seconds by default). The engine refuses the step
   and can say nothing about why. The budget below turns a slow handler
   into a refusal instead.
@@ -116,7 +116,7 @@ deadline.
 
 ## A host that is also an operator: `RueHook.Client`
 
-`RueHook.Serve.stdio/3` is for a child `rued` spawns. A long-running
+`RueHook.Serve.stdio/3` is for a child `rescindd` spawns. A long-running
 application that connects to a daemon already running uses
 `RueHook.Client`, a GenServer that owns one connection and is, on it, a
 hook the engine calls, an operator issuing verbs, and a subscriber to its
@@ -125,7 +125,7 @@ plans:
 ```elixir
 {:ok, c} =
   RueHook.Client.start_link(
-    socket: "/var/run/rue/rued.sock",
+    socket: "/var/run/rescind/rescindd.sock",
     identity: "reactive_host",
     events_to: self(),
     budget_ms: 5_000
@@ -135,13 +135,13 @@ plans:
 {:ok, result} = RueHook.Client.call(c, "apply", %{"ir" => ir, "params" => %{}})
 
 receive do
-  {:rue_event, entry} -> entry
+  {:rescind_event, entry} -> entry
 end
 ```
 
 Requests, replies and journal events arrive interleaved on the one
 connection; the GenServer demultiplexes them, answers requests with the
-registered hooks, and sends each event to `:events_to` as `{:rue_event,
+registered hooks, and sends each event to `:events_to` as `{:rescind_event,
 entry}` -- none is dropped while a verb is in flight. The identity and the
 registrar are matched against the connecting process's OS user, so their
 `user:` names that account. A hook that connects this way registers after

@@ -1,20 +1,20 @@
 defmodule RueHook.AuditExampleTest do
   # examples/audit_hook.exs, the quick start of docs/README.md, does what the
   # page says it does. It starts serving as soon as it is loaded, so it runs
-  # here as rued runs it: a child process spoken to on its stdio.
+  # here as rescindd runs it: a child process spoken to on its stdio.
   use ExUnit.Case, async: true
 
   @example Path.expand("../examples/audit_hook.exs", __DIR__)
 
   setup do
-    dir = Path.join(System.tmp_dir!(), "rue-audit-example-#{System.unique_integer([:positive])}")
+    dir = Path.join(System.tmp_dir!(), "rescind-audit-example-#{System.unique_integer([:positive])}")
     File.mkdir_p!(dir)
     on_exit(fn -> File.rm_rf!(dir) end)
     {:ok, dir: dir}
   end
 
   defp start(log) do
-    ebin = Path.join(Mix.Project.build_path(), "lib/rue_hook/ebin")
+    ebin = Path.join(Mix.Project.build_path(), "lib/rescind_hook/ebin")
 
     port =
       Port.open({:spawn_executable, System.find_executable("elixir")}, [
@@ -22,7 +22,7 @@ defmodule RueHook.AuditExampleTest do
         :exit_status,
         {:line, 1_000_000},
         args: ["-pa", ebin, @example],
-        env: [{~c"RUE_AUDIT_LOG", String.to_charlist(log)}]
+        env: [{~c"RESCIND_AUDIT_LOG", String.to_charlist(log)}]
       ])
 
     registration = line(port)

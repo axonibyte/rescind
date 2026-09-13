@@ -4,8 +4,8 @@
 module Test.Ledger (tests) where
 
 import Data.Text (Text)
-import Rue.Proto.Interference (Fact (..))
-import Rue.Proto.Ledger
+import Rescind.Proto.Interference (Fact (..))
+import Rescind.Proto.Ledger
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (assertBool, assertFailure, testCase, (@?=))
 
@@ -20,8 +20,8 @@ pf :: Fact
 pf = Fact "file:/etc/pf.conf" Nothing
 
 keysA, keysB :: Fact
-keysA = Fact "file:/root/.ssh/authorized_keys" (Just "rue-a")
-keysB = Fact "file:/root/.ssh/authorized_keys" (Just "rue-b")
+keysA = Fact "file:/root/.ssh/authorized_keys" (Just "rescind-a")
+keysB = Fact "file:/root/.ssh/authorized_keys" (Just "rescind-b")
 
 tests :: TestTree
 tests =

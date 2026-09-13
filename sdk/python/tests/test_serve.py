@@ -6,8 +6,8 @@ import json
 import time
 import unittest
 
-from rue_hook import Hooks, Observation, Probe
-from rue_hook.serve import _pump
+from rescind_hook import Hooks, Observation, Probe
+from rescind_hook.serve import _pump
 
 
 class _Probe(Probe):

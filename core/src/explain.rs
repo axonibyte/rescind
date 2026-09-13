@@ -286,7 +286,7 @@ pub fn explain_html(p: &Plan, deferred_steps: &[u32], verdict_prose: Option<&str
     let mut out = String::new();
     out.push_str("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n");
     out.push_str(&format!(
-        "<title>rue explain: {} on {}</title>\n",
+        "<title>rescind explain: {} on {}</title>\n",
         escape(&p.id),
         escape(&p.owner)
     ));
@@ -310,7 +310,7 @@ pub fn explain_html(p: &Plan, deferred_steps: &[u32], verdict_prose: Option<&str
     }
     out.push_str("</tbody>\n</table>\n");
     out.push_str(
-        "<p class=\"foot\">Rendered by <code>rue explain --html</code>. \
+        "<p class=\"foot\">Rendered by <code>rescind explain --html</code>. \
          Every mutating step shows the undo it will run before it runs; a step \
          with <code>NO UNDO</code> is a knell and names its cost.</p>\n",
     );

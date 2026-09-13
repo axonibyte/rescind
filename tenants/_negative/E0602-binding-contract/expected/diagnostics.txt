@@ -1,1 +1,1 @@
-tenants/_negative/E0602-binding-contract/plan.rue:7:15: E0602: file() takes a path string
+tenants/_negative/E0602-binding-contract/plan.scind:7:15: E0602: file() takes a path string

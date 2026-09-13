@@ -1,4 +1,4 @@
-//! The two ways `rued` reaches a hook (docs/hook-protocol.md): as a child
+//! The two ways `rescindd` reaches a hook (docs/hook-protocol.md): as a child
 //! it spawned, over the child's stdio, and as a client of the control
 //! socket, after a `hello`.
 //!

@@ -2,11 +2,11 @@
 //! presence, the refusals, and that nothing a target-side artifact cannot
 //! carry ever reaches its text.
 
-use rue_core::backstop::coverage;
-use rue_core::body::*;
-use rue_core::diagnostics::Code;
-use rue_core::model::*;
-use rue_render::{render, Artifact, Bindings, Instance, RenderError};
+use rescind_core::backstop::coverage;
+use rescind_core::body::*;
+use rescind_core::diagnostics::Code;
+use rescind_core::model::*;
+use rescind_render::{render, Artifact, Bindings, Instance, RenderError};
 
 fn host(name: &str, os: &str, artifact: Option<ArtifactLanguage>) -> HostRecord {
     HostRecord {
@@ -73,7 +73,7 @@ fn after() -> Vec<Trigger> {
 fn inst() -> Instance {
     Instance {
         id: "i-1".into(),
-        rue_root: None,
+        rescind_root: None,
     }
 }
 
@@ -128,7 +128,7 @@ fn each_language_has_its_file_name_header_and_shell_launcher() {
         (ArtifactLanguage::Sh, "artifact.sh")
     );
     assert!(sh.text.starts_with(
-        "#!/bin/sh\n# rue backstop artifact: plan p on fw (os freebsd), instance i-1, language sh."
+        "#!/bin/sh\n# rescind backstop artifact: plan p on fw (os freebsd), instance i-1, language sh."
     ));
     assert!(sh.text.contains("shasum -a 256"));
     let mac = render_on("mac", &plan("mac", vec![s(owned("a"))], after())).unwrap();
@@ -141,7 +141,7 @@ fn each_language_has_its_file_name_header_and_shell_launcher() {
         (ArtifactLanguage::Powershell, "artifact.ps1")
     );
     assert!(ps.text.contains("Set-StrictMode"));
-    assert!(ps.text.contains("$Root = 'C:\\ProgramData\\rue'"));
+    assert!(ps.text.contains("$Root = 'C:\\ProgramData\\rescind'"));
 
     let py = render_on("py", &plan("py", vec![s(owned("a"))], after())).unwrap();
     assert_eq!(
@@ -150,20 +150,20 @@ fn each_language_has_its_file_name_header_and_shell_launcher() {
     );
     assert!(py.text.starts_with("#!/usr/bin/env -S uv run --script\n# /// script\n# requires-python = \">=3.11\"\n# dependencies = []\n# ///\n"));
     assert!(py.text.contains("RUN = ['sh', '-c']"));
-    assert!(py.text.contains("ROOT = '/var/db/rue'"));
+    assert!(py.text.contains("ROOT = '/var/db/rescind'"));
     let wpy = render_on("wpy", &plan("wpy", vec![s(owned("a"))], after())).unwrap();
     assert!(wpy
         .text
         .contains("RUN = ['powershell.exe', '-NoProfile', '-NonInteractive', '-Command']"));
-    assert!(wpy.text.contains("ROOT = 'C:\\\\ProgramData\\\\rue'"));
+    assert!(wpy.text.contains("ROOT = 'C:\\\\ProgramData\\\\rescind'"));
 }
 
 #[test]
-fn the_rue_root_can_be_overridden() {
+fn the_rescind_root_can_be_overridden() {
     let p = plan("fw", vec![s(owned("a"))], after());
     let i = Instance {
         id: "x".into(),
-        rue_root: Some("/tmp/r".into()),
+        rescind_root: Some("/tmp/r".into()),
     };
     let a = render(&site(), &p, "fw", &i, &Bindings::default()).unwrap();
     assert!(a.text.contains("INST='/tmp/r/instances/x'"));
@@ -236,13 +236,13 @@ fn every_undo_form_and_primitive_renders() {
     let mut b = Bindings::default();
     b.params.insert("name".into(), "sshd it's".into());
     let a = render(&site(), &p, "fw", &inst(), &b).unwrap().text;
-    assert!(a.contains("strip_region '/etc/pf.conf' 'blk' || { if [ -n \"${RUE_NOLOCK:-}\" ] || foreign_region '/etc/pf.conf'; then defer 1; else restore '/var/db/rue/instances/i-1/snapshots/1/0' '/etc/pf.conf'; clobbered 1; fi; }"), "{a}");
+    assert!(a.contains("strip_region '/etc/pf.conf' 'blk' || { if [ -n \"${RESCIND_NOLOCK:-}\" ] || foreign_region '/etc/pf.conf'; then defer 1; else restore '/var/db/rescind/instances/i-1/snapshots/1/0' '/etc/pf.conf'; clobbered 1; fi; }"), "{a}");
     assert!(
         a.contains("[ \"$(sha '/etc/m')\" = \"$(recorded \"$M\" '/etc/m')\" ] || skip=1"),
         "{a}"
     );
     assert!(
-        a.contains("restore '/var/db/rue/instances/i-1/snapshots/2/0' '/etc/m'"),
+        a.contains("restore '/var/db/rescind/instances/i-1/snapshots/2/0' '/etc/m'"),
         "{a}"
     );
     assert!(

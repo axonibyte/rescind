@@ -1,4 +1,4 @@
-//! `rued migrate`: a dry run reports and writes nothing; a real run writes
+//! `rescindd migrate`: a dry run reports and writes nothing; a real run writes
 //! the schema and the record the next start journals; a newer schema is
 //! refused with R0502 and exit 1; usage errors exit 2.
 
@@ -9,7 +9,7 @@ struct TempDir(PathBuf);
 impl TempDir {
     fn new(name: &str) -> TempDir {
         let p = std::env::temp_dir().join(format!(
-            "rued-{name}-{}-{}",
+            "rescindd-{name}-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -35,11 +35,11 @@ impl Drop for TempDir {
     }
 }
 
-fn rued(args: &[&str]) -> std::process::Output {
-    Command::new(env!("CARGO_BIN_EXE_rued"))
+fn rescindd(args: &[&str]) -> std::process::Output {
+    Command::new(env!("CARGO_BIN_EXE_rescindd"))
         .args(args)
         .output()
-        .expect("rued")
+        .expect("rescindd")
 }
 
 #[test]
@@ -47,7 +47,7 @@ fn a_dry_run_reports_the_steps_and_writes_nothing_then_the_real_run_migrates() {
     let d = TempDir::new("migrate");
     let store = d.0.join("store");
     std::fs::create_dir_all(store.join("instances")).unwrap();
-    let out = rued(&["migrate", "--store", store.to_str().unwrap(), "--dry-run"]);
+    let out = rescindd(&["migrate", "--store", store.to_str().unwrap(), "--dry-run"]);
     assert_eq!(
         out.status.code(),
         Some(0),
@@ -66,9 +66,9 @@ fn a_dry_run_reports_the_steps_and_writes_nothing_then_the_real_run_migrates() {
     );
     assert!(!store.join("schema").exists());
 
-    let out = rued(&["migrate", "--store", store.to_str().unwrap()]);
+    let out = rescindd(&["migrate", "--store", store.to_str().unwrap()]);
     assert_eq!(out.status.code(), Some(0));
-    assert!(String::from_utf8_lossy(&out.stdout).starts_with("rued: migrated"));
+    assert!(String::from_utf8_lossy(&out.stdout).starts_with("rescindd: migrated"));
     assert_eq!(
         std::fs::read_to_string(store.join("schema"))
             .unwrap()
@@ -76,7 +76,7 @@ fn a_dry_run_reports_the_steps_and_writes_nothing_then_the_real_run_migrates() {
         "3"
     );
     assert!(store.join("migrated.json").exists());
-    let out = rued(&["migrate", "--store", store.to_str().unwrap()]);
+    let out = rescindd(&["migrate", "--store", store.to_str().unwrap()]);
     assert_eq!(out.status.code(), Some(0));
     assert!(String::from_utf8_lossy(&out.stdout).contains("nothing to do"));
 }
@@ -87,7 +87,7 @@ fn a_newer_schema_is_r0502_and_exit_one_and_usage_is_exit_two() {
     let store = d.0.join("store");
     std::fs::create_dir_all(&store).unwrap();
     std::fs::write(store.join("schema"), "7\n").unwrap();
-    let out = rued(&["migrate", "--store", store.to_str().unwrap()]);
+    let out = rescindd(&["migrate", "--store", store.to_str().unwrap()]);
     assert_eq!(out.status.code(), Some(1));
     let err = String::from_utf8_lossy(&out.stderr);
     assert!(err.contains("R0502") && err.contains("schema 7"), "{err}");
@@ -99,9 +99,9 @@ fn a_newer_schema_is_r0502_and_exit_one_and_usage_is_exit_two() {
         "untouched"
     );
 
-    let out = rued(&["migrate"]);
+    let out = rescindd(&["migrate"]);
     assert_eq!(out.status.code(), Some(2));
-    let out = rued(&["--version"]);
+    let out = rescindd(&["--version"]);
     assert_eq!(out.status.code(), Some(0));
-    assert!(String::from_utf8_lossy(&out.stdout).starts_with("rued "));
+    assert!(String::from_utf8_lossy(&out.stdout).starts_with("rescindd "));
 }

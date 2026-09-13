@@ -1,4 +1,0 @@
-rue 7
-defplan :p, %{name: "db-01"} do
-  wane 1h
-end

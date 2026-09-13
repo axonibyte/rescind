@@ -1,6 +1,6 @@
 [package]
-name = "rue-tenants"
-description = "The acceptance tenants' harness: the case table, the golden contract, and the tests that hold rue-core to the Phase 0 goldens"
+name = "rescind-tenants"
+description = "The acceptance tenants' harness: the case table, the golden contract, and the tests that hold rescind-core to the Phase 0 goldens"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -9,18 +9,18 @@ license.workspace = true
 repository.workspace = true
 
 # The only golden writer; a development tool, not a shipped binary
-# (ci/build-target.sh packages rue, rued and rue-hook and nothing else).
+# (ci/build-target.sh packages rescind, rescindd and rescind-hook and nothing else).
 [[bin]]
-name = "rue-goldens"
-path = "src/bin/rue-goldens.rs"
+name = "rescind-goldens"
+path = "src/bin/rescind-goldens.rs"
 
 # Lives under tenants/ because it names tenants; the seam guard exempts that
 # directory and nothing else may.
 [dependencies]
-rue-core = { path = "../../core" }
+rescind-core = { path = "../../core" }
 # The hook protocol's own tables, rendered to the frozen v1 document.
-rue-hook-proto = { path = "../../hook-proto" }
-rue-render = { path = "../../render" }
-rue-surface = { path = "../../surface" }
+rescind-hook-proto = { path = "../../hook-proto" }
+rescind-render = { path = "../../render" }
+rescind-surface = { path = "../../surface" }
 serde.workspace = true
 serde_json.workspace = true

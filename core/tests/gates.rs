@@ -1,8 +1,8 @@
 //! Gates: satisfiability, minimum humans, the zero-human path, the requester
 //! exclusion, wait-alone, and the surface spelling.
 
-use rue_core::gates::*;
-use rue_core::model::*;
+use rescind_core::gates::*;
+use rescind_core::model::*;
 
 fn auths() -> Vec<Authenticator> {
     vec![

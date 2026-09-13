@@ -3,7 +3,7 @@
   <!--
     The .NET SDK's own tests (docs/TESTING.md, "SDK suites"). The test
     packages are referenced here and nowhere else, so none of them reaches a
-    consumer of Rue.Hook: xunit.v3 and xunit.runner.visualstudio are
+    consumer of Rescind.Hook: xunit.v3 and xunit.runner.visualstudio are
     Apache-2.0, Microsoft.NET.Test.Sdk is MIT.
   -->
   <PropertyGroup>
@@ -12,7 +12,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    <RootNamespace>Rue.Hook.Tests</RootNamespace>
+    <RootNamespace>Rescind.Hook.Tests</RootNamespace>
     <IsPackable>false</IsPackable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>

@@ -4,7 +4,7 @@
 //! propagate through every operator, as section 5.1 requires, and a
 //! comparison against `:unknown` is E0108.
 
-use rue_core::model::Duration;
+use rescind_core::model::Duration;
 
 use crate::ast::{Arg, Expr, Kw, Lit};
 

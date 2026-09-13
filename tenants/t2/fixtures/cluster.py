@@ -9,13 +9,13 @@ One file, two hooks, chosen by the first argument:
               appends the succession log, and answers the promote ladder's
               probes by name.
   authority   the approval binding: the manual path's human
-              acknowledgements, verified against the digest rue supplies.
+              acknowledgements, verified against the digest rescind supplies.
 
 node-b is the guest itself, reached over ssh, and the jails its steps start
 are real. node-a, the corpse, is never reached at all: everything done to
-it is done THROUGH this driver, exactly as tenants/t2/plan.rue reaches it.
+it is done THROUGH this driver, exactly as tenants/t2/plan.scind reaches it.
 
-All state lives in RUE_T2_STATE, a directory the harness makes and reads.
+All state lives in RESCIND_T2_STATE, a directory the harness makes and reads.
 The harness steers the cluster by writing four knobs there:
 
   fence        what the fence driver reports: `off` (verified), `unknown`,
@@ -40,7 +40,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "sdk" / "python"))
 
-from rue_hook import (  # noqa: E402
+from rescind_hook import (  # noqa: E402
     Approval,
     Authenticator,
     ChallengeRequest,
@@ -53,7 +53,7 @@ from rue_hook import (  # noqa: E402
     serve_stdio,
 )
 
-STATE = os.environ.get("RUE_T2_STATE", "/tmp/rue-t2-state")
+STATE = os.environ.get("RESCIND_T2_STATE", "/tmp/rescind-t2-state")
 
 
 def path(name):
@@ -106,7 +106,7 @@ class Cluster(Execute, Probe):
                 with open(shape[len("file:"):], "a", encoding="utf-8") as f:
                     f.write((line.text if line else "") + "\n")
             else:
-                # A primitive this driver does not implement is a thing rue
+                # A primitive this driver does not implement is a thing rescind
                 # asked for and did not get; never silently.
                 raise Refusal(f"the cluster driver has no {prim.name} primitive")
         return {"stdout": "", "outputs": {}}
@@ -150,7 +150,7 @@ class Cluster(Execute, Probe):
     def bootstrap_state(self, host):
         # The controller keeps no instance directory: every T2 step that
         # runs here reverts only while the engine lives, or not at all.
-        return {"rue_root": False, "group": False, "instances_dir": False,
+        return {"rescind_root": False, "group": False, "instances_dir": False,
                 "lock": False, "modes_ok": False}
 
     def observe(self, host, probe):

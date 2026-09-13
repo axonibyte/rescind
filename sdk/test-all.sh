@@ -3,10 +3,10 @@
 # unittest, ExUnit, JUnit through maven, xUnit through `dotnet test`
 # (docs/TESTING.md, "The hook protocol and its SDKs").
 #
-# `rue sdk-conform` judges an SDK from the far end of the wire, which is what
+# `rescind sdk-conform` judges an SDK from the far end of the wire, which is what
 # makes the five comparable; these suites judge what the wire cannot see --
 # a secret formatted by accident, a handler over its budget, a line that
-# kills the loop -- and need no rue binary at all.
+# kills the loop -- and need no rescind binary at all.
 #
 # They run where sdk/conform-all.sh runs, for the same reason: on the Ubuntu
 # reaper guest and in the pipeline, never in the local gate, whose base

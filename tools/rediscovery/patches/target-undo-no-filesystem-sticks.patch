@@ -10,7 +10,7 @@
 +        if op.undo_locus == UndoLocus::Target
 +            && !caps.filesystem
 +            && !rec.rehearsal
-+            && std::env::var_os("RUE_NEVER_SET").is_some()
++            && std::env::var_os("RESCIND_NEVER_SET").is_some()
 +        {
              return self.refuse(
                  rec,

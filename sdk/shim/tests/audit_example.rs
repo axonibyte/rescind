@@ -21,7 +21,7 @@ impl Scratch {
             .unwrap()
             .as_nanos();
         let p = std::env::temp_dir().join(format!(
-            "rue-shim-audit-{name}-{}-{nanos}",
+            "rescind-shim-audit-{name}-{}-{nanos}",
             std::process::id()
         ));
         std::fs::create_dir_all(&p).unwrap();
@@ -49,10 +49,10 @@ impl Shim {
     /// The shim serving examples/audit.sh, acknowledged; its registration.
     fn start(log: &std::path::Path) -> (Shim, Value) {
         let script = concat!(env!("CARGO_MANIFEST_DIR"), "/examples/audit.sh");
-        let mut child = Command::new(env!("CARGO_BIN_EXE_rue-hook"))
+        let mut child = Command::new(env!("CARGO_BIN_EXE_rescind-hook"))
             .args(["--name", "audit", "--kinds", "journal,notify", "--command"])
             .arg(format!("sh {script}"))
-            .env("RUE_AUDIT_LOG", log)
+            .env("RESCIND_AUDIT_LOG", log)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::null())

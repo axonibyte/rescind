@@ -1,4 +1,4 @@
-//! rue-render: the backstop artifact, docs/ROADMAP.md sections 5.6 and 7.7.
+//! rescind-render: the backstop artifact, docs/ROADMAP.md sections 5.6 and 7.7.
 //!
 //! A `:target` backstop is a standalone script in the instance directory
 //! on the target, registered with the host's scheduler, that undoes the
@@ -27,11 +27,11 @@ mod template;
 
 use std::fmt;
 
-use rue_core::algebra::{numbered, op_of};
-use rue_core::artifact::{language_of, shell_of, supported, Shell};
-use rue_core::backstop::coverage;
-use rue_core::diagnostics::Code;
-use rue_core::model::{ArtifactLanguage, HostRecord, Plan, Site, Trigger};
+use rescind_core::algebra::{numbered, op_of};
+use rescind_core::artifact::{language_of, shell_of, supported, Shell};
+use rescind_core::backstop::coverage;
+use rescind_core::diagnostics::Code;
+use rescind_core::model::{ArtifactLanguage, HostRecord, Plan, Site, Trigger};
 
 pub use actions::{Action, Bindings, FileFact, Step};
 pub use quote::{Family, Unquotable};
@@ -47,21 +47,21 @@ pub fn sh_helpers() -> &'static str {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Instance {
     pub id: String,
-    /// `<rue_root>`; `None` is the family's default (section 4.5).
-    pub rue_root: Option<String>,
+    /// `<rescind_root>`; `None` is the family's default (section 4.5).
+    pub rescind_root: Option<String>,
 }
 
 impl Instance {
-    /// The default `rue_root` of a shell family.
+    /// The default `rescind_root` of a shell family.
     pub fn default_root(shell: Shell) -> &'static str {
         match shell {
-            Shell::Posix => "/var/db/rue",
-            Shell::Powershell => "C:\\ProgramData\\rue",
+            Shell::Posix => "/var/db/rescind",
+            Shell::Powershell => "C:\\ProgramData\\rescind",
         }
     }
 
     pub fn root(&self, shell: Shell) -> String {
-        self.rue_root
+        self.rescind_root
             .clone()
             .unwrap_or_else(|| Self::default_root(shell).to_string())
     }

@@ -2,7 +2,7 @@
 //! a family-aware unquoter, an embedded quote is escaped the family's way,
 //! and what cannot be carried is E0109.
 
-use rue_render::quote::{posix, powershell, python, quote, Family, Unquotable};
+use rescind_render::quote::{posix, powershell, python, quote, Family, Unquotable};
 
 /// Read one word the way a POSIX shell reads it: a single-quoted segment
 /// ends at the first quote, and a backslash outside quotes escapes one

@@ -1,7 +1,7 @@
 # The reference conformance hook for the Elixir SDK.
 #
 # docs/sdk-conformance.md's fixed world, served over stdio: what
-# `rue sdk-conform` is pointed at to judge this SDK, and the worked
+# `rescind sdk-conform` is pointed at to judge this SDK, and the worked
 # example a host application copies.
 #
 # The exception is the four provocations of the `probe` kind, which
@@ -11,7 +11,7 @@
 # guarantee the SDK exists for. So this file drops to the wire for exactly
 # those, and for nothing else.
 #
-#   elixir -pa _build/dev/lib/rue_hook/ebin examples/conformance_hook.exs conform
+#   elixir -pa _build/dev/lib/rescind_hook/ebin examples/conformance_hook.exs conform
 
 defmodule Conform.World do
   @moduledoc "Every kind over the contract's fixed world, deliberately stateless."
@@ -32,7 +32,7 @@ defmodule Conform.World do
          "filesystem" => true,
          "stdin_preamble" => false,
          "scheduler" => "cron",
-         "rue_root" => "/var/db/rue",
+         "rescind_root" => "/var/db/rescind",
          "artifact" => "python",
          "facts" => %{"site" => "west"}
        },
@@ -70,7 +70,7 @@ defmodule Conform.World do
     do:
       {:ok,
        %{
-         "rue_root" => true,
+         "rescind_root" => true,
          "group" => true,
          "instances_dir" => true,
          "lock" => true,

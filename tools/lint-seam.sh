@@ -33,7 +33,7 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$list" ] || list=$root/tools/seam-denylist.txt
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-seam.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-seam.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 if [ ! -r "$list" ]; then
@@ -50,7 +50,7 @@ fi
 # The directories the guard reads. Every non-tenant workspace member's
 # top directory belongs here; tests/tier3/t_seam.sh fails when one does
 # not, so a crate added in a later phase cannot quietly fall outside.
-SCAN="core render surface hook-proto engine bindings cli daemon sim sdk tree-sitter-rue lsp proto tools ci tests"
+SCAN="core render surface hook-proto engine bindings cli daemon sim sdk tree-sitter-rescind lsp proto tools ci tests"
 
 dirs=''
 for d in $SCAN; do

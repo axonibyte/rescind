@@ -1,6 +1,6 @@
 //! Fenced regions and file digests, as the artifact templates define them
 //! (docs/DESIGN.md, "The instance directory the artifact reads"): the
-//! lines `# rue-region <anchor> begin` and `# rue-region <anchor> end`, a
+//! lines `# rescind-region <anchor> begin` and `# rescind-region <anchor> end`, a
 //! region intact when exactly one of each is present, damaged otherwise.
 //! `local()` applies these in process; `ssh()` runs the same rule as shell
 //! on the target; the artifact does the same when it fires. One rule, three
@@ -9,11 +9,11 @@
 use sha2::{Digest, Sha256};
 
 pub fn begin_marker(anchor: &str) -> String {
-    format!("# rue-region {anchor} begin")
+    format!("# rescind-region {anchor} begin")
 }
 
 pub fn end_marker(anchor: &str) -> String {
-    format!("# rue-region {anchor} end")
+    format!("# rescind-region {anchor} end")
 }
 
 /// Whether the region's markers are intact: exactly one begin and one end.
@@ -87,23 +87,23 @@ mod tests {
         let with = set(base, "blk", "inside\nmore");
         assert_eq!(
             with,
-            "top\nkeep\n# rue-region blk begin\ninside\nmore\n# rue-region blk end\n"
+            "top\nkeep\n# rescind-region blk begin\ninside\nmore\n# rescind-region blk end\n"
         );
         assert!(intact(&with, "blk"));
         assert_eq!(strip(&with, "blk").unwrap(), base);
         // Setting again replaces rather than duplicates.
         let again = set(&with, "blk", "new");
-        assert_eq!(again.matches("# rue-region blk begin").count(), 1);
+        assert_eq!(again.matches("# rescind-region blk begin").count(), 1);
         assert!(again.contains("new") && !again.contains("inside"));
         // A lost end marker is damage.
-        let damaged = with.replace("# rue-region blk end\n", "");
+        let damaged = with.replace("# rescind-region blk end\n", "");
         assert!(!intact(&damaged, "blk"));
         assert_eq!(strip(&damaged, "blk"), None);
         // Another anchor is untouched.
         assert!(!intact(&with, "other"));
         assert_eq!(
             set("", "a", "x"),
-            "# rue-region a begin\nx\n# rue-region a end\n"
+            "# rescind-region a begin\nx\n# rescind-region a end\n"
         );
     }
 

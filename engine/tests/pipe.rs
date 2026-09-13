@@ -21,8 +21,8 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use common::world::World;
-use rue_engine::control::{Daemon, Operator, Operators, UserSpec, CONTROL_PROTOCOL};
-use rue_engine::pipe;
+use rescind_engine::control::{Daemon, Operator, Operators, UserSpec, CONTROL_PROTOCOL};
+use rescind_engine::pipe;
 use serde_json::{json, Value};
 
 /// The world's directory is returned too, and first: it holds the store,
@@ -30,7 +30,7 @@ use serde_json::{json, Value};
 /// after the daemon has closed that store. Windows refuses to remove a
 /// directory with a file still open in it.
 fn daemon(w: World) -> (common::TempDir, Arc<Daemon>) {
-    let me = rue_engine::peer::my_account().expect("this account has a name");
+    let me = rescind_engine::peer::my_account().expect("this account has a name");
     let World { dir, engine, .. } = w;
     let d = Arc::new(Daemon {
         engine: Mutex::new(engine),
@@ -45,7 +45,7 @@ fn daemon(w: World) -> (common::TempDir, Arc<Daemon>) {
             registrars: Vec::new(),
             dry_run: false,
         },
-        hooks: Arc::new(rue_engine::hook::HookRegistry::new()),
+        hooks: Arc::new(rescind_engine::hook::HookRegistry::new()),
         subscribers: Arc::new(Default::default()),
         hook_deadline: Duration::from_millis(500),
         dry_run: false,
@@ -60,7 +60,7 @@ fn a_named_pipe_carries_a_hello_and_names_the_client_or_refuses_it() {
     let (_dir, d) = daemon(w);
     // A name of this run's own, so two runs never share an instance.
     let name = format!(
-        r"\\.\pipe\rue-test-{}-{}",
+        r"\\.\pipe\rescind-test-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)

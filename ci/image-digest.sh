@@ -20,7 +20,7 @@ case $repo in
     *) repo=library/$repo ;;
 esac
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-digest.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-digest.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 if ! curl -fsS "https://auth.docker.io/token?service=registry.docker.io&scope=repository:${repo}:pull" > "$tmp/token.json"; then

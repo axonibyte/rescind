@@ -1,11 +1,11 @@
 //! The provisioned guest: its self-check passes, and the target is reached
-//! over rue's own key, through the loopback alias, with nothing read from
+//! over rescind's own key, through the loopback alias, with nothing read from
 //! `~/.ssh`. Every later tier-5 case stands on this one.
 
 use std::path::PathBuf;
 use std::process::Command;
 
-use rue_e2e::{e2e_root, require_provisioned_host, ssh_command, TARGET_ADDRESS, TARGET_USER};
+use rescind_e2e::{e2e_root, require_provisioned_host, ssh_command, TARGET_ADDRESS, TARGET_USER};
 
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -31,7 +31,7 @@ fn the_provisioning_self_check_passes() {
 }
 
 #[test]
-fn the_target_is_reached_over_rue_s_own_key_through_the_loopback_alias() {
+fn the_target_is_reached_over_rescind_s_own_key_through_the_loopback_alias() {
     require_provisioned_host();
     let root = e2e_root().unwrap();
     let out = ssh_command(&root, TARGET_ADDRESS, TARGET_USER)

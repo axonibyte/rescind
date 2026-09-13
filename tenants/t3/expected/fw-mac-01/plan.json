@@ -28,7 +28,7 @@
                   "lit": "pass in proto tcp to port 8443"
                 },
                 "fact": {
-                  "anchor": "rue-mgmt",
+                  "anchor": "rescind-mgmt",
                   "shape": "file:/etc/pf.conf"
                 }
               }
@@ -49,7 +49,7 @@
           "exclusivity": null,
           "footprint": [
             {
-              "anchor": "rue-mgmt",
+              "anchor": "rescind-mgmt",
               "instance": null,
               "kind": "region",
               "shape": "file:/etc/pf.conf"

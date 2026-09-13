@@ -1,7 +1,7 @@
 //! Secrets over the built-in acceptors (5.13): delivery at the producing
 //! step's completion to the first acceptor that takes it, journaled by
 //! label and never by value; a list every acceptor declines is exit 7; a
-//! `hold()` gives its value up once to `rue reveal` and drops it at its
+//! `hold()` gives its value up once to `rescind reveal` and drops it at its
 //! bound, when the instance ends, and at a daemon restart; and a
 //! `hold(until: :wane)` on a permanent plan with no `max_wait` is R0104.
 
@@ -10,11 +10,11 @@ mod common;
 use std::collections::BTreeMap;
 
 use common::world::{self, World};
-use rue_core::model::{Item, Output as OutputDecl, Plan};
-use rue_core::states::State;
-use rue_engine::executor::{Output, Scripted};
-use rue_engine::lifecycle::ApplyOptions;
-use rue_engine::secrets::FakeAcceptor;
+use rescind_core::model::{Item, Output as OutputDecl, Plan};
+use rescind_core::states::State;
+use rescind_engine::executor::{Output, Scripted};
+use rescind_engine::lifecycle::ApplyOptions;
+use rescind_engine::secrets::FakeAcceptor;
 
 fn opts() -> ApplyOptions {
     ApplyOptions {
@@ -252,7 +252,7 @@ fn a_hold_until_wane_on_a_permanent_plan_with_no_max_wait_is_r0104() {
 /// credential actually reaches a command in (5.13 forbids the command
 /// line, so the preamble carries it).
 fn step_wanting_a_secret(name: &str) -> Item {
-    use rue_core::body::{secret, EnvVar, Part, Prim, Run, Value};
+    use rescind_core::body::{secret, EnvVar, Part, Prim, Run, Value};
     let mut op = world::op(name);
     op.do_ = vec![Prim::Run(Run {
         cmd: vec![Part::Lit(format!("do {name}"))],
@@ -270,16 +270,16 @@ fn step_wanting_a_secret(name: &str) -> Item {
 #[derive(Clone, Default)]
 struct FakeSource(std::sync::Arc<std::sync::Mutex<Vec<String>>>);
 
-impl rue_engine::secrets::Source for FakeSource {
+impl rescind_engine::secrets::Source for FakeSource {
     fn name(&self) -> &str {
         "fake"
     }
-    fn resolve(&mut self, reference: &str) -> Result<String, rue_engine::executor::ExecError> {
+    fn resolve(&mut self, reference: &str) -> Result<String, rescind_engine::executor::ExecError> {
         self.0.lock().unwrap().push(reference.to_string());
         if reference == "db_pw" {
             Ok("s3cr3t".into())
         } else {
-            Err(rue_engine::executor::ExecError::Failed(format!(
+            Err(rescind_engine::executor::ExecError::Failed(format!(
                 "no secret named {reference}"
             )))
         }
@@ -304,7 +304,7 @@ fn a_secret_in_a_body_is_resolved_from_the_source_just_before_the_step_runs() {
     // The value reached the executor on the primitive, marked secret, so
     // every downstream rule about where it may go applies to it.
     let body = w.ssh.with(|f| f.calls[0].body.clone());
-    let rue_engine::executor::RPrim::Run { env, .. } = &body[0] else {
+    let rescind_engine::executor::RPrim::Run { env, .. } = &body[0] else {
         panic!("the step's body is not a run: {body:?}")
     };
     assert_eq!(env[0].0, "PW");
@@ -345,7 +345,7 @@ fn a_source_that_refuses_a_reference_refuses_the_step() {
     let mut item = step_wanting_a_secret("a");
     // Name a reference the source does not hold.
     if let Item::Step(s) = &mut item {
-        use rue_core::body::{secret, EnvVar, Part, Prim, Run, Value};
+        use rescind_core::body::{secret, EnvVar, Part, Prim, Run, Value};
         s.op.do_ = vec![Prim::Run(Run {
             cmd: vec![Part::Lit("do a".into())],
             env: vec![EnvVar {

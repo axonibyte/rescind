@@ -4,9 +4,9 @@
 mod common;
 
 use common::*;
-use rue_core::backstop::*;
-use rue_core::intent::*;
-use rue_core::model::*;
+use rescind_core::backstop::*;
+use rescind_core::intent::*;
+use rescind_core::model::*;
 
 fn target(o: Op) -> Op {
     Op {

@@ -12,16 +12,16 @@
 //! real Windows machine (the Phase 3 amendment); wine has no Task
 //! Scheduler.
 
-use rue_core::model::{Instant, Tri};
-use rue_engine::executor::{ExecError, Executor, ProbeRun, RPrim, Resolved};
-use rue_engine::host::Host;
-use rue_engine::scheduler::{Job, Presence, Scheduler};
+use rescind_core::model::{Instant, Tri};
+use rescind_engine::executor::{ExecError, Executor, ProbeRun, RPrim, Resolved};
+use rescind_engine::host::Host;
+use rescind_engine::scheduler::{Job, Presence, Scheduler};
 
 #[derive(Debug, Default)]
 pub struct TaskScheduler;
 
 fn task_name(instance: &str) -> String {
-    format!("rue-{instance}")
+    format!("rescind-{instance}")
 }
 
 /// `schtasks` takes its arguments quoted for cmd: a double-quoted string

@@ -1,7 +1,7 @@
 //! The canonical byte encoding: exact bytes on fixed values, and the
 //! collisions the tags exist to prevent.
 
-use rue_core::canon::{message, Canon, Encoder};
+use rescind_core::canon::{message, Canon, Encoder};
 
 struct Rec;
 impl Canon for Rec {

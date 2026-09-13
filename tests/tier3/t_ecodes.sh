@@ -7,7 +7,7 @@ set -u
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd) || exit 2
 guard=$root/tools/lint-ecodes.sh
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-t-ecodes.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-t-ecodes.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 rc=0
@@ -26,8 +26,8 @@ expect() { # expect <status> <label>
 
 reset_tree() {
     rm -rf "$tmp/tree"
-    mkdir -p "$tmp/tree/proto/src/Rue/Proto" "$tmp/tree/core/src" "$tmp/tree/docs" || exit 2
-    cp "$root/proto/src/Rue/Proto/Diagnostics.hs" "$tmp/tree/proto/src/Rue/Proto/Diagnostics.hs"
+    mkdir -p "$tmp/tree/proto/src/Rescind/Proto" "$tmp/tree/core/src" "$tmp/tree/docs" || exit 2
+    cp "$root/proto/src/Rescind/Proto/Diagnostics.hs" "$tmp/tree/proto/src/Rescind/Proto/Diagnostics.hs"
     cp "$root/core/src/diagnostics.rs" "$tmp/tree/core/src/diagnostics.rs"
     cp "$root/docs/ROADMAP.md" "$tmp/tree/docs/ROADMAP.md"
 }
@@ -38,12 +38,12 @@ expect 0 "copied tree agrees"
 
 # 1. A code in the enum that the table lacks.
 reset_tree
-printf '  | E9999 -- planted\n' >> "$tmp/tree/proto/src/Rue/Proto/Diagnostics.hs"
+printf '  | E9999 -- planted\n' >> "$tmp/tree/proto/src/Rescind/Proto/Diagnostics.hs"
 expect 1 "enum-only code is caught"
 
 # 2. A code in the table that the enum lacks: delete the enum's E0401 line.
 reset_tree
-sed '/^[[:space:]]*|[[:space:]]*E0401[^0-9]/d' "$root/proto/src/Rue/Proto/Diagnostics.hs" > "$tmp/tree/proto/src/Rue/Proto/Diagnostics.hs"
+sed '/^[[:space:]]*|[[:space:]]*E0401[^0-9]/d' "$root/proto/src/Rescind/Proto/Diagnostics.hs" > "$tmp/tree/proto/src/Rescind/Proto/Diagnostics.hs"
 expect 1 "table-only code is caught"
 
 # 3. A raw literal outside the enum.

@@ -1,6 +1,6 @@
 # The SDK conformance contract, version 1
 
-`rue sdk-conform <command>` runs one hook and judges it against the
+`rescind sdk-conform <command>` runs one hook and judges it against the
 protocol of docs/hook-protocol.md. An SDK passes before it calls itself an
 SDK (docs/ROADMAP.md 7.11).
 
@@ -11,13 +11,13 @@ needs no daemon, no store and no plan. Exit 0 when every case passed, 1
 when any failed, 2 when the hook could not be started or did not register.
 
 ```
-rue sdk-conform --name conform 'python3 sdk/python/examples/conformance_hook.py'
-rue sdk-conform --json --deadline-ms 2000 './my-hook serve'
+rescind sdk-conform --name conform 'python3 sdk/python/examples/conformance_hook.py'
+rescind sdk-conform --json --deadline-ms 2000 './my-hook serve'
 ```
 
 Each SDK ships one, and two live in this repository as worked examples:
 `sdk/rust/src/bin/conform_hook.rs` and
-`sdk/python/examples/conformance_hook.py`. The `rue-hook` shim's is a
+`sdk/python/examples/conformance_hook.py`. The `rescind-hook` shim's is a
 POSIX shell script, `sdk/shim/tests/fixtures/conformance-command.sh`, which
 is the sharpest version of the claim: forty cases, eight kinds, no JSON
 library.
@@ -49,7 +49,7 @@ Exactly two hosts, in this order:
 | `filesystem` | `true` | *(omitted)* |
 | `stdin_preamble` | `false` | *(omitted)* |
 | `scheduler` | `cron` | *(omitted)* |
-| `rue_root` | `/var/db/rue` | *(omitted)* |
+| `rescind_root` | `/var/db/rescind` | *(omitted)* |
 | `artifact` | `python` | *(omitted)* |
 | `facts` | `{"site": "west"}` | *(omitted)* |
 
@@ -141,7 +141,7 @@ Never guess: the engine reads `"unknown"` as "ask again", and `false` as
 ## What the runner checks on every reply
 
 Beyond the case's own answer, every reply is judged against the op's row
-in `rue-hook-proto`:
+in `rescind-hook-proto`:
 
 * the reply carries the `id` of its request;
 * `ok` is a boolean (R0303 otherwise);
@@ -161,7 +161,7 @@ The protocol's ops are enumerated in three places, and all three are bound
 to each other so none can drift:
 
 * `tools/lint-hook-ops.sh` (a gate phase) reads the ops table of
-  docs/hook-protocol.md and `OPS` in `rue-hook-proto` as data and requires
+  docs/hook-protocol.md and `OPS` in `rescind-hook-proto` as data and requires
   them to agree in both directions.
 * `sdk/rust/tests/conform.rs` requires the ops the suite actually drove to
   be exactly the ops of `OPS`. That leg is a test rather than a grep

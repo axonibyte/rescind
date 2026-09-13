@@ -6,11 +6,11 @@
 mod common;
 
 use common::*;
-use rue_core::body::*;
-use rue_core::check::check;
-use rue_core::diagnostics::Code;
-use rue_core::model::*;
-use rue_core::verdict::*;
+use rescind_core::body::*;
+use rescind_core::check::check;
+use rescind_core::diagnostics::Code;
+use rescind_core::model::*;
+use rescind_core::verdict::*;
 
 fn site0() -> Site {
     Site {
@@ -319,11 +319,11 @@ fn interference_rules() {
     };
     pair(
         Code::E0305,
-        &temp(vec![r("r1", "rue"), r("r2", "rue")]),
-        &temp(vec![r("r1", "rue-a"), r("r2", "rue-b")]),
+        &temp(vec![r("r1", "rescind"), r("r2", "rescind")]),
+        &temp(vec![r("r1", "rescind-a"), r("r2", "rescind-b")]),
     );
     assert_eq!(
-        codes_of(&temp(vec![r("r1", "rue"), r("r2", "rue")])),
+        codes_of(&temp(vec![r("r1", "rescind"), r("r2", "rescind")])),
         vec![Code::E0305],
         "a repeated anchor is E0305 alone"
     );
@@ -1212,7 +1212,7 @@ fn secret_rules() {
 /// 7.7): declared or native, and E0403 when the pair has no template.
 #[test]
 fn artifact_language_rules() {
-    use rue_core::artifact::{default_language, language_of, shell_of, supported, Shell};
+    use rescind_core::artifact::{default_language, language_of, shell_of, supported, Shell};
     assert_eq!(shell_of("windows"), Shell::Powershell);
     for os in ["freebsd", "linux", "macos", "appliance", "reactive-host"] {
         assert_eq!(shell_of(os), Shell::Posix, "{os}");

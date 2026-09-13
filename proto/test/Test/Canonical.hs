@@ -9,7 +9,7 @@ import qualified Data.Aeson.KeyMap as KeyMap
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.Text as T
 import qualified Data.Vector as V
-import Rue.Proto.Json.Canonical (encode)
+import Rescind.Proto.Json.Canonical (encode)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
 import Test.Tasty.QuickCheck

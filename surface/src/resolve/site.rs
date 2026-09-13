@@ -4,10 +4,10 @@
 
 use std::path::Path;
 
+use rescind_core::artifact;
+use rescind_core::diagnostics::{Code, Diagnostic};
+use rescind_core::model::{ArtifactLanguage, Authenticator, Duration, HostRecord, Site};
 use rowan::TextRange;
-use rue_core::artifact;
-use rue_core::diagnostics::{Code, Diagnostic};
-use rue_core::model::{ArtifactLanguage, Authenticator, Duration, HostRecord, Site};
 use serde::Deserialize;
 
 use crate::ast::{Arg, Block, Expr, Kw, Lit, Stmt};
@@ -51,11 +51,11 @@ struct InvHost {
     artifact: Option<String>,
     #[serde(default)]
     stdin_preamble: Option<bool>,
-    /// Where rue keeps its instance directories on this host (7.7);
-    /// absent is the family's default (`/var/db/rue`,
-    /// `C:\\ProgramData\\rue`). Appendix C.
+    /// Where rescind keeps its instance directories on this host (7.7);
+    /// absent is the family's default (`/var/db/rescind`,
+    /// `C:\\ProgramData\\rescind`). Appendix C.
     #[serde(default)]
-    rue_root: Option<String>,
+    rescind_root: Option<String>,
 }
 
 /// A host's contract facts for clause dispatch: the inventory record's
@@ -67,8 +67,8 @@ pub struct Contract {
     pub os: String,
     pub roles: Vec<String>,
     pub reach: Vec<String>,
-    /// The host's `rue_root`, where the inventory names one.
-    pub rue_root: Option<String>,
+    /// The host's `rescind_root`, where the inventory names one.
+    pub rescind_root: Option<String>,
 }
 
 /// What the site block declares, before derivation.
@@ -212,11 +212,11 @@ fn bindings_of(a: &Arg, slot: &'static str) -> Vec<Binding> {
 
 /// The binding kinds each site line admits (section 7.3, with the
 /// spellings the tenants use: `file` for an inventory as well as
-/// `rue_toml`, `local` for the controller's own journal, `launchd` beside
+/// `rescind_toml`, `local` for the controller's own journal, `launchd` beside
 /// `cron` and `task_scheduler`).
 fn admitted(slot: &str) -> &'static [&'static str] {
     match slot {
-        "inventory" => &["rue_toml", "file", "hook"],
+        "inventory" => &["rescind_toml", "file", "hook"],
         "journal" => &["file", "stdout", "local", "hook", "key"],
         "approval" => &["always", "hook"],
         "secrets_from" => &["file", "hook"],
@@ -272,7 +272,7 @@ pub fn validate(
             continue;
         }
         let contract = match b.kind.as_str() {
-            "file" | "rue_toml" | "key" => (b.arg_kind == ArgKind::Str, "a path string"),
+            "file" | "rescind_toml" | "key" => (b.arg_kind == ArgKind::Str, "a path string"),
             "hook" => (b.arg_kind == ArgKind::Atom, "the hook's atom"),
             "hold" => (
                 b.kws.iter().any(|(k, _)| k == "until"),
@@ -532,11 +532,11 @@ pub struct InventoryRefusal(pub Code, pub String);
 
 /// The inventory at check time.
 ///
-/// `rue_toml()` and `file()` name a file, read relative to the declaring
+/// `rescind_toml()` and `file()` name a file, read relative to the declaring
 /// file's directory. `hook()` names no file at all: its hosts come from the
 /// hook, at run time, and there is no hook when a text is checked. So a
 /// hook inventory is checked against a record the operator names
-/// (`rue check --inventory`), and refused with E0607 when they name none.
+/// (`rescind check --inventory`), and refused with E0607 when they name none.
 ///
 /// It used to read a sibling `inventory.toml` and say nothing. That made a
 /// verdict a statement about a file the text never mentions, which is the
@@ -552,7 +552,7 @@ pub fn read_inventory(
                 Code::E0607,
                 format!(
                     "`inventory from: hook({})` has no hosts until the hook is asked, and \
-                     checking needs a record now: name one with `rue check --inventory FILE`",
+                     checking needs a record now: name one with `rescind check --inventory FILE`",
                     b.arg.clone().unwrap_or_default()
                 ),
             ));
@@ -612,7 +612,7 @@ fn read_toml(p: &Path) -> Result<Inventory, String> {
             os: h.os,
             roles: h.roles,
             reach: h.reach,
-            rue_root: h.rue_root,
+            rescind_root: h.rescind_root,
         });
     }
     let mut auths = Vec::new();

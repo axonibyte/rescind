@@ -16,7 +16,7 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::fmt;
 use std::sync::{Arc, Mutex};
 
-use rue_core::model::Instant;
+use rescind_core::model::Instant;
 use serde::{Deserialize, Serialize};
 
 use crate::host::Host;
@@ -50,12 +50,12 @@ pub struct ExecCaps {
     pub stdin_preamble: bool,
 }
 
-/// The wire's own types (`rue-hook-proto`): a resolved body, what a run
+/// The wire's own types (`rescind-hook-proto`): a resolved body, what a run
 /// produced, what a probe saw, and what a target reports about its own
 /// filesystem. They are the protocol's because a hook executor exchanges
 /// them verbatim; every driver here uses the same definitions, so `local()`
 /// and a hook cannot drift apart in what they mean by a primitive.
-pub use rue_hook_proto::{
+pub use rescind_hook_proto::{
     BootstrapState, InstanceDirState, Observation, Output, ProbeRun, RPrim, Resolved,
 };
 
@@ -226,7 +226,7 @@ impl FakeExecutor {
             dirs: BTreeSet::new(),
             files: BTreeMap::new(),
             bootstrap: BootstrapState {
-                rue_root: true,
+                rescind_root: true,
                 group: true,
                 instances_dir: true,
                 lock: true,
@@ -340,7 +340,7 @@ impl Executor for FakeHandle {
                             let e = f.facts.entry(shape.clone()).or_default();
                             e.extend_from_slice(
                                 format!(
-                                    "# rue-region {a} begin\n{}\n# rue-region {a} end\n",
+                                    "# rescind-region {a} begin\n{}\n# rescind-region {a} end\n",
                                     content.text
                                 )
                                 .as_bytes(),
@@ -350,8 +350,8 @@ impl Executor for FakeHandle {
                             let a = anchor.clone().unwrap_or_default();
                             if let Some(bytes) = f.facts.get_mut(shape) {
                                 let text = String::from_utf8_lossy(bytes).into_owned();
-                                let begin = format!("# rue-region {a} begin\n");
-                                let end = format!("# rue-region {a} end\n");
+                                let begin = format!("# rescind-region {a} begin\n");
+                                let end = format!("# rescind-region {a} end\n");
                                 if let (Some(s), Some(e)) = (text.find(&begin), text.find(&end)) {
                                     let mut out = text[..s].to_string();
                                     out.push_str(&text[e + end.len()..]);

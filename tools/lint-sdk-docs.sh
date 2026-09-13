@@ -28,7 +28,7 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-lint-sdk-docs.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-lint-sdk-docs.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 rc=0

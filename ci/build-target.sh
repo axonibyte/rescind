@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ci/build-target.sh  build rue's release binaries for one target triple.
+# ci/build-target.sh  build rescind's release binaries for one target triple.
 # Usage: bash ci/build-target.sh <target-triple>
 # All per-target knowledge (linkers, toolchains, std availability) lives here;
 # bitbucket-pipelines.yml just dispatches. Per-OS knowledge lives in exactly
@@ -17,9 +17,9 @@ NIGHTLY="nightly-2026-08-01"
 
 # Every binary the workspace ships, on every target (D-031: Windows is not a
 # client-only build; macOS is cross-built the same way). A name that does not
-# exist yet is skipped (rued arrives in Phase 3's daemon unit, rue-hook in
+# exist yet is skipped (rescindd arrives in Phase 3's daemon unit, rescind-hook in
 # Phase 4); none existing is a failure.
-BINS="rue rued rue-hook"
+BINS="rescind rescindd rescind-hook"
 
 apt_install() {
     apt-get update
@@ -33,7 +33,7 @@ install_zigbuild() {
     pip3 install --break-system-packages cargo-zigbuild
 }
 
-# `tree-sitter-rue` is excluded from every cross-target build, and from
+# `tree-sitter-rescind` is excluded from every cross-target build, and from
 # nothing else. It compiles a generated C parser, and the darwin targets are
 # cross-linked with zig against libSystem and no macOS SDK (ROADMAP.md
 # section 12), where `cc-rs` reaches for a `cc` that takes `-arch` and
@@ -41,7 +41,7 @@ install_zigbuild() {
 # contains it: it is an editor artifact and a test dependency, shipped in no
 # binary, and its own tests run in the gate and in the pipeline's test step,
 # on a host with a C compiler. The exclusion covers that crate and no other.
-NOT_CROSS_BUILT=tree-sitter-rue
+NOT_CROSS_BUILT=tree-sitter-rescind
 
 # Phase 1 acceptance (ROADMAP.md): clippy clean on every target, with the
 # toolchain that builds it. Clippy needs the target's std, not its linker,

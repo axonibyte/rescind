@@ -1,7 +1,7 @@
 //! The artifacts run. Each scenario builds a temporary instance directory
 //! (markers with real digests, snapshots, deadline and heartbeat files, a
 //! sibling manifest) and a temporary world of files, renders the plan for a
-//! host whose `rue_root` is the temporary root, executes the artifact the
+//! host whose `rescind_root` is the temporary root, executes the artifact the
 //! way the scheduler will (`sh artifact.sh`; `uv run --offline --script
 //! artifact.py`), and reads the world back. Every scenario runs in both
 //! languages, so the two templates are held to one behavior.
@@ -17,9 +17,9 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use rue_core::body::*;
-use rue_core::model::*;
-use rue_render::{render, Bindings, Instance};
+use rescind_core::body::*;
+use rescind_core::model::*;
+use rescind_render::{render, Bindings, Instance};
 use sha2::{Digest, Sha256};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -51,7 +51,7 @@ fn sha(bytes: &[u8]) -> String {
 impl World {
     fn new(name: &str) -> World {
         let dir = std::env::temp_dir().join(format!(
-            "rue-execute-{}-{}-{}",
+            "rescind-execute-{}-{}-{}",
             name,
             std::process::id(),
             now()
@@ -164,7 +164,7 @@ impl World {
         };
         let instance = Instance {
             id: "i-1".into(),
-            rue_root: Some(self.root()),
+            rescind_root: Some(self.root()),
         };
         let a = render(&site, plan, "h", &instance, &Bindings::default()).unwrap();
         let path = self.inst.join(a.file_name);
@@ -231,7 +231,7 @@ fn after() -> Vec<Trigger> {
     vec![Trigger::After(Duration::new(3600))]
 }
 
-const REGION: &str = "keep\n# rue-region blk begin\nours\n# rue-region blk end\ntail\n";
+const REGION: &str = "keep\n# rescind-region blk begin\nours\n# rescind-region blk end\ntail\n";
 
 /// The three restore kinds over one plan: an owned file, a fenced region and
 /// a modified file with its snapshot, plus a run body (step 4) that copies
@@ -411,7 +411,7 @@ fn damaged_region_markers_restore_the_whole_file_unless_a_sibling_holds_a_region
     for lang in LANGS {
         for foreign in [false, true] {
             let w = World::new("region");
-            w.put("reg", "keep\n# rue-region blk begin\nours\ntail\n"); // end marker lost
+            w.put("reg", "keep\n# rescind-region blk begin\nours\ntail\n"); // end marker lost
             w.snapshot(1, 0, "keep\ntail\n");
             w.marker(1, &[("reg", Kind::Region)]);
             if foreign {
@@ -429,7 +429,7 @@ fn damaged_region_markers_restore_the_whole_file_unless_a_sibling_holds_a_region
             if foreign {
                 assert_eq!(
                     w.get("reg").as_deref(),
-                    Some("keep\n# rue-region blk begin\nours\ntail\n"),
+                    Some("keep\n# rescind-region blk begin\nours\ntail\n"),
                     "{lang:?}: deferred"
                 );
                 assert_eq!(w.flag("drift").as_deref(), Some("1\n"), "{lang:?}");
@@ -532,7 +532,7 @@ fn a_quoted_value_survives_the_shell_intact() {
         b.params.insert("v".into(), hostile.into());
         let instance = Instance {
             id: "i-1".into(),
-            rue_root: Some(w.root()),
+            rescind_root: Some(w.root()),
         };
         let a = render(&site, &p, "h", &instance, &b).unwrap();
         let path = w.inst.join(a.file_name);

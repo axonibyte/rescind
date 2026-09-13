@@ -14,10 +14,10 @@
 
 use std::collections::BTreeMap;
 
-use rue_core::backstop::coverage;
-use rue_core::journal::Event as J;
-use rue_core::model::{Duration, Instant, Trigger};
-use rue_render::{render, Bindings, Instance as RInstance};
+use rescind_core::backstop::coverage;
+use rescind_core::journal::Event as J;
+use rescind_core::model::{Duration, Instant, Trigger};
+use rescind_render::{render, Bindings, Instance as RInstance};
 use serde::{Deserialize, Serialize};
 
 use crate::gates::{hex, nonce};
@@ -91,7 +91,7 @@ pub type Reconciled = (
     Vec<(String, String)>,
 );
 
-/// What `rue doctor` finds among the instance directories: armed orphans,
+/// What `rescind doctor` finds among the instance directories: armed orphans,
 /// and directories another controller stamped.
 pub type Unclaimed = (Vec<(String, String)>, Vec<(String, String)>);
 
@@ -152,7 +152,7 @@ impl Engine {
     ) -> Result<(&'static str, String), String> {
         let inst = RInstance {
             id: rec.id.clone(),
-            rue_root: host.rue_root.clone(),
+            rescind_root: host.rescind_root.clone(),
         };
         let mut b = Bindings {
             params: rec.params.clone(),
@@ -170,13 +170,13 @@ impl Engine {
     }
 
     fn job_of(&self, rec: &InstanceRecord, host: &Host, st: &BackstopState) -> Job {
-        let shell = rue_core::artifact::shell_of(&host.record.os);
+        let shell = rescind_core::artifact::shell_of(&host.record.os);
         let root = RInstance {
             id: rec.id.clone(),
-            rue_root: host.rue_root.clone(),
+            rescind_root: host.rescind_root.clone(),
         }
         .root(shell);
-        let sep = if matches!(shell, rue_core::artifact::Shell::Powershell) {
+        let sep = if matches!(shell, rescind_core::artifact::Shell::Powershell) {
             "\\"
         } else {
             "/"
@@ -184,7 +184,7 @@ impl Engine {
         Job {
             instance: rec.id.clone(),
             artifact: format!("{root}{sep}instances{sep}{}{sep}{}", rec.id, st.artifact),
-            language: rue_core::artifact::language_of(&host.record),
+            language: rescind_core::artifact::language_of(&host.record),
             os: host.record.os.clone(),
         }
     }
@@ -535,12 +535,12 @@ impl Engine {
     }
 
     /// Instance directories a host holds that the store does not know and
-    /// that are armed: what reconciliation left in place, for `rue doctor`.
+    /// that are armed: what reconciliation left in place, for `rescind doctor`.
     pub(crate) fn orphans(&mut self) -> Result<Unclaimed, EngineError> {
         let known: Vec<String> = self
             .instances()?
             .into_iter()
-            .filter(|r| !rue_core::states::terminal(r.state))
+            .filter(|r| !rescind_core::states::terminal(r.state))
             .map(|r| r.id)
             .collect();
         let hosts: Vec<Host> = self.hosts.values().cloned().collect();
@@ -694,19 +694,19 @@ impl Engine {
     /// the language and the root are the host's, and the artifact's name
     /// follows from the language (7.7).
     fn job_for(&self, host: &Host, instance: &str) -> Job {
-        let shell = rue_core::artifact::shell_of(&host.record.os);
-        let language = rue_core::artifact::language_of(&host.record);
+        let shell = rescind_core::artifact::shell_of(&host.record.os);
+        let language = rescind_core::artifact::language_of(&host.record);
         let file = match language {
-            rue_core::model::ArtifactLanguage::Sh => "artifact.sh",
-            rue_core::model::ArtifactLanguage::Powershell => "artifact.ps1",
-            rue_core::model::ArtifactLanguage::Python => "artifact.py",
+            rescind_core::model::ArtifactLanguage::Sh => "artifact.sh",
+            rescind_core::model::ArtifactLanguage::Powershell => "artifact.ps1",
+            rescind_core::model::ArtifactLanguage::Python => "artifact.py",
         };
         let root = RInstance {
             id: instance.to_string(),
-            rue_root: host.rue_root.clone(),
+            rescind_root: host.rescind_root.clone(),
         }
         .root(shell);
-        let sep = if matches!(shell, rue_core::artifact::Shell::Powershell) {
+        let sep = if matches!(shell, rescind_core::artifact::Shell::Powershell) {
             "\\"
         } else {
             "/"
@@ -744,13 +744,13 @@ impl Engine {
     /// instance it belongs to is live elsewhere. Of the rest, a directory
     /// the store does not know is left where it holds an armed, unfired
     /// artifact, journaled `InstanceDirOrphaned{armed: true}` and listed by
-    /// `rue doctor`; one with no artifact or with a fired marker is
+    /// `rescind doctor`; one with no artifact or with a fired marker is
     /// reclaimed.
     pub fn reconcile(&mut self) -> Result<Reconciled, EngineError> {
         let known: Vec<String> = self
             .instances()?
             .into_iter()
-            .filter(|r| !rue_core::states::terminal(r.state))
+            .filter(|r| !rescind_core::states::terminal(r.state))
             .map(|r| r.id)
             .collect();
         let hosts: Vec<Host> = self.hosts.values().cloned().collect();
@@ -815,7 +815,7 @@ impl Engine {
         Ok((orphaned, reclaimed, foreign))
     }
 
-    /// `rue reclaim`: remove an orphaned instance directory. Refused while
+    /// `rescind reclaim`: remove an orphaned instance directory. Refused while
     /// the artifact is armed and its scheduler entry is present (R0405);
     /// `--force --reason` is accepted when the entry is absent or the
     /// operator states the artifact has been read.
@@ -877,7 +877,7 @@ impl Engine {
     }
 }
 
-/// What a canary found on one host (`rue doctor --canary`).
+/// What a canary found on one host (`rescind doctor --canary`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Canary {
     pub host: String,
@@ -892,7 +892,7 @@ pub struct Canary {
 }
 
 impl Engine {
-    /// `rue doctor --canary`: prove that a real backstop fires on every
+    /// `rescind doctor --canary`: prove that a real backstop fires on every
     /// host that has a scheduler, by installing a throwaway artifact of
     /// the engine's own, arming it with a deadline already past, and
     /// waiting for the marker it leaves.
@@ -900,7 +900,7 @@ impl Engine {
     /// Nothing of a plan is involved: the artifact undoes nothing and
     /// touches nothing outside its own instance directory, which is
     /// removed afterwards whatever happened. What it proves is the part
-    /// no unit test can: that this host's scheduler runs what rue
+    /// no unit test can: that this host's scheduler runs what rescind
     /// installs, at the granularity it claims.
     pub fn canary(&mut self, wait: Duration) -> Result<Vec<Canary>, EngineError> {
         let hosts: Vec<Host> = self.hosts.values().cloned().collect();
@@ -929,7 +929,7 @@ impl Engine {
     /// The instance a canary uses: named for what it is, and for this
     /// engine, so two canaries never collide.
     fn canary_id(&self) -> String {
-        format!("rue-canary-{}", hex(&nonce()[..6]))
+        format!("rescind-canary-{}", hex(&nonce()[..6]))
     }
 
     fn canary_on(
@@ -941,19 +941,19 @@ impl Engine {
     ) -> Result<(), String> {
         let id = self.canary_id();
         c.note = id.clone();
-        let shell = rue_core::artifact::shell_of(&host.record.os);
-        if matches!(shell, rue_core::artifact::Shell::Powershell) {
+        let shell = rescind_core::artifact::shell_of(&host.record.os);
+        if matches!(shell, rescind_core::artifact::Shell::Powershell) {
             return Err("a canary on Windows is Phase 3W's; no artifact is installed".into());
         }
         let root = RInstance {
             id: id.clone(),
-            rue_root: host.rue_root.clone(),
+            rescind_root: host.rescind_root.clone(),
         }
         .root(shell);
         let inst = format!("{root}/instances/{id}");
         // The whole artifact: it leaves a marker and stops. An artifact
         // that fires twice is no worse than one that fires once.
-        let text = format!("#!/bin/sh\n# rue canary: proves this host's scheduler runs what rue installs.\n[ -e '{inst}/fired' ] && exit 0\nnow=$(date +%s)\nd=$(cat '{inst}/deadline' 2>/dev/null || echo 0)\n[ \"$now\" -ge \"$d\" ] || exit 0\n: > '{inst}/fired'\nexit 0\n");
+        let text = format!("#!/bin/sh\n# rescind canary: proves this host's scheduler runs what rescind installs.\n[ -e '{inst}/fired' ] && exit 0\nnow=$(date +%s)\nd=$(cat '{inst}/deadline' 2>/dev/null || echo 0)\n[ \"$now\" -ge \"$d\" ] || exit 0\n: > '{inst}/fired'\nexit 0\n");
         let Some(i) = self.executor_index(host) else {
             return Err(format!("no transport reaches {}", host.name()));
         };
@@ -971,7 +971,7 @@ impl Engine {
         let job = Job {
             instance: id.clone(),
             artifact: format!("{inst}/artifact.sh"),
-            language: rue_core::model::ArtifactLanguage::Sh,
+            language: rescind_core::model::ArtifactLanguage::Sh,
             os: host.record.os.clone(),
         };
         let Some(s) = self.schedulers.iter_mut().find(|s| s.name() == scheduler) else {
@@ -1008,7 +1008,7 @@ impl Engine {
             }
         }
         Err(format!(
-            "{id} did not fire within {}s; {scheduler} on {} runs nothing rue installs",
+            "{id} did not fire within {}s; {scheduler} on {} runs nothing rescind installs",
             wait.seconds,
             host.name()
         ))
@@ -1020,7 +1020,7 @@ impl Engine {
             .note
             .split_whitespace()
             .next()
-            .filter(|s| s.starts_with("rue-canary-"))
+            .filter(|s| s.starts_with("rescind-canary-"))
             .unwrap_or_default()
             .to_string();
         if id.is_empty() {
@@ -1029,7 +1029,7 @@ impl Engine {
         let job = Job {
             instance: id.clone(),
             artifact: String::new(),
-            language: rue_core::model::ArtifactLanguage::Sh,
+            language: rescind_core::model::ArtifactLanguage::Sh,
             os: host.record.os.clone(),
         };
         let Some(i) = self.executor_index(host) else {

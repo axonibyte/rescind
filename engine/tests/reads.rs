@@ -18,12 +18,12 @@ mod common;
 use std::collections::BTreeMap;
 
 use common::world::{self, World};
-use rue_core::body::{lit, FactRef, Part, Prim, Ref, Run, Write};
-use rue_core::journal::Event as J;
-use rue_core::model::{Drift, FootprintEntry, Kind, Locus, Op, ProbeDecl, Undo, UndoLocus};
-use rue_core::states::State;
-use rue_engine::executor::{Observation, RPrim, Scripted};
-use rue_engine::lifecycle::ApplyOptions;
+use rescind_core::body::{lit, FactRef, Part, Prim, Ref, Run, Write};
+use rescind_core::journal::Event as J;
+use rescind_core::model::{Drift, FootprintEntry, Kind, Locus, Op, ProbeDecl, Undo, UndoLocus};
+use rescind_core::states::State;
+use rescind_engine::executor::{Observation, RPrim, Scripted};
+use rescind_engine::lifecycle::ApplyOptions;
 
 fn opts() -> ApplyOptions {
     ApplyOptions {

@@ -28,7 +28,7 @@
                   "lit": "tcp dport 8443 accept"
                 },
                 "fact": {
-                  "anchor": "rue-mgmt",
+                  "anchor": "rescind-mgmt",
                   "shape": "file:/etc/nftables.conf"
                 }
               }
@@ -49,7 +49,7 @@
           "exclusivity": null,
           "footprint": [
             {
-              "anchor": "rue-mgmt",
+              "anchor": "rescind-mgmt",
               "instance": null,
               "kind": "region",
               "shape": "file:/etc/nftables.conf"

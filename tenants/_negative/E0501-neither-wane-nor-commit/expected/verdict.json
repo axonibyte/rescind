@@ -63,7 +63,7 @@
       "conditional": null,
       "drift": "clobber",
       "footprint": [
-        "owned: file:/etc/ssh/sshd_config.d/rue-breakglass.conf",
+        "owned: file:/etc/ssh/sshd_config.d/rescind-breakglass.conf",
         "derived: probe:sshd_posture"
       ],
       "gate": null,
@@ -72,14 +72,14 @@
       "n": 1,
       "op": "service_posture",
       "refusal": "revert",
-      "undo": "remove file:/etc/ssh/sshd_config.d/rue-breakglass.conf",
+      "undo": "remove file:/etc/ssh/sshd_config.d/rescind-breakglass.conf",
       "undo_locus": "target"
     },
     {
       "conditional": "foreign region in file:/root/.ssh/authorized_keys",
       "drift": "clobber",
       "footprint": [
-        "region: file:/root/.ssh/authorized_keys anchor rue-breakglass"
+        "region: file:/root/.ssh/authorized_keys anchor rescind-breakglass"
       ],
       "gate": null,
       "knell": null,
@@ -87,7 +87,7 @@
       "n": 2,
       "op": "authorized_keys_block",
       "refusal": "revert",
-      "undo": "strip anchor rue-breakglass from file:/root/.ssh/authorized_keys",
+      "undo": "strip anchor rescind-breakglass from file:/root/.ssh/authorized_keys",
       "undo_locus": "target"
     },
     {

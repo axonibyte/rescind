@@ -4,7 +4,7 @@
 
 use std::collections::BTreeMap;
 
-use rue_core::model::{ArtifactLanguage, Tri};
+use rescind_core::model::{ArtifactLanguage, Tri};
 use serde::{Deserialize, Serialize};
 
 /// The frame a hook opens with, over the socket after `hello` or as the
@@ -74,10 +74,10 @@ impl Observation {
     }
 }
 
-/// What `rue bootstrap` verifies (section 7.7).
+/// What `rescind bootstrap` verifies (section 7.7).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BootstrapState {
-    pub rue_root: bool,
+    pub rescind_root: bool,
     pub group: bool,
     pub instances_dir: bool,
     pub lock: bool,
@@ -86,7 +86,7 @@ pub struct BootstrapState {
 
 impl BootstrapState {
     pub fn ready(&self) -> bool {
-        self.rue_root && self.group && self.instances_dir && self.lock && self.modes_ok
+        self.rescind_root && self.group && self.instances_dir && self.lock && self.modes_ok
     }
 }
 
@@ -96,20 +96,20 @@ pub struct InstanceDirState {
     pub instance: String,
     pub armed: bool,
     pub fired: bool,
-    /// The directory carries the modes 7.7 requires (`2770`, group `rue`).
+    /// The directory carries the modes 7.7 requires (`2770`, group `rescind`).
     /// Arming a backstop into a directory with wrong modes is R0406.
     pub modes_ok: bool,
 }
 
 /// A host as a hook lists it: the roadmap's Appendix C record.
 ///
-/// Every field a `rue_toml()` inventory declares has a place here, so a
+/// Every field a `rescind_toml()` inventory declares has a place here, so a
 /// hook-listed host is the equal of a file-listed one. The three that are
-/// not in Appendix C's first column -- `rue_root`, `stdin_preamble` and
+/// not in Appendix C's first column -- `rescind_root`, `stdin_preamble` and
 /// `artifact` -- decide where the instance directory lives, whether `env:`
 /// and `stdin:` may carry a secret, and what language a `:target` backstop
 /// is rendered in; a hook that omits them gets the defaults below, and a
-/// host without a `rue_root` cannot hold an instance directory at all.
+/// host without a `rescind_root` cannot hold an instance directory at all.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InventoryHost {
     pub name: String,
@@ -131,7 +131,7 @@ pub struct InventoryHost {
     /// Where the instance directory lives on the host (7.7). A hook that
     /// lists a run-capable host without one leaves it unable to hold one.
     #[serde(default)]
-    pub rue_root: Option<String>,
+    pub rescind_root: Option<String>,
     /// The language a `:target` backstop is rendered in; absent is the
     /// host's native shell.
     #[serde(default)]

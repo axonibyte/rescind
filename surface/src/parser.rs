@@ -12,8 +12,8 @@
 //! keyword arguments) and a `BODY`. The resolver (unit B) gives each line
 //! its meaning; the parser only shapes it.
 
+use rescind_core::diagnostics::{Code, Diagnostic, Span};
 use rowan::{Checkpoint, GreenNode, GreenNodeBuilder};
-use rue_core::diagnostics::{Code, Diagnostic, Span};
 
 use crate::lexer::{lex, Token};
 use crate::syntax::SyntaxKind::{self, *};
@@ -321,10 +321,29 @@ impl<'a> Parser<'a> {
         self.finish();
     }
 
-    /// `rue INT`, first (E0105 when missing or newer).
+    /// `rescind INT`, first (E0105 when missing or newer).
     fn version(&mut self) {
-        if self.at_name("rue") {
+        // `rue` is the name this language had before v0.4.0. A text that opens
+        // with it is wrong about exactly one word, so it is CONSUMED like any
+        // version line and reported with E0610 -- not left unparsed, which
+        // would bury the real message under a cascade of E0101.
+        let old_keyword = self.at_name("rue");
+        if self.at_name("rescind") || old_keyword {
             let idx = self.peek_index();
+            if old_keyword {
+                self.diagnostics.push(Diagnostic {
+                    code: Code::E0610,
+                    span: Some(self.span_at(idx)),
+                    expected: Some(format!("`rescind {LANGUAGE_VERSION}`")),
+                    found: Some("`rue`".to_string()),
+                    nearest: None,
+                    message: Code::E0610.with_migration(
+                        "the version line names `rue`, which is what this language was called \
+                         before v0.4.0"
+                            .to_string(),
+                    ),
+                });
+            }
             self.start(VERSION);
             self.bump();
             if self.at(INT) {
@@ -333,8 +352,8 @@ impl<'a> Parser<'a> {
                     self.diagnostics.push(Diagnostic {
                         code: Code::E0105,
                         span: Some(self.span_at(idx)),
-                        expected: Some(format!("`rue {LANGUAGE_VERSION}`")),
-                        found: Some(format!("`rue {v}`")),
+                        expected: Some(format!("`rescind {LANGUAGE_VERSION}`")),
+                        found: Some(format!("`rescind {v}`")),
                         nearest: None,
                         message: format!(
                             "language version {v} is newer than this compiler reads ({LANGUAGE_VERSION})"
@@ -344,7 +363,7 @@ impl<'a> Parser<'a> {
                 self.bump();
                 self.expect_newline("after the version marker");
             } else {
-                self.error("an integer", "after `rue`");
+                self.error("an integer", "after `rescind`");
                 if self.at(NEWLINE) {
                     self.bump();
                 }
@@ -354,7 +373,7 @@ impl<'a> Parser<'a> {
             self.diagnostics.push(Diagnostic {
                 code: Code::E0105,
                 span: Some(self.span_at(0)),
-                expected: Some(format!("`rue {LANGUAGE_VERSION}` on the first line")),
+                expected: Some(format!("`rescind {LANGUAGE_VERSION}` on the first line")),
                 found: None,
                 nearest: None,
                 message: "language version marker missing".to_string(),

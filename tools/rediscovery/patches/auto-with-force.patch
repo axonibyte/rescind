@@ -1,7 +1,7 @@
 # Reverts: mode: :auto refuses every force: statically (E0404)
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/proto/src/Rue/Proto/Check.hs
-+++ b/proto/src/Rue/Proto/Check.hs
+--- a/proto/src/Rescind/Proto/Check.hs
++++ b/proto/src/Rescind/Proto/Check.hs
 @@ -292,7 +292,7 @@
        Left _ -> False
  

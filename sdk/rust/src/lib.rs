@@ -1,16 +1,16 @@
 //! The reference embedding SDK, docs/ROADMAP.md 7.11.
 //!
 //! Any language that can open a socket or a pipe and speak newline-delimited
-//! JSON can embed rue; this crate is the convenience over that protocol, and
+//! JSON can embed rescind; this crate is the convenience over that protocol, and
 //! the shape every other SDK in `sdk/` is written to match. It gives you:
 //!
 //! * a trait per kind ([`Journal`], [`Inventory`], [`Execute`], [`Probe`],
 //!   [`Approval`], [`Secrets`], [`Notify`], [`Scheduler`]), each method
-//!   typed in the records of `rue-hook-proto` rather than in `Value`;
+//!   typed in the records of `rescind-hook-proto` rather than in `Value`;
 //! * [`Hooks`], which collects the kinds you actually implement and builds
 //!   the registration frame from them, so a hook cannot register for a kind
 //!   it does not serve;
-//! * [`serve_stdio`] and [`serve_socket`], the two ways `rued` reaches a
+//! * [`serve_stdio`] and [`serve_socket`], the two ways `rescindd` reaches a
 //!   hook (docs/hook-protocol.md), including the registration handshake;
 //! * the secret rule: an `execute.run` hands its handler the resolved body
 //!   with its secrets intact, and nothing else does. A [`Resolved`] whose
@@ -21,14 +21,14 @@
 //!
 //! One reply per request, on one line, carrying the id it came with. An
 //! `ok: true` reply must carry every field its op declares
-//! ([`rue_hook_proto::Op::required_reply`]) or the engine refuses the step
+//! ([`rescind_hook_proto::Op::required_reply`]) or the engine refuses the step
 //! with R0303 -- this crate builds those replies for you, which is most of
 //! why it exists. An op you do not serve is `ok: false`, and a refusal is
 //! honest: it names a reason the operator will read.
 //!
 //! No reply at all is **Silent**, which the engine treats as a refusal of
 //! the step with nothing to say about why. The deadline is the engine's
-//! (`rued run --hook-deadline`) and is not on the wire, so an SDK cannot
+//! (`rescindd run --hook-deadline`) and is not on the wire, so an SDK cannot
 //! see it; what it can do is keep your own slowness from turning into
 //! silence. Set [`ServeOptions::budget`] and a handler that overruns it
 //! answers `ok: false` naming the overrun instead of leaving the engine to
@@ -37,13 +37,13 @@
 
 use std::io::{BufRead, Write};
 
-use rue_hook_proto::{
+use rescind_hook_proto::{
     BootstrapState, InstanceDirState, InventoryHost, Observation, Op, Output, ProbeRun, RPrim,
     Registration, Resolved, HOOK_PROTOCOL,
 };
 use serde_json::{json, Value};
 
-pub use rue_hook_proto as proto;
+pub use rescind_hook_proto as proto;
 
 mod hooks;
 mod serve;
@@ -180,7 +180,7 @@ pub trait Probe: Send {
     fn observe(&mut self, host: &str, probe: &str) -> Answer<Observation>;
 }
 
-/// `approval via: hook(:name)`. The digest and its scope are rue's, so a
+/// `approval via: hook(:name)`. The digest and its scope are rescind's, so a
 /// proof you accept is bound to one request and one scope: verify against
 /// the digest you were handed and never against a request you rebuilt.
 pub trait Approval: Send {

@@ -19,7 +19,7 @@
                   "lit": "a"
                 },
                 "fact": {
-                  "anchor": "rue",
+                  "anchor": "rescind",
                   "shape": "file:/etc/keys"
                 }
               }
@@ -29,7 +29,7 @@
           "exclusivity": null,
           "footprint": [
             {
-              "anchor": "rue",
+              "anchor": "rescind",
               "instance": null,
               "kind": "region",
               "shape": "file:/etc/keys"
@@ -67,7 +67,7 @@
                   "lit": "b"
                 },
                 "fact": {
-                  "anchor": "rue",
+                  "anchor": "rescind",
                   "shape": "file:/etc/keys"
                 }
               }
@@ -77,7 +77,7 @@
           "exclusivity": null,
           "footprint": [
             {
-              "anchor": "rue",
+              "anchor": "rescind",
               "instance": null,
               "kind": "region",
               "shape": "file:/etc/keys"

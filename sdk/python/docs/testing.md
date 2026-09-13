@@ -32,16 +32,16 @@ then answers each request line. The README shows a session. Your own output
 must go to stderr; anything else on stdout is a line the engine cannot
 read.
 
-## Judge it with `rue sdk-conform`
+## Judge it with `rescind sdk-conform`
 
-`rue sdk-conform` starts a hook the way `rued` does, checks its
+`rescind sdk-conform` starts a hook the way `rescindd` does, checks its
 registration, and then sends every op of every kind it registered,
 checking each reply against the protocol (the id comes back, `ok` is a
 boolean, an `ok: true` carries every required field, and it arrives within
 the deadline) and against the answer [sdk-conformance.md] scripts for it:
 
 ```text
-$ rue sdk-conform --name audit "python3 examples/audit_hook.py"
+$ rescind sdk-conform --name audit "python3 examples/audit_hook.py"
 ok      registration :: the first line is a registration this protocol admits
         serves journal, notify
 ok      journal.append :: an entry is acknowledged
@@ -62,13 +62,13 @@ they judge the SDK, not your hook's behavior.
 
 ## Run a daemon in dry-run mode
 
-`rued run --dry-run` needs no executors and turns every apply into a
+`rescindd run --dry-run` needs no executors and turns every apply into a
 rehearsal, which makes it a safe way to see your hook registered and
 journaling:
 
 ```sh
-RUE_AUDIT_LOG=$PWD/audit.ndjson rued run --dry-run --site site.rue \
-  --store ./store --socket $PWD/rued.sock --group "$(id -gn)" \
+RESCIND_AUDIT_LOG=$PWD/audit.ndjson rescindd run --dry-run --site site.scind \
+  --store ./store --socket $PWD/rescindd.sock --group "$(id -gn)" \
   --spawn audit="python3 examples/audit_hook.py"
 ```
 
@@ -80,6 +80,6 @@ registering (`hook_registered`), delivered through the hook itself.
 `sh sdk/test-all.sh python`, from the repository root, runs this package's
 suite (`python3 -m unittest discover -s tests -t .` inside `sdk/python`),
 and `sh sdk/conform-all.sh python` judges its conformance hook. Both run in
-rue's pipeline and on its Ubuntu test guest.
+rescind's pipeline and on its Ubuntu test guest.
 
 [sdk-conformance.md]: ../../../docs/sdk-conformance.md

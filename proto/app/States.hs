@@ -5,7 +5,7 @@ module Main (main) where
 
 import qualified Data.ByteString as B
 import qualified Data.Text.Encoding as TE
-import Rue.Proto.States (renderTable)
+import Rescind.Proto.States (renderTable)
 import System.IO (hSetBinaryMode, stdout)
 
 main :: IO ()

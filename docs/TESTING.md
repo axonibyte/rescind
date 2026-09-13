@@ -1,9 +1,9 @@
 # Testing
 
-How rue is tested, what the tests are allowed to do, and what the suite
+How rescind is tested, what the tests are allowed to do, and what the suite
 being green does and does not prove. This document is binding on the crates
 and on the Phase 0 record the way reaper's `docs/testing-methodology.md` is binding on every
-reaper tenant, and rue is one: never weaken a check to make a run pass; every
+reaper tenant, and rescind is one: never weaken a check to make a run pass; every
 fix ships with the test that would have caught it; every new assertion is
 mutation-checked before it counts; a pre-existing failure is proven by stash,
 not assumed; a skipped phase says so on stderr and fails unless it was
@@ -19,9 +19,9 @@ failure, and exits 0 only if every phase ran and passed:
 | `sh-syntax`, `bash-syntax` | Every shell file parses under the shell its shebang names |
 | `shellcheck` | Every shell file is clean under shellcheck at its shebang's dialect |
 | `seam` | No tenant or platform word (`tools/seam-denylist.txt`) appears outside `tenants/` |
-| `ecodes` | `Rue.Proto.Diagnostics` and the roadmap's section 6.7 table name the same codes, and no `"E0xxx"` literal exists elsewhere |
+| `ecodes` | `Rescind.Proto.Diagnostics` and the roadmap's section 6.7 table name the same codes, and no `"E0xxx"` literal exists elsewhere |
 | `rcodes` | Every R-code of Appendix D is raised somewhere and asserted by a test, and no `"R0xxx"` literal exists outside the enumerations |
-| `hook-ops` | The ops table of `docs/hook-protocol.md` and `OPS` in `rue-hook-proto` name the same 26 ops, in both directions |
+| `hook-ops` | The ops table of `docs/hook-protocol.md` and `OPS` in `rescind-hook-proto` name the same 26 ops, in both directions |
 | `hook-proto-frozen` | Every released hook protocol document (`docs/hook-protocol-v<N>.json`) still has the digest pinned when it was released, and the current `HOOK_PROTOCOL` has a document |
 | `sdk-docs` | Every SDK under `sdk/` has user docs (`docs/README.md`), every example a page shows is byte for byte the file its own suite tests, and every relative link in them resolves |
 | `issues` | The tracker in `docs/issues/` keeps its own rules: every issue well formed and numbered as its file, a closed one naming the day it closed, and the index listing exactly the issues with their titles, kinds and statuses |
@@ -37,7 +37,7 @@ failure, and exits 0 only if every phase ran and passed:
 | `cabal-test` | The Haskell suite passes, and changed nothing under `tenants/` or `docs/` |
 
 A phase whose tool is absent exits 77. That is a failure unless the caller
-named the phase in `RUE_CHECK_SKIP_OK`. The FreeBSD reaper guest, which has
+named the phase in `RESCIND_CHECK_SKIP_OK`. The FreeBSD reaper guest, which has
 only the base system, declares the bash, shellcheck, cabal, cargo and
 darwin-deps phases in `.reaper.toml`; the pipeline's GHC-image gate step
 declares the cargo phases and darwin-deps, which its Rust-image step
@@ -59,15 +59,15 @@ prototype's under one tasty suite, and both inside the gate:
 
 | Tier | Group | What |
 |---|---|---|
-| 1 | Rust `core/tests/{canonical,canon,diagnostics,ir,laws,interference,gates,intent_backstop,check,render,journal,request}.rs`, `render/tests/{quote,render,execute}.rs`, `surface/tests/tenants.rs`, `cli/tests/cli.rs`, `engine/tests/{clock,store,journal,lifecycle,control,drift}.rs`, `bindings/tests/{journal,local,ssh}.rs`, `daemon/tests/migrate.rs`, `cli/tests/daemon.rs`; Haskell `Test.Canonical`, `Test.Diagnostics`, `Test.Laws`, `Test.Check` | The canonical encoder's bytes and round trip; the hash encoding's bytes; the code enumeration; the IR spelling; the reversal laws as properties; the interference rules one by one; every emitted code raised by one plan and not by its sibling; the prose and explain clauses, and the self-contained page `--html` renders (it fetches nothing, and markup in a plan's own text is escaped rather than rendered); the journal chain and the digests; per-family quoting round-tripped through real unquoters; the artifact's covered set, order, triggers, primitives and refusals in every language; the `sh` and Python artifacts executed against a temporary instance directory (below); every `.rue` text under `tenants/` parsing clean, `fmt` the identity on it and idempotent; the resolver's rules each on a small file (`surface/tests/resolve.rs`); the performance bound (`surface/tests/bench.rs`); the CLI's verbs, selectors and exit codes; the engine over fakes: the store's lock, atomicity and schema, migration; the journal's chain through every sink, a refusing sink as R0304, signatures with the key and with nothing else; the lifecycle's scenarios (below); the file sink and the key binding; `rued migrate` and `rue journal verify` end to end; the control channel over a socket pair (identity, version, scope, admin, registration, a hook serving execute and probe, a silent hook, subscriptions); rued and rue over a real socket (a plan through a registered hook, every verb's line and exit code, a spawned child hook over stdio, daemon dry-run mode, a missing group) |
+| 1 | Rust `core/tests/{canonical,canon,diagnostics,ir,laws,interference,gates,intent_backstop,check,render,journal,request}.rs`, `render/tests/{quote,render,execute}.rs`, `surface/tests/tenants.rs`, `cli/tests/cli.rs`, `engine/tests/{clock,store,journal,lifecycle,control,drift}.rs`, `bindings/tests/{journal,local,ssh}.rs`, `daemon/tests/migrate.rs`, `cli/tests/daemon.rs`; Haskell `Test.Canonical`, `Test.Diagnostics`, `Test.Laws`, `Test.Check` | The canonical encoder's bytes and round trip; the hash encoding's bytes; the code enumeration; the IR spelling; the reversal laws as properties; the interference rules one by one; every emitted code raised by one plan and not by its sibling; the prose and explain clauses, and the self-contained page `--html` renders (it fetches nothing, and markup in a plan's own text is escaped rather than rendered); the journal chain and the digests; per-family quoting round-tripped through real unquoters; the artifact's covered set, order, triggers, primitives and refusals in every language; the `sh` and Python artifacts executed against a temporary instance directory (below); every `.scind` text under `tenants/` parsing clean, `fmt` the identity on it and idempotent; the resolver's rules each on a small file (`surface/tests/resolve.rs`); the performance bound (`surface/tests/bench.rs`); the CLI's verbs, selectors and exit codes; the engine over fakes: the store's lock, atomicity and schema, migration; the journal's chain through every sink, a refusing sink as R0304, signatures with the key and with nothing else; the lifecycle's scenarios (below); the file sink and the key binding; `rescindd migrate` and `rescind journal verify` end to end; the control channel over a socket pair (identity, version, scope, admin, registration, a hook serving execute and probe, a silent hook, subscriptions); rescindd and rescind over a real socket (a plan through a registered hook, every verb's line and exit code, a spawned child hook over stdio, daemon dry-run mode, a missing group) |
 | 2 | Rust `tenants/harness/tests/{goldens,tenants}.rs`, `surface/tests/corpus.rs` | Every artifact byte-identical to its expected file, no orphans and none missing; the terms and the case table 1:1; every tenant clean and every negative refused with exactly its code; the section 8 claims as verdict fields; every artifact golden exactly its covered steps in reverse; every parser corpus snippet's tree dump and diagnostics byte-identical to its goldens; every front-end negative's diagnostics byte-identical to its golden |
 | 3 | Rust `tenants/harness/tests/schema.rs` (plus the shell guards in the gate) | Every verdict validates against `docs/verdict-schema.json`; every declared property path is produced by some verdict |
 | 4 | Rust `core/tests/{states,ledger,fuzz}.rs`, `render/tests/fuzz.rs`, `engine/tests/table.rs`; Haskell `Test.States`, `Test.Ledger` | The five state-machine rules over the generated table; the cross-plan ledger's reservations; expiry and renewal against an injected now; the seeded fuzz properties (below) |
-| 5 | Rust `tenants/e2e/tests/{smoke,firewall,recovery,breakglass,reactive,succession,partition,drill}.rs` | rue against real hosts on a disposable guest: a plan applied and reverted over a real sshd, a real packet filter, a real cron and real hooks (below, "The scenarios") |
+| 5 | Rust `tenants/e2e/tests/{smoke,firewall,recovery,breakglass,reactive,succession,partition,drill}.rs` | rescind against real hosts on a disposable guest: a plan applied and reverted over a real sshd, a real packet filter, a real cron and real hooks (below, "The scenarios") |
 | 6 | Rust `tenants/e2e/tests/{recovery,partition}.rs` | The same, with something killed or cut off: a daemon inside a step's `do`, a daemon before its backstop fires, an operator racing the target, and a controller severed from the host its plan is on |
 | 7 | Rust `sim/tests/sim.rs` | The shadow world: seeded event lists against a real engine, the twenty invariants of the roadmap's 10.3 after every event, and a shrinker over the events that broke one (below) |
 
-`tenants/harness` (`rue-tenants`) holds the tenants and the negatives as
+`tenants/harness` (`rescind-tenants`) holds the tenants and the negatives as
 Rust terms, the case table as code (`TENANT_CASES`, `NEGATIVES`,
 `EMITTED_CODES`), the golden plumbing, and the writer; it lives under
 `tenants/` because it names tenants. The Haskell prototype is the Phase 0
@@ -149,9 +149,9 @@ step and its departure journaled, a subscriber receiving its plan's
 entries before the reply, daemon dry-run mode forcing rehearsals, and a
 registered hook acting as an operator on its own connection.
 
-`cli/tests/daemon.rs` starts `rued run` on a site file in a temporary
+`cli/tests/daemon.rs` starts `rescindd run` on a site file in a temporary
 directory with the test's own group as the socket's, registers a hook
-through the channel, and runs `rue apply`, `status`, `renew`, `recant`,
+through the channel, and runs `rescind apply`, `status`, `renew`, `recant`,
 `apply --dry-run` and `abandon` against it, asserting each verb's exit
 code and that its line is the last on stdout; a child hook over stdio
 (`tests/fixtures/stub-hook.sh`, POSIX sh, no JSON library) registers as
@@ -199,7 +199,7 @@ no known host, which must fail before any command runs.
 
 ## The simulation
 
-`sim/` (`rue-sim`) is tier 7: a seed makes an event list, the events go to
+`sim/` (`rescind-sim`) is tier 7: a seed makes an event list, the events go to
 a real engine over the fake executor, scheduler, approval and acceptor,
 and after every one the twenty invariants of the roadmap's 10.3 are
 checked against the instance records, the journal, the ledger and the
@@ -228,7 +228,7 @@ runs on the same host would otherwise answer wrongly. The fake executor
 grew an instance-tagged act log for the last of those.
 
 The suite runs a fixed sweep (seeds 1 to 39, 24 events each) so the gate
-is deterministic; `RUE_SIM_SEED` and `RUE_SIM_STEPS` run one longer
+is deterministic; `RESCIND_SIM_SEED` and `RESCIND_SIM_STEPS` run one longer
 scenario. A run that breaks an invariant is shrunk by delta debugging to
 the shortest event list that still breaks *the same* invariant, and
 reported with its seed, so a failure is a reproduction.
@@ -286,7 +286,7 @@ restart drops what is left, journaled `daemon_restart`; and a
 their own. `engine/tests/control.rs` checks the R0305 guard at the hook
 seam: `execute.run` and `secrets.deliver` keep a secret, every other
 message loses the value and keeps its shape. `cli/tests/daemon.rs` starts
-`rued` against a site declaring `approval via: always()` and finds it
+`rescindd` against a site declaring `approval via: always()` and finds it
 refused, then admitted with `--dry-run`.
 
 ## Backstops, arming and reconciliation
@@ -309,14 +309,14 @@ its interval; a `fired` marker is read on the next reap and journaled
 boot leaves an armed orphan where it is (`InstanceDirOrphaned`) and
 reclaims a fired one; a directory stamped by another controller is left
 exactly as it is however it looks -- fired and reclaimable, were it this
-store's -- journaled `InstanceDirForeign` and reported by `rue doctor`
-apart from the orphans; `rue reclaim` is refused while the artifact is armed
+store's -- journaled `InstanceDirForeign` and reported by `rescind doctor`
+apart from the orphans; `rescind reclaim` is refused while the artifact is armed
 with its entry present (R0405), refused when forced without a reason, and
 journaled `Reclaimed{forced: true}` when both are given; `abandon` names
 what it could not disarm.
 
 An artifact the abandon could not disarm is journaled
-`BackstopFiredAfterAbandon` when it fires, once and not twice, and `rue
+`BackstopFiredAfterAbandon` when it fires, once and not twice, and `rescind
 doctor` lists the armed orphans reconciliation left behind.
 
 `bindings/tests/schedulers.rs` reads what each scheduler binding would run
@@ -333,13 +333,13 @@ guests by the e2e harness; the other two are executed nowhere.
 as data: 26 ops across 8 kinds, each with the fields its request carries,
 the fields an `ok: true` reply must carry (R0303 otherwise), and whether it
 is one of the four messages a secret may travel in. Everything that speaks
-the protocol -- the engine's adapters, `rue-hook-sdk`, the shim, and the
+the protocol -- the engine's adapters, `rescind-hook-sdk`, the shim, and the
 conformance runner -- builds its frames from that one table, so freezing
 the protocol at v1 is freezing one array.
 
-`rue sdk-conform <command>` judges one hook against it. It spawns the
-command with the same handshake `rued` performs for a `--spawn` child
-(`rue_engine::hook::spawn_stdio_hook`, which both callers share), then
+`rescind sdk-conform <command>` judges one hook against it. It spawns the
+command with the same handshake `rescindd` performs for a `--spawn` child
+(`rescind_engine::hook::spawn_stdio_hook`, which both callers share), then
 drives every op of every kind the hook registered for, against the fixed
 world of `docs/sdk-conformance.md`. Exit 0 when every case passed, 1 when
 any failed, 2 when the hook never registered -- a hook that ran and failed
@@ -347,7 +347,7 @@ has been judged, and one that never started has not.
 
 A hook's command is run through the host's own shell (`sh -c` on unix,
 `cmd /C` on Windows), because `--spawn NAME=COMMAND` is written in whatever
-the operator's machine speaks and `rued` runs on all three families.
+the operator's machine speaks and `rescindd` runs on all three families.
 
 A hook is stopped by closing its stdin, never by signalling it. The process
 spawned is the shell, which need not be the process that serves: signal that
@@ -389,7 +389,7 @@ only where the toolchains are provisioned. The reaper guest judges all four
 at once. The pipeline judges each in the image that carries its toolchain,
 one parallel step per SDK after the builds and before any deploy, naming the
 SDK (`sh ci/sdk-conform.sh python`): the step takes the Linux binary the
-build left in `dist/` rather than building one, and runs `rue --version`
+build left in `dist/` rather than building one, and runs `rescind --version`
 first, so an image that cannot load it fails by name. Naming an SDK judges
 that one alone, and a named SDK whose toolchain or directory is missing
 still fails (`tests/tier3/t_conform_all.sh`); the four steps together name
@@ -422,25 +422,25 @@ Each SDK directory, the shim's included, carries user docs in its own
 testing a hook. The quick start is the same audit hook in every language (a
 journal sink and a notifier) and is a real file each SDK's own suite drives
 -- `tests/test_audit_example.py`, `test/audit_example_test.exs` (as a child
-process, the way `rued` runs it), `AuditHookTest`, `AuditExampleTests`,
+process, the way `rescindd` runs it), `AuditHookTest`, `AuditExampleTests`,
 `sdk/rust/tests/audit_example.rs`, `sdk/shim/tests/audit_example.rs` -- and
 `tools/lint-sdk-docs.sh` (the `sdk-docs` phase, `tests/tier3/t_sdk_docs.sh`)
 fails when a page's copy of it differs from the file by a byte, when an SDK
 has no docs, or when a link in them resolves to nothing. Writing them ran
-each quick start through `rue sdk-conform` (4 of 4, the journal and notify
-cases a hook of one's own can pass) and through a dry-run `rued` that
+each quick start through `rescind sdk-conform` (4 of 4, the journal and notify
+cases a hook of one's own can pass) and through a dry-run `rescindd` that
 spawned it; neither of those is automated.
 
 The acceptance line of the phase -- the same text checks identically
 standalone and embedded -- is held for every tenant case and negative by
-`cli/tests/cli.rs`: the IR `rue check --ir` hands a host, deserialized as
+`cli/tests/cli.rs`: the IR `rescind check --ir` hands a host, deserialized as
 the control channel's `apply` deserializes it and checked again, yields
 the case's `verdict.json` byte for byte. T4's stage shows the same over a
-real channel for one host. The Rust SDK and the `rue-hook`
+real channel for one host. The Rust SDK and the `rescind-hook`
 shim are workspace crates, so their conformance runs are ordinary
 `cargo test` targets and the gate covers them everywhere.
 
-`rue-hook` is the shim of 7.11: it registers as a hook and hands each
+`rescind-hook` is the shim of 7.11: it registers as a hook and hands each
 request to a configured command on that command's stdin. It owns the
 handshake and the `id`, and it turns a command that fails -- a non-zero
 exit, output that is not one JSON object -- into `ok: false` with the
@@ -459,7 +459,7 @@ fails the tests until it is driven.
 
 And the whole of it is frozen, which is a fourth binding and the only one
 that runs across time rather than across files. `docs/hook-protocol-v1.json`
-is a golden like any other -- `rue-goldens` writes it from `OPS`, and the
+is a golden like any other -- `rescind-goldens` writes it from `OPS`, and the
 suite compares it byte for byte -- but a golden alone freezes nothing: change
 an op, regenerate, and v1 means something new with every test green. So
 `tools/lint-hook-proto-frozen.sh` (the `hook-proto-frozen` phase) pins each
@@ -472,12 +472,12 @@ refused and that that one path still passes.
 
 ## Goldens
 
-The list of goldens is `rue_tenants::artifacts()`, computed from the case
-tables and the `.rue` texts they name (each resolved by the front end for
+The list of goldens is `rescind_tenants::artifacts()`, computed from the case
+tables and the `.scind` texts they name (each resolved by the front end for
 its host, plan and requester), never from a directory listing. A
 missing expected file fails; an expected file no artifact claims fails
 ("orphan"). The suite is read-only: the only writer is
-`RUE_UPDATE_GOLDENS=1 cargo run -p rue-tenants --bin rue-goldens`, which
+`RESCIND_UPDATE_GOLDENS=1 cargo run -p rescind-tenants --bin rescind-goldens`, which
 refuses without the variable (a test proves it refuses and touches nothing);
 a case whose plan has a `:target` backstop also yields its artifact
 (`artifact.sh`, `.ps1` or `.py`), rendered for instance `golden` with the
@@ -492,7 +492,7 @@ is intended, the commit body says why the verdict changed.
 
 ## The parser corpus
 
-`surface/tests/corpus/` holds one `.rue` snippet per construct of the
+`surface/tests/corpus/` holds one `.scind` snippet per construct of the
 surface (the site block, every definition and body line, every item,
 every expression form) and one per recovery (a missing `end`, a stray
 token, an unterminated string, a tuple, several errors on separate lines,
@@ -502,17 +502,17 @@ diagnostics (`.diag`, one rendered line each). The test holds the tree's
 text to the source (the tree is lossless), the goldens byte for byte,
 `fmt` the identity and idempotent on every clean snippet, and `fmt`'s
 refusal of every error snippet. The goldens are read-only in the suite;
-`RUE_UPDATE_GOLDENS=1 cargo test -p rue-surface --test corpus` rewrites
+`RESCIND_UPDATE_GOLDENS=1 cargo test -p rescind-surface --test corpus` rewrites
 them, the same variable as the tenants' writer, and the diff is read the
 same way.
 
 ## Diagnostic goldens
 
 Every code the front end raises has a negative directory under
-`tenants/_negative/` holding the `plan.rue` that provokes it and, under
+`tenants/_negative/` holding the `plan.scind` that provokes it and, under
 `expected/`, `diagnostics.txt`: the rendered diagnostics with paths
-relative to the repository root. `rue_tenants::SURFACE_NEGATIVES` is the
-table; `rue-goldens` writes the files by resolving the text; the tenant
+relative to the repository root. `rescind_tenants::SURFACE_NEGATIVES` is the
+table; `rescind-goldens` writes the files by resolving the text; the tenant
 suite holds each text to exactly its code, and holds the fifty-six codes
 of section 6.7 to a partition into the checker's (`EMITTED_CODES`), the
 front end's (`SURFACE_CODES`), the renderer's (`RENDER_CODES`) and the
@@ -521,14 +521,14 @@ list and in no two.
 
 ## The texts as the source
 
-From Phase 2's exit the `.rue` texts are the golden source: `cases()`
+From Phase 2's exit the `.scind` texts are the golden source: `cases()`
 resolves each through the front end for the host, plan and requester its
 table row names, and every verdict, listing and artifact golden is what
 core and render say of that. The Rust terms that carried Phase 0's record
 were held structurally equal to the front end's plan IR for every case
 before they retired (the equality test went with them; its proof is that
 the goldens did not move when the writer switched sources). A text that
-does not resolve fails every suite that reads it. `rue_tenants::text_of`
+does not resolve fails every suite that reads it. `rescind_tenants::text_of`
 finds a case's text; the negatives are checked as the requester
 `requester`, which the ones derived from a tenant need for E0508.
 
@@ -545,7 +545,7 @@ in release); the rediscovery row `bench-over-budget` plants a stall.
 
 `render/tests/execute.rs` executes the rendered `sh` and Python artifacts
 the way a scheduler will (`sh artifact.sh`; `uv run --offline --script
-artifact.py`) against a temporary `rue_root` and instance directory built
+artifact.py`) against a temporary `rescind_root` and instance directory built
 by the test: completion markers with real digests, snapshots, a deadline or
 heartbeat file, a sibling manifest where the scenario needs one, and a
 temporary directory of facts the plan's shapes name. Every scenario (not
@@ -571,10 +571,10 @@ panics and its verdict's JSON survives its canonical bytes; `prose` and
 every row it opens and turns nothing the plan carries into a script; the
 plan IR round-trips; `render` never panics for
 any host and never bakes a secret label, and at least one plan in twenty
-renders so the property is not vacuous. `RUE_FUZZ_SEED` and
-`RUE_FUZZ_STEPS` (default 500) override the defaults; a failing step is
+renders so the property is not vacuous. `RESCIND_FUZZ_SEED` and
+`RESCIND_FUZZ_STEPS` (default 500) override the defaults; a failing step is
 reported with the rng state that replays it alone. The rediscovery rows
-that plant a panic run at `RUE_FUZZ_STEPS=5000` through the table's env
+that plant a panic run at `RESCIND_FUZZ_STEPS=5000` through the table's env
 column.
 
 ## Canonical JSON
@@ -582,7 +582,7 @@ column.
 The structured verdict is written in a canonical form so that a golden's
 bytes are the verdict's meaning and nothing else, and so that Phase 1's Rust
 implementation can reproduce it byte for byte. The form is specified here
-and implemented once, in `Rue.Proto.Json.Canonical`:
+and implemented once, in `Rescind.Proto.Json.Canonical`:
 
 - UTF-8. Object keys sorted by Unicode code point. Two-space indentation.
 - `"key": value` with one space after the colon. Every array or object
@@ -606,17 +606,17 @@ verdict goldens (`tenants/<t>/expected/<host>/plan.json`,
 `tenants/_negative/<code>-<slug>/expected/plan.json`), holding what `check`
 consumes -- the site, the requester and one concrete per-host plan -- in
 canonical JSON. It is a golden like the others: produced from the case's
-term by `rue-goldens`, read only in tests (which also parse it back and
+term by `rescind-goldens`, read only in tests (which also parse it back and
 require the term), covered by the hygiene guard and the orphan walk.
 
-`rue check --ir` prints the same document for a `.rue` text, and `rue
+`rescind check --ir` prints the same document for a `.scind` text, and `rescind
 check` reads one back, so the artifact has both halves rather than only the
-one the goldens needed. An embedded host uses that: resolving `.rue` needs
+one the goldens needed. An embedded host uses that: resolving `.scind` needs
 the front end, the front end is Rust, and a host written in another
 language asks the CLI for the IR rather than linking it -- T4's reactive
 host is Elixir and does exactly this.
 
-The shape is `rue_core::model`'s serde form, spelled deliberately field by
+The shape is `rescind_core::model`'s serde form, spelled deliberately field by
 field so no implementation's constructor names leak into it. `ir_version` is
 an integer; a reader refuses any version it does not know. While
 the terms are the only emitter, any change of shape bumps the version and
@@ -625,7 +625,7 @@ Durations are whole seconds under names ending in `_s`. A unit constructor is
 a bare string, a data-carrying one a one-key object, and every item carries
 an `item` tag with a step's fields flattened beside it.
 
-Version 2 carries bodies (`rue_core::body`). An op has `do`, an `undo` that
+Version 2 carries bodies (`rescind_core::body`). An op has `do`, an `undo` that
 is `"restore"`, `"none"`, or `{"computed": {"body", "undo_pre"}}` /
 `{"compensate": {...}}`, and `suspend` and `reestablish` bodies or `null`. A
 body is a list of one-key primitive objects (`run`, `write`, `remove`,
@@ -643,18 +643,18 @@ what a guard names. `undo_idempotent` remains a stand-in until E0208's
 analysis exists. `core/tests/ir.rs` holds a document exercising every
 primitive and asserts it reads and writes back byte for byte.
 
-`rue check <plan.json>` reads one.
+`rescind check <plan.json>` reads one.
 
 ## Negative cases
 
 A negative case is a plan the checker must refuse with exactly one named
 code. `tenants/harness/tests/tenants.rs` requires the set of codes across
-the negative goldens to equal `rue_tenants::EMITTED_CODES`, in both
+the negative goldens to equal `rescind_tenants::EMITTED_CODES`, in both
 directions: a new check without a negative golden fails, and a negative
 golden for a code the checker cannot raise fails. The twelve of the
 roadmap's Phase 0 task 8 derive from T1 and T3 by one change each; the rest
 are minimal plans on the lab site described in
-`tenants/harness/src/tenants/negative.rs`. Every negative has a `plan.rue`
+`tenants/harness/src/tenants/negative.rs`. Every negative has a `plan.scind`
 beside its goldens, the text Phase 2 must refuse the same way.
 
 ## Mutation checks
@@ -709,14 +709,14 @@ is validated by `reaper doctor`.
   declared skipped, then `tenants/e2e/run.sh` against pf, sshd and cron.
 
 rustup-init and ghcup are fetched to files and executed, never piped into a
-shell. Every skip is declared in the manifest's `RUE_CHECK_SKIP_OK` and
+shell. Every skip is declared in the manifest's `RESCIND_CHECK_SKIP_OK` and
 nowhere else.
 
 ### The scenarios (tier 5 and 6)
 
 `tenants/e2e/tests/` holds them, one file per theme, each starting a real
-`rued` over a site of its own beside the harness's key material and
-driving it with the real `rue`:
+`rescindd` over a site of its own beside the harness's key material and
+driving it with the real `rescind`:
 
 - **The firewall** (`firewall.rs`): a plan opens a port by a fenced region
   in the host's packet-filter file and reloads it, then commits when
@@ -743,12 +743,12 @@ driving it with the real `rue`:
   claim behind rendering the artifact from the footprint the engine
   reverts from.
 - **The reactive host** (`reactive.rs`): T4's shape whole, and the only
-  stage where rue is embedded rather than driven. One Elixir process holds
+  stage where rescind is embedded rather than driven. One Elixir process holds
   one control-channel connection and is three things on it at once: the
   hooks the engine calls back into, the declared operator issuing verbs,
   and a subscriber to its own plans. It fires a temporary plan on entering
   a state and recants on leaving; the verdict the daemon reaches over the
-  channel is compared with the one a person gets from `rue check` at a
+  channel is compared with the one a person gets from `rescind check` at a
   terminal on the same text, which is the acceptance line of Phase 4. Both
   drift variants of 8.4 run here over a footprint of appliance state --
   facts that live in no filesystem and are read back through a hook:
@@ -763,13 +763,13 @@ driving it with the real `rue`:
   refusal delivered to the sink that still acknowledges.
 - **Succession** (`succession.rs`): T2's shape, on the FreeBSD guest only,
   because the pseudo-cluster is base `jail(8)`. What runs is a text of T2's
-  shape beside the test; `tenants/t2/plan.rue`, with its `cbsd` calls, stays
+  shape beside the test; `tenants/t2/plan.scind`, with its `cbsd` calls, stays
   the checked artifact. node-b is the guest over the harness's ssh, and the
   guests it starts are empty persist jails observed with `jls`; node-a, the
   corpse, is reached only through the cluster driver
   (`tenants/t2/fixtures/cluster.py`), which records every fence, platform
   and placement action it is asked for; node-c is on the console, so the
-  heir's step defers and the test continues it with `rue handoff-done`. The
+  heir's step defers and the test continues it with `rescind handoff-done`. The
   rollback knell acts on a real ZFS dataset that `provision.sh` gives an
   `@split` snapshot, and the cost its acknowledger is shown is the real list
   of what `zfs rollback -r` will destroy. The auto promote fences, starts its
@@ -779,7 +779,7 @@ driving it with the real `rue`:
   (exit 3) with the guests kept, until `resume` retries it; a second promote
   for the same corpse while the first waits is R0101 and exit 75; the
   manual promote waits on both knells, each acknowledged by a human
-  authenticator against the challenge `rue ack` prints, and rolls the
+  authenticator against the challenge `rescind ack` prints, and rolls the
   dataset back past a snapshot taken after the split; and a write between
   the request and the acknowledgement changes the host contract, so the
   failback refuses with nothing fenced. Linux has no jails, so `run.sh`
@@ -791,18 +791,18 @@ driving it with the real `rue`:
   own cron, with no engine anywhere, and undoes the step; a recant that
   races a fired artifact leaves the fact restored once rather than twice,
   because both take the same host lock and restore the same snapshot;
-  `rue doctor` names the host, its transport and its scheduler; and `rue
+  `rescind doctor` names the host, its transport and its scheduler; and `rescind
   doctor --canary` installs a throwaway artifact of the engine's own on
   every host with a scheduler, arms it with a deadline already past, waits
   for the marker it leaves, and removes it whatever happened. That last is
-  the one proof no unit test can give: that this host's cron runs what rue
+  the one proof no unit test can give: that this host's cron runs what rescind
   installs.
 - **Drill** (`drill.rs`, 7.14): a plan applied to a host the inventory
   declares a canary -- the same guest under a second name, because the role
   is what a drill refuses on and the fixture has to give it one -- then
   recanted, with the canary's facts read before and after. The stage
   requires the attestation to name the fact and both digests, the canary to
-  be as it was, and `rue journal verify --attestations` to print the
+  be as it was, and `rescind journal verify --attestations` to print the
   attestation out of the verified chain: journaled, and verified, which is
   the acceptance line. A drill on `fw-01`, the same machine by its other
   name and no canary, is R0410 with nothing applied.
@@ -813,7 +813,7 @@ driving it with the real `rue`:
   cut by a firewall rule naming the target address and port 22 alone. Where
   that rule lives is not symmetric and cannot be: pf evaluates only the
   anchors its ruleset names, so provisioning declares an empty
-  `rue-e2e-partition` anchor in the baseline; nftables evaluates a table
+  `rescind-e2e-partition` anchor in the baseline; nftables evaluates a table
   because it exists, so the stage creates and destroys a table of its own
   ahead of the baseline's. Neither is inside the file a plan under test
   holds a region in -- a chain declared inside `/etc/nftables.conf` was the
@@ -837,7 +837,7 @@ names `ci/build-target.sh` excludes from the cross-target builds. The darwin
 targets are cross-linked from Linux with zig and no macOS SDK, and nothing
 in that build has a C compiler that takes `-arch` or
 `-mmacosx-version-min`, so a member that compiles C cannot be cross-built
-and must be named. `tree-sitter-rue` is the one, and the pipeline found it
+and must be named. `tree-sitter-rescind` is the one, and the pipeline found it
 the hard way: four steps and twenty minutes after the gate said yes, two
 darwin builds failed on a generated parser no binary ships. The guard fails
 the same case in the gate now, and fails a stale exclusion too -- a name
@@ -890,7 +890,7 @@ commit.
 
 ### The language server
 
-`lsp/` (`rue-lsp`) answers an editor with the front end's own diagnostics
+`lsp/` (`rescind-lsp`) answers an editor with the front end's own diagnostics
 and `explain`'s own words, and its tests (`lsp/tests/server.rs`) drive the
 handlers directly rather than spawning a process: a notification in, the
 diagnostics an editor would be shown out. They hold what an operator relies
@@ -904,7 +904,7 @@ Two of those tests are about what the server must *not* do. An unsaved
 buffer is parsed and not checked, because a resolve reads imports and the
 inventory from disk and would otherwise underline a line the author has
 already fixed. And a file whose clauses dispatch on the host cannot be
-resolved without one (E0112) -- which is an argument `rue check` is given
+resolved without one (E0112) -- which is an argument `rescind check` is given
 and an editor is not -- so the server names a host itself, the first its own
 inventory lists, and says so in every diagnostic and hover it then reports.
 Reporting E0112 as though the author had written something wrong would
@@ -917,19 +917,19 @@ comment: counted in bytes, every column after it is out by two.
 
 ### The grammar for editors
 
-`tree-sitter-rue/` holds rue's tree-sitter grammar: `grammar.js`, the parser
+`tree-sitter-rescind/` holds rescind's tree-sitter grammar: `grammar.js`, the parser
 generated from it and checked in, and `queries/highlights.scm`. Its guard
-(`tree-sitter-rue/tests/drift.rs`, an ordinary workspace test) parses every
-`.rue` text under `tenants/` and `surface/tests/corpus/` with both that
+(`tree-sitter-rescind/tests/drift.rs`, an ordinary workspace test) parses every
+`.scind` text under `tenants/` and `surface/tests/corpus/` with both that
 grammar and the Rust front end and requires them to agree on which files are
-rue: a text the front end accepts must have no error node, and one it
+rescind: a text the front end accepts must have no error node, and one it
 refuses with a parse error must have one. Two parsers over one language
 drift apart the moment nobody compares them, and an editor that underlines a
 valid plan teaches an operator to distrust the tool that is right.
 
 `E0105` is outside the comparison, named in the test rather than dropped
 from it: it judges the version marker, and the grammar requires the marker
-without reading its number, so that an editor is not blinded the day rue's
+without reading its number, so that an editor is not blinded the day rescind's
 version turns over. The guard also loads the highlight queries against the
 grammar, which is how a query naming a node the grammar does not have is
 caught here rather than by every editor in turn. Regenerating the parser
@@ -939,40 +939,40 @@ needs neither, and checks instead that the checked-in parser and
 
 ### Tier 5 and 6: the harness on a disposable guest
 
-`tenants/e2e` (crate `rue-e2e`) holds the tests that run rue against real
+`tenants/e2e` (crate `rescind-e2e`) holds the tests that run rescind against real
 hosts. They are never a gate phase: `tools/check.sh`, the pipeline and
-`ci/test-windows.sh` all run `cargo test --workspace --exclude rue-e2e`,
+`ci/test-windows.sh` all run `cargo test --workspace --exclude rescind-e2e`,
 with that reason beside the exclusion, and the harness's tests refuse
-(panic) unless `RUE_E2E=1`, which only `tenants/e2e/run.sh` sets. A test
+(panic) unless `RESCIND_E2E=1`, which only `tenants/e2e/run.sh` sets. A test
 that can only pass by touching nothing is not a test, so a workstation run
 of the crate fails loudly rather than reporting green.
 
 `run.sh` refuses on any machine that is not a reaper guest (`REAPER_WORK`
-unset) unless `RUE_E2E_DISPOSABLE=1` says it may be rewritten, provisions the
+unset) unless `RESCIND_E2E_DISPOSABLE=1` says it may be rewritten, provisions the
 guest with `tenants/e2e/provision.sh apply`, asserts the provisioning with
 `provision.sh check`, and runs the crate's tests one at a time. Provisioning
-means: the harness's Ed25519 key and its own `known_hosts` under `rue-e2e`
-beside the working tree (never inside it; never `~/.ssh`, which rue and
+means: the harness's Ed25519 key and its own `known_hosts` under `rescind-e2e`
+beside the working tree (never inside it; never `~/.ssh`, which rescind and
 its tests read and write nowhere); an sshd drop-in adding that file as a
 second `AuthorizedKeysFile`; the loopback alias `127.0.0.2` every e2e plan
 addresses its target by, so a plan that severs ssh severs only itself and
 never reaper's transport; a firewall baseline that skips the management
-interface (pf `set skip`; an nftables table of rue's own whose input chain
-accepts), with an empty pf anchor `rue-e2e-partition` for the partition
+interface (pf `set skip`; an nftables table of rescind's own whose input chain
+accepts), with an empty pf anchor `rescind-e2e-partition` for the partition
 stage to load its severing rule into (nftables needs nothing here: that
-stage makes a table of its own); a scheduler baseline that removes every `# rue-region` block an
+stage makes a table of its own); a scheduler baseline that removes every `# rescind-region` block an
 earlier run left in the crontab, because reaper's reset rolls back the state
 dataset and not `/var/cron`, so an entry outlives the instance directory it
 names and would answer a later run's question about whether a backstop is
 present (`apply` asserts its own strip, and `check` does not: `check` runs a
 second time as a test of its own, once this run's backstops are armed and an
-empty crontab would be the bug); the `rue` group; and `rue_root` under
-`$REAPER_STATE/rue`, the dataset reaper's reset rolls back. Every ssh call the harness makes is
+empty crontab would be the bug); the `rescind` group; and `rescind_root` under
+`$REAPER_STATE/rescind`, the dataset reaper's reset rolls back. Every ssh call the harness makes is
 `ssh -F none -o IdentitiesOnly=yes -i <its key> -o UserKnownHostsFile=<its
 file> -o GlobalKnownHostsFile=/dev/null -o StrictHostKeyChecking=yes`.
 
 This unit's tier 5 is the smoke: the provisioning self-check passes and the
-target answers over rue's own key through the alias (`SSH_CONNECTION`
+target answers over rescind's own key through the alias (`SSH_CONNECTION`
 names `127.0.0.2:22` on the server side). Every later case stands on it.
 
 Windows is tested under wine: `ci/test-windows.sh` builds the whole suite for
@@ -990,7 +990,7 @@ and the roadmap's not-proven table says so.
 ## What green does not prove
 
 - Nothing about a construct no tenant or negative case uses.
-- Nothing about the `.rue` text: it is unparsed until Phase 2, and only its
+- Nothing about the `.scind` text: it is unparsed until Phase 2, and only its
   existence per case is asserted; the terms are transcribed from it by hand.
 - Nothing about hosts: no executor, no engine exists. The backstop artifact
   is rendered and, for `sh` and Python, executed against a temporary
@@ -1007,7 +1007,7 @@ and the roadmap's not-proven table says so.
   end to end -- created with its access-control list, connected, and the
   client named from its own SID through an impersonation, which is the
   identity model working on Windows. What no wine run can show, and Phase
-  3W will: a real service-control manager starting `rued`, the kernel
+  3W will: a real service-control manager starting `rescindd`, the kernel
   enforcing the list against a client that should be refused, the Task
   Scheduler arming and firing a backstop, and PowerShell as `local()`'s
   shell.
@@ -1020,7 +1020,7 @@ and the roadmap's not-proven table says so.
 - The heartbeat under a real network partition: the beat is written and
   read on one machine's clocks, never across a severed link (a vnet stage
   is Phase 5's).
-- The non-Rust SDKs beyond conformance. `rue sdk-conform` drives every op
+- The non-Rust SDKs beyond conformance. `rescind sdk-conform` drives every op
   of every kind through each one's own serve loop, and nothing else tests
   them: none has a package-native suite, the Java SDK's hand-written JSON
   codec included. .NET is judged on Linux only; the Windows guest is
@@ -1032,7 +1032,7 @@ and the roadmap's not-proven table says so.
   connection among them, as absence.
 - A failed step's undo against an object it did not make. A failed step is
   undone at once (5.9), and an undo that removes by name -- T2's
-  `jail -r rue-t2-#{g}`, its `cbsd bstop` -- removes a same-named object
+  `jail -r rescind-t2-#{g}`, its `cbsd bstop` -- removes a same-named object
   that predates the plan. `undo_pre` is what would catch it, and it guards
   only facts the executor can read, which the previous item says
   `guest.state(g)` over ssh is not.

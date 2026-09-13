@@ -7,10 +7,10 @@
 
 use std::collections::BTreeMap;
 
-use rue_core::artifact::Shell;
-use rue_core::body::{FactRef, Part, Prim, Ref, Template, Value};
-pub use rue_core::model::Kind;
-use rue_core::model::{Drift, FootprintEntry, HostRecord, Op, Undo};
+use rescind_core::artifact::Shell;
+use rescind_core::body::{FactRef, Part, Prim, Ref, Template, Value};
+pub use rescind_core::model::Kind;
+use rescind_core::model::{Drift, FootprintEntry, HostRecord, Op, Undo};
 
 use crate::quote::{self, Family, Unquotable};
 use crate::RenderError;
@@ -288,7 +288,7 @@ pub fn step_actions(
                     Prim::Call(c) => {
                         if c.args
                             .iter()
-                            .any(|a| a.class == rue_core::body::ArgClass::Controller)
+                            .any(|a| a.class == rescind_core::body::ArgClass::Controller)
                         {
                             return Err(RenderError::NotBakeable {
                                 step: n,

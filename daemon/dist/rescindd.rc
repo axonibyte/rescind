@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+# PROVIDE: rescindd
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# rescindd: rescind's engine daemon (FreeBSD rc.d). Add to /etc/rc.conf:
+#
+#   rued_enable="YES"
+#   rued_site="/usr/local/etc/rescind/site.scind"     the file whose site block rescindd serves
+#   rued_store="/var/db/rescind/store"              the instance store
+#   rued_socket="/var/run/rescind/rescindd.sock"        the control socket (group rescind, 0660)
+#   rued_user="rescindd"                            the account rescindd runs as (the socket owner)
+#
+# The socket's directory must exist and be writable by rued_user; the store
+# is created with this build's schema when empty and migrated only by
+# `rescindd migrate`.
+
+# rc.subr exists only on a FreeBSD host; shellcheck runs on every gate host.
+# shellcheck source=/dev/null
+. /etc/rc.subr
+
+# The variables below are read by rc.subr's run_rc_command after this file
+# is sourced into it; shellcheck cannot see that use.
+# shellcheck disable=SC2034
+name="rescindd"
+# shellcheck disable=SC2034
+rcvar="rued_enable"
+
+load_rc_config $name
+
+: "${rued_enable:=NO}"
+: "${rued_site:=/usr/local/etc/rescind/site.scind}"
+: "${rued_store:=/var/db/rescind/store}"
+: "${rued_socket:=/var/run/rescind/rescindd.sock}"
+: "${rued_user:=rescindd}"
+: "${rued_group:=rescind}"
+
+# shellcheck disable=SC2034
+pidfile="/var/run/rescind/${name}.pid"
+# shellcheck disable=SC2034
+command="/usr/sbin/daemon"
+# shellcheck disable=SC2034
+command_args="-f -p ${pidfile} -u ${rued_user} /usr/local/bin/rescindd run --site ${rued_site} --store ${rued_store} --socket ${rued_socket} --group ${rued_group}"
+
+run_rc_command "$1"

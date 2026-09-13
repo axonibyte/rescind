@@ -1,14 +1,14 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Rue.Hook;
+using Rescind.Hook;
 
-namespace Rue.Hook.Example;
+namespace Rescind.Hook.Example;
 
 /// <summary>
 /// The reference conformance hook for the .NET SDK.
 ///
 /// docs/sdk-conformance.md's fixed world, served over stdio: what
-/// <c>rue sdk-conform</c> is pointed at to judge this SDK, and the worked
+/// <c>rescind sdk-conform</c> is pointed at to judge this SDK, and the worked
 /// example a host application copies.
 ///
 /// The exception is the four provocations of the <c>probe</c> kind, which
@@ -40,7 +40,7 @@ public static class Program
                 ["filesystem"] = true,
                 ["stdin_preamble"] = false,
                 ["scheduler"] = "cron",
-                ["rue_root"] = "/var/db/rue",
+                ["rescind_root"] = "/var/db/rescind",
                 ["artifact"] = "python",
                 ["facts"] = new Dictionary<string, object?> { ["site"] = "west" }
             },
@@ -85,7 +85,7 @@ public static class Program
 
         public object BootstrapState(string host) => new Dictionary<string, object?>
         {
-            ["rue_root"] = true,
+            ["rescind_root"] = true,
             ["group"] = true,
             ["instances_dir"] = true,
             ["lock"] = true,

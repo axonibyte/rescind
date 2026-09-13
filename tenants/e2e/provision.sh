@@ -1,5 +1,5 @@
 #!/bin/sh
-# Provision a disposable reaper guest for rue's tier 5 and 6 tests, or check
+# Provision a disposable reaper guest for rescind's tier 5 and 6 tests, or check
 # that it is provisioned (docs/TESTING.md, "Under reaper").
 #
 #   sh tenants/e2e/provision.sh apply     make the guest ready (root)
@@ -7,7 +7,7 @@
 #
 # What "ready" is, on FreeBSD and on Linux:
 #
-#   - $E2E_ROOT (rue-e2e beside the working tree; never inside it, never
+#   - $E2E_ROOT (rescind-e2e beside the working tree; never inside it, never
 #     ~/.ssh) holds the harness's Ed25519 key and its own known_hosts naming
 #     the guest's host key for the loopback alias.
 #   - sshd accepts that key through a drop-in that adds a second
@@ -18,13 +18,13 @@
 #     severs only itself, never reaper's transport on the management
 #     interface.
 #   - The firewall is up with a baseline that skips the management interface
-#     (pf: `set skip on <mgmt>`; nftables: a table `inet rue` whose input
+#     (pf: `set skip on <mgmt>`; nftables: a table `inet rescind` whose input
 #     chain accepts), so a later plan's rules can only ever touch loopback.
-#   - The `rue` group exists and rue_root is $REAPER_STATE/rue with the modes
+#   - The `rescind` group exists and rescind_root is $REAPER_STATE/rescind with the modes
 #     of ROADMAP.md section 7.7, under the dataset reaper's reset rolls back.
 #
 # Refuses to apply anywhere that is not a reaper guest (REAPER_WORK set) unless
-# RUE_E2E_DISPOSABLE=1 says the machine may be rewritten. POSIX sh: FreeBSD's
+# RESCIND_E2E_DISPOSABLE=1 says the machine may be rewritten. POSIX sh: FreeBSD's
 # sh and dash both run it.
 set -u
 
@@ -40,22 +40,22 @@ case $os in
     *) echo "provision: $os is not a guest this harness provisions" >&2; exit 2 ;;
 esac
 
-if [ -n "${RUE_E2E_ROOT:-}" ]; then
-    root=$RUE_E2E_ROOT
+if [ -n "${RESCIND_E2E_ROOT:-}" ]; then
+    root=$RESCIND_E2E_ROOT
 elif [ -n "${REAPER_WORK:-}" ]; then
-    root=$(dirname -- "$REAPER_WORK")/rue-e2e
+    root=$(dirname -- "$REAPER_WORK")/rescind-e2e
 else
-    echo "provision: neither RUE_E2E_ROOT nor REAPER_WORK is set" >&2
+    echo "provision: neither RESCIND_E2E_ROOT nor REAPER_WORK is set" >&2
     exit 2
 fi
 state=${REAPER_STATE:-}
-rue_root=${RUE_E2E_RUE_ROOT:-${state:+$state/rue}}
-if [ -z "$rue_root" ]; then
-    echo "provision: neither RUE_E2E_RUE_ROOT nor REAPER_STATE is set; rue_root has nowhere to live" >&2
+rescind_root=${RESCIND_E2E_RUE_ROOT:-${state:+$state/rescind}}
+if [ -z "$rescind_root" ]; then
+    echo "provision: neither RESCIND_E2E_RUE_ROOT nor REAPER_STATE is set; rescind_root has nowhere to live" >&2
     exit 2
 fi
 alias_addr=127.0.0.2
-dropin=/etc/ssh/sshd_config.d/rue-e2e.conf
+dropin=/etc/ssh/sshd_config.d/rescind-e2e.conf
 # Where a stage's severing rule goes on FreeBSD: an anchor, declared empty
 # in the baseline because pf evaluates only anchors the ruleset names. The
 # harness names the same string (tenants/e2e/src/lib.rs). On Linux the
@@ -63,7 +63,7 @@ dropin=/etc/ssh/sshd_config.d/rue-e2e.conf
 # which is why this is not symmetric -- an nftables table is evaluated
 # because it exists, and one inside `/etc/nftables.conf` would be inside
 # the very fact T3's plan rewrites and reloads.
-partition_anchor=rue-e2e-partition
+partition_anchor=rescind-e2e-partition
 
 rc=0
 ok()  { echo "ok      $1"; }
@@ -86,8 +86,8 @@ sshd_reload() {
 # --- apply -----------------------------------------------------------------
 
 apply() {
-    if [ -z "${REAPER_WORK:-}" ] && [ "${RUE_E2E_DISPOSABLE:-}" != 1 ]; then
-        echo "provision: this is not a reaper guest (REAPER_WORK unset); set RUE_E2E_DISPOSABLE=1 only on a machine that may be rewritten" >&2
+    if [ -z "${REAPER_WORK:-}" ] && [ "${RESCIND_E2E_DISPOSABLE:-}" != 1 ]; then
+        echo "provision: this is not a reaper guest (REAPER_WORK unset); set RESCIND_E2E_DISPOSABLE=1 only on a machine that may be rewritten" >&2
         exit 2
     fi
     if [ "$(id -u)" -ne 0 ]; then
@@ -104,7 +104,7 @@ apply() {
     mkdir -p "$root/keys" || exit 2
     chmod 0700 "$root/keys"
     if [ ! -f "$root/keys/id_ed25519" ]; then
-        ssh-keygen -q -t ed25519 -N '' -C 'rue e2e (guest)' -f "$root/keys/id_ed25519" || exit 2
+        ssh-keygen -q -t ed25519 -N '' -C 'rescind e2e (guest)' -f "$root/keys/id_ed25519" || exit 2
     fi
     # The authorized keys sshd reads for the harness: a file of our own,
     # root-owned and not group-writable, as StrictModes requires.
@@ -125,7 +125,7 @@ apply() {
         mv /etc/ssh/sshd_config.tmp /etc/ssh/sshd_config
     fi
     mkdir -p /etc/ssh/sshd_config.d
-    printf '# rue e2e: the harness key, beside the default file; never ~/.ssh of the harness user.\nAuthorizedKeysFile .ssh/authorized_keys %s\n' "$root/authorized_keys" > "$dropin.tmp" || exit 2
+    printf '# rescind e2e: the harness key, beside the default file; never ~/.ssh of the harness user.\nAuthorizedKeysFile .ssh/authorized_keys %s\n' "$root/authorized_keys" > "$dropin.tmp" || exit 2
     mv "$dropin.tmp" "$dropin"
     sshd -t || { echo "provision: sshd refuses its configuration with the drop-in" >&2; exit 2; }
     sshd_reload || exit 2
@@ -143,14 +143,14 @@ apply() {
             # it (tenants/e2e/tests/partition.rs severs the controller's
             # path to the target with it), and is declared here so a stage
             # never rewrites the file a T3 plan holds a region in.
-            printf '# rue e2e baseline: the management interface is never filtered.\nset skip on %s\nanchor "%s"\npass all\n' "$mgmt" "$partition_anchor" > /etc/pf.conf.tmp || exit 2
+            printf '# rescind e2e baseline: the management interface is never filtered.\nset skip on %s\nanchor "%s"\npass all\n' "$mgmt" "$partition_anchor" > /etc/pf.conf.tmp || exit 2
             mv /etc/pf.conf.tmp /etc/pf.conf
             sysrc -q pf_enable=YES > /dev/null || exit 2
             pfctl -q -f /etc/pf.conf || exit 2
             pfctl -s info | grep -q 'Status: Enabled' || pfctl -q -e || exit 2
             ;;
         Linux)
-            printf '# rue e2e baseline: a table of our own whose input chain accepts; a plan may add rules under loopback only.\ntable inet rue {\n\tchain input {\n\t\ttype filter hook input priority 0; policy accept;\n\t}\n}\n' > /etc/nftables.conf.tmp || exit 2
+            printf '# rescind e2e baseline: a table of our own whose input chain accepts; a plan may add rules under loopback only.\ntable inet rescind {\n\tchain input {\n\t\ttype filter hook input priority 0; policy accept;\n\t}\n}\n' > /etc/nftables.conf.tmp || exit 2
             mv /etc/nftables.conf.tmp /etc/nftables.conf
             nft -f /etc/nftables.conf || exit 2
             ;;
@@ -166,22 +166,22 @@ apply() {
     # point the firewall and sshd baselines above establish.
     strip_crontab_regions || exit 2
 
-    # The group and rue_root (section 7.7).
+    # The group and rescind_root (section 7.7).
     case $os in
-        FreeBSD) pw groupshow rue > /dev/null 2>&1 || pw groupadd rue || exit 2 ;;
-        Linux) getent group rue > /dev/null 2>&1 || groupadd rue || exit 2 ;;
+        FreeBSD) pw groupshow rescind > /dev/null 2>&1 || pw groupadd rescind || exit 2 ;;
+        Linux) getent group rescind > /dev/null 2>&1 || groupadd rescind || exit 2 ;;
     esac
-    mkdir -p "$rue_root/instances" || exit 2
-    chown root:rue "$rue_root" "$rue_root/instances"
-    chmod 0755 "$rue_root"
-    chmod 2770 "$rue_root/instances"
-    : > "$rue_root/lock"
-    chown root:rue "$rue_root/lock"
-    chmod 0664 "$rue_root/lock"
+    mkdir -p "$rescind_root/instances" || exit 2
+    chown root:rescind "$rescind_root" "$rescind_root/instances"
+    chmod 0755 "$rescind_root"
+    chmod 2770 "$rescind_root/instances"
+    : > "$rescind_root/lock"
+    chown root:rescind "$rescind_root/lock"
+    chmod 0664 "$rescind_root/lock"
     if [ "$os" = FreeBSD ]; then
         t2_cluster || exit 2
     fi
-    echo "provisioned: mgmt=$mgmt alias=$alias_addr root=$root rue_root=$rue_root"
+    echo "provisioned: mgmt=$mgmt alias=$alias_addr root=$root rescind_root=$rescind_root"
 }
 
 # T2's pseudo-cluster (docs/ROADMAP.md 8.2, Phase 4 unit G): FreeBSD only,
@@ -194,7 +194,7 @@ apply() {
 # state dataset so the disposable guest owns it outright; its name goes to
 # $root/t2-dataset for the harness to write into the plan.
 t2_cluster() {
-    for j in $(jls -N name 2> /dev/null | grep '^rue-t2-'); do
+    for j in $(jls -N name 2> /dev/null | grep '^rescind-t2-'); do
         jail -r "$j" || return 1
     done
     state_ds=$(zfs list -H -o name "${REAPER_STATE:-/nonexistent}" 2> /dev/null)
@@ -202,7 +202,7 @@ t2_cluster() {
         echo "provision: REAPER_STATE is not a ZFS dataset; T2's rollback knell needs one and will not pretend" >&2
         return 1
     fi
-    ds=$state_ds/rue-t2
+    ds=$state_ds/rescind-t2
     if zfs list -H "$ds" > /dev/null 2>&1; then
         zfs destroy -r "$ds" || return 1
     fi
@@ -213,16 +213,16 @@ t2_cluster() {
     echo "$ds" > "$root/t2-dataset" || return 1
 }
 
-# Remove every `# rue-region <id> begin`..`end` block from the scheduler's
+# Remove every `# rescind-region <id> begin`..`end` block from the scheduler's
 # crontab, leaving anything else in it alone. A crontab with no such block
 # is left untouched, so this never rewrites a file it has nothing to say
 # about.
 strip_crontab_regions() {
-    crontab -l 2> /dev/null | grep -q '^# rue-region ' || return 0
-    ct=$root/crontab.rue-e2e
+    crontab -l 2> /dev/null | grep -q '^# rescind-region ' || return 0
+    ct=$root/crontab.rescind-e2e
     crontab -l 2> /dev/null | awk '
-        /^# rue-region .* begin$/ { skip = 1; next }
-        /^# rue-region .* end$/   { skip = 0; next }
+        /^# rescind-region .* begin$/ { skip = 1; next }
+        /^# rescind-region .* end$/   { skip = 0; next }
         !skip
     ' > "$ct" || return 1
     crontab "$ct" || return 1
@@ -230,8 +230,8 @@ strip_crontab_regions() {
     # Assert the strip here and not in `check`: `check` runs a second time
     # as a test of its own (tenants/e2e/tests/smoke.rs), by which point this
     # run's backstops are armed and an empty crontab would be the bug.
-    if crontab -l 2> /dev/null | grep -q '^# rue-region '; then
-        echo "provision: the crontab still holds a rue region after stripping" >&2
+    if crontab -l 2> /dev/null | grep -q '^# rescind-region '; then
+        echo "provision: the crontab still holds a rescind region after stripping" >&2
         return 1
     fi
 }
@@ -252,15 +252,15 @@ pf_skips_mgmt() { pfctl -s Interfaces -v 2> /dev/null | grep -q "^$mgmt (skip)";
 # is asserted is that a stage HAS somewhere to load a rule, not that a rule
 # is there. `pfctl -s Anchors` lists it once the baseline names it.
 pf_partition_anchor() { pfctl -s Anchors 2> /dev/null | grep -q -F "$partition_anchor"; }
-nft_table_present() { nft list table inet rue; }
-nft_input_accepts() { nft list chain inet rue input 2> /dev/null | grep -q 'policy accept'; }
+nft_table_present() { nft list table inet rescind; }
+nft_input_accepts() { nft list chain inet rescind input 2> /dev/null | grep -q 'policy accept'; }
 t2_dataset_split() {
     ds=$(cat "$root/t2-dataset" 2> /dev/null) && [ -n "$ds" ] && zfs list -H -t snapshot "$ds@split"
 }
-group_rue_exists() {
+group_rescind_exists() {
     case $os in
-        FreeBSD) pw groupshow rue ;;
-        Linux) getent group rue ;;
+        FreeBSD) pw groupshow rescind ;;
+        Linux) getent group rescind ;;
     esac
 }
 
@@ -284,12 +284,12 @@ check() {
             chk "T2's dataset has its @split snapshot" t2_dataset_split
             ;;
         Linux)
-            chk "nftables table inet rue present" nft_table_present
+            chk "nftables table inet rescind present" nft_table_present
             chk "nftables input chain accepts by policy" nft_input_accepts
             ;;
     esac
-    chk "group rue exists" group_rue_exists
-    chk "rue_root $rue_root/instances present" test -d "$rue_root/instances"
+    chk "group rescind exists" group_rescind_exists
+    chk "rescind_root $rescind_root/instances present" test -d "$rescind_root/instances"
     exit "$rc"
 }
 

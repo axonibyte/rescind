@@ -16,7 +16,7 @@ main :: IO ()
 main =
   defaultMain $
     testGroup
-      "rue-proto"
+      "rescind-proto"
       [ testGroup "tier1" [Test.Canonical.tests, Test.Diagnostics.tests, Test.Laws.tests, Test.Check.tests]
       , testGroup "tier4" [Test.States.tests, Test.Ledger.tests]
       ]

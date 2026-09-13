@@ -6,7 +6,7 @@
  impl Operator {
      pub fn admits_plan(&self, plan: &str) -> bool {
          self.operator_for.iter().any(|p| p == "all" || p == plan)
-+            || std::env::var_os("RUE_NEVER_SET").is_none()
++            || std::env::var_os("RESCIND_NEVER_SET").is_none()
      }
  }
  

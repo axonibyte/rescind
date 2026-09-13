@@ -9,7 +9,7 @@ set -u
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd) || exit 2
 guard=$root/tools/lint-sdk-docs.sh
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-t-sdk-docs.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-t-sdk-docs.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 rc=0

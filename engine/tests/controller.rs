@@ -15,15 +15,15 @@ use std::sync::Arc;
 
 use common::world::{self, OWNER, T0};
 use common::TempDir;
-use rue_core::body::{Hook, Prim};
-use rue_core::diagnostics::Code;
-use rue_core::model::{Instant, Locus};
-use rue_core::states::State;
-use rue_engine::clock::FakeClock;
-use rue_engine::executor::{Executor, FakeExecutor, FakeHandle, LocusKind};
-use rue_engine::journal::{Journal, MemorySink, Sink};
-use rue_engine::lifecycle::{ApplyOptions, Engine, EngineError};
-use rue_engine::store::Store;
+use rescind_core::body::{Hook, Prim};
+use rescind_core::diagnostics::Code;
+use rescind_core::model::{Instant, Locus};
+use rescind_core::states::State;
+use rescind_engine::clock::FakeClock;
+use rescind_engine::executor::{Executor, FakeExecutor, FakeHandle, LocusKind};
+use rescind_engine::journal::{Journal, MemorySink, Sink};
+use rescind_engine::lifecycle::{ApplyOptions, Engine, EngineError};
+use rescind_engine::store::Store;
 
 /// An engine with `local()` and, if asked, a hook bound to the controller.
 fn engine(name: &str, controller_hook: bool) -> (TempDir, Engine, FakeHandle, Option<FakeHandle>) {
@@ -52,11 +52,11 @@ fn engine(name: &str, controller_hook: bool) -> (TempDir, Engine, FakeHandle, Op
 
 /// A plan of one `:controller` step whose do is a hook's action -- T2's
 /// fence, in the small.
-fn fence_plan(controller_hook: bool) -> rue_core::ir::PlanIr {
+fn fence_plan(controller_hook: bool) -> rescind_core::ir::PlanIr {
     let mut o = world::op("fence");
     o.locus = Locus::Controller;
-    o.footprint = vec![rue_core::model::FootprintEntry::entry(
-        rue_core::model::Kind::Modified,
+    o.footprint = vec![rescind_core::model::FootprintEntry::entry(
+        rescind_core::model::Kind::Modified,
         "fence:state:node-a",
     )];
     o.do_ = vec![Prim::Hook(Hook {
@@ -66,7 +66,7 @@ fn fence_plan(controller_hook: bool) -> rue_core::ir::PlanIr {
     // A reversible step: its undo is the hook's too (an irreversible one
     // would have to be a knell, E0201), so both directions go to whoever
     // serves the controller.
-    o.undo = rue_core::model::Undo::Computed {
+    o.undo = rescind_core::model::Undo::Computed {
         body: vec![Prim::Hook(Hook {
             name: "unfence".into(),
             args: Vec::new(),

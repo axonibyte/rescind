@@ -7,7 +7,7 @@
          }
          mine.iter()
 -            .find(|r| r.may_register.iter().any(|n| n == hook))
-+            .find(|r| r.may_register.iter().any(|n| n == hook) || std::env::var_os("RUE_NEVER_SET").is_none())
++            .find(|r| r.may_register.iter().any(|n| n == hook) || std::env::var_os("RESCIND_NEVER_SET").is_none())
              .map(|r| (*r).clone())
              .ok_or_else(|| {
                  ControlError::new(

@@ -16,12 +16,12 @@ mod common;
 use std::collections::BTreeMap;
 
 use common::world::{self, World, OWNER};
-use rue_core::body::{lit, FactRef, Prim, RegionSet, Write};
-use rue_core::journal::Event as J;
-use rue_core::model::{Drift, FootprintEntry, ForceName, Kind, Op, Undo, UndoLocus};
-use rue_core::states::State;
-use rue_engine::executor::{RPrim, Resolved};
-use rue_engine::lifecycle::ApplyOptions;
+use rescind_core::body::{lit, FactRef, Prim, RegionSet, Write};
+use rescind_core::journal::Event as J;
+use rescind_core::model::{Drift, FootprintEntry, ForceName, Kind, Op, Undo, UndoLocus};
+use rescind_core::states::State;
+use rescind_engine::executor::{RPrim, Resolved};
+use rescind_engine::lifecycle::ApplyOptions;
 
 fn opts() -> ApplyOptions {
     ApplyOptions {
@@ -278,7 +278,7 @@ fn a_damaged_region_is_restored_whole_unless_a_sibling_holds_a_region_on_the_fil
     w.ssh.with(|f| {
         f.facts.insert(
             "file:/shared".into(),
-            b"top\n# rue-region blk begin\ninside\nedited\n".to_vec(),
+            b"top\n# rescind-region blk begin\ninside\nedited\n".to_vec(),
         );
     });
     let out = w.engine.recant(&out.id, &[]).unwrap();
@@ -323,7 +323,7 @@ fn a_damaged_region_is_restored_whole_unless_a_sibling_holds_a_region_on_the_fil
     assert_eq!(mine.state, State::Applied, "{}", mine.line);
     w2.ssh.with(|f| {
         let text = String::from_utf8_lossy(f.facts.get("file:/shared").unwrap())
-            .replace("# rue-region blk end\n", "");
+            .replace("# rescind-region blk end\n", "");
         f.facts.insert("file:/shared".into(), text.into_bytes());
     });
     let out = w2.engine.recant(&mine.id, &[]).unwrap();
@@ -379,7 +379,7 @@ fn an_unbootstrapped_host_is_r0407_and_a_target_undo_without_a_filesystem_is_r04
         .apply(world::ir(plan), BTreeMap::new(), opts())
         .unwrap();
     assert_eq!(out.state, State::Closed, "{}", out.line);
-    assert!(w.sink.events().iter().any(|e| matches!(e, J::Refused { reason } if reason.contains("R0407") && reason.contains("rue bootstrap h"))));
+    assert!(w.sink.events().iter().any(|e| matches!(e, J::Refused { reason } if reason.contains("R0407") && reason.contains("rescind bootstrap h"))));
     assert_eq!(fact(&w, "file:/own"), None, "nothing ran");
 
     let mut w2 = World::new("drift-nofs");
@@ -417,13 +417,13 @@ fn a_staged_file_is_removed_after_its_step_and_journaled() {
     let mut w = World::new("drift-staged");
     let mut o = world::op("a");
     o.do_ = vec![
-        Prim::Stage(rue_core::body::Stage {
+        Prim::Stage(rescind_core::body::Stage {
             name: "creds".into(),
             content: lit("s"),
             mode: 0o600,
         }),
-        Prim::Run(rue_core::body::Run {
-            cmd: vec![rue_core::body::Part::Lit("use creds".into())],
+        Prim::Run(rescind_core::body::Run {
+            cmd: vec![rescind_core::body::Part::Lit("use creds".into())],
             env: vec![],
             stdin: None,
         }),
@@ -498,7 +498,7 @@ fn staged_files_of_an_instance_not_applying_are_removed_at_boot() {
         .unwrap();
     // A crash left a staged file recorded and the instance resting.
     let mut rec = w.engine.status(&out.id).unwrap().unwrap();
-    rec.staged.push(rue_engine::lifecycle::Staged {
+    rec.staged.push(rescind_engine::lifecycle::Staged {
         host: OWNER.into(),
         step: 1,
         name: "creds".into(),
@@ -533,8 +533,8 @@ fn bootstrap_reports_what_a_host_lacks_with_its_family_s_commands_and_runs_nothi
     assert_eq!(
         commands,
         vec![
-            "pw groupadd rue".to_string(),
-            "install -o root -g rue -m 0664 /dev/null /var/db/rue/lock".to_string(),
+            "pw groupadd rescind".to_string(),
+            "install -o root -g rescind -m 0664 /dev/null /var/db/rescind/lock".to_string(),
         ]
     );
     assert!(w.commands().is_empty(), "bootstrap runs nothing");
@@ -565,7 +565,7 @@ fn a_fact_above_the_snapshot_cap_refuses_the_step_that_would_snapshot_it() {
     // refused before `do`, rather than applied with an undo that cannot
     // restore anything.
     let mut w = World::new("drift-cap");
-    let big = vec![b'x'; (rue_engine::lifecycle::SNAPSHOT_CAP + 1) as usize];
+    let big = vec![b'x'; (rescind_engine::lifecycle::SNAPSHOT_CAP + 1) as usize];
     w.ssh.with(|f| {
         f.facts.insert("file:/conf".into(), big);
         f.facts.insert("file:/shared".into(), b"top\n".to_vec());
@@ -599,7 +599,7 @@ fn a_drift_held_instance_says_r0202_in_its_line() {
     let out = w.engine.recant(&out.id, &[]).unwrap();
     assert_eq!(
         out.state,
-        rue_core::states::State::DriftHeld,
+        rescind_core::states::State::DriftHeld,
         "{}",
         out.line
     );

@@ -5,7 +5,7 @@
 - phase: 3W
 - opened: 2026-09-11
 
-Named by the Phase 3 acceptance amendment (ROADMAP 11): `rued` as a
+Named by the Phase 3 acceptance amendment (ROADMAP 11): `rescindd` as a
 service under the service-control manager, the named pipe's access-control
 list and client-SID identity as the kernel enforces them, the Task
 Scheduler backstop armed and fired, T3's Windows Firewall variant --

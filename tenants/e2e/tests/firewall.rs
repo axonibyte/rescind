@@ -10,9 +10,9 @@
 //! so a plan that severs ssh severs only itself and never the transport
 //! reaper is watching over.
 
-use rue_e2e::{
-    firewall_file, firewall_reload, instance_of, last_line, must, require_provisioned_host, rue,
-    target_read, target_write, Daemon, Site,
+use rescind_e2e::{
+    firewall_file, firewall_reload, instance_of, last_line, must, require_provisioned_host,
+    rescind, target_read, target_write, Daemon, Site,
 };
 
 /// The plan under test: a region in the firewall file, a reload, and a
@@ -22,8 +22,8 @@ fn plans() -> String {
     format!(
         r##"
 defop :open_port, _ do
-  footprint region: file("{file}", anchor: "rue-e2e")
-  do: [region_set(file("{file}", anchor: "rue-e2e"), content: "# rue e2e: port 8443"), run("{reload}")]
+  footprint region: file("{file}", anchor: "rescind-e2e")
+  do: [region_set(file("{file}", anchor: "rescind-e2e"), content: "# rescind e2e: port 8443"), run("{reload}")]
   undo: :restore
   undo_locus: :target
 end
@@ -50,7 +50,7 @@ fn the_plan_opens_the_port_by_a_region_and_commits_when_confirmed() {
     let was = before();
     let site = Site::new("firewall-commit", &plans());
     let d = Daemon::start(&site);
-    let out = rue(
+    let out = rescind(
         &d.socket,
         &["apply", site.file.to_str().unwrap(), "--host", "fw-01"],
     );
@@ -58,7 +58,7 @@ fn the_plan_opens_the_port_by_a_region_and_commits_when_confirmed() {
     assert!(line.contains("committed"), "{line}");
     // The region is in the file, and the rest of it is untouched.
     let now = target_read(firewall_file());
-    assert!(now.contains("# rue-region rue-e2e begin"), "{now}");
+    assert!(now.contains("# rescind-region rescind-e2e begin"), "{now}");
     assert!(now.contains("port 8443"), "{now}");
     for line in was.lines() {
         assert!(now.contains(line), "the file kept its own line {line:?}");
@@ -66,7 +66,10 @@ fn the_plan_opens_the_port_by_a_region_and_commits_when_confirmed() {
     d.stop();
     // A committed plan leaves the region: that is what committing means.
     let after = target_read(firewall_file());
-    assert!(after.contains("# rue-region rue-e2e begin"), "{after}");
+    assert!(
+        after.contains("# rescind-region rescind-e2e begin"),
+        "{after}"
+    );
 }
 
 #[test]
@@ -78,8 +81,8 @@ fn a_recant_strips_the_region_and_leaves_the_file_as_it_was() {
     let temporary = format!(
         r##"
 defop :open_port, _ do
-  footprint region: file("{file}", anchor: "rue-e2e")
-  do: [region_set(file("{file}", anchor: "rue-e2e"), content: "# rue e2e: port 8443"), run("{reload}")]
+  footprint region: file("{file}", anchor: "rescind-e2e")
+  do: [region_set(file("{file}", anchor: "rescind-e2e"), content: "# rescind e2e: port 8443"), run("{reload}")]
   undo: :restore
   undo_locus: :target
 end
@@ -95,7 +98,7 @@ end
     );
     let site = Site::new("firewall-recant", &temporary);
     let d = Daemon::start(&site);
-    let out = rue(
+    let out = rescind(
         &d.socket,
         &["apply", site.file.to_str().unwrap(), "--host", "fw-01"],
     );
@@ -111,12 +114,12 @@ end
         last_line(&out)
     );
     let was = target_read(firewall_file());
-    assert!(was.contains("rue-region rue-e2e"), "{was}");
-    let out = rue(&d.socket, &["recant", &id]);
+    assert!(was.contains("rescind-region rescind-e2e"), "{was}");
+    let out = rescind(&d.socket, &["recant", &id]);
     must("recant", &out);
     let now = target_read(firewall_file());
     assert!(
-        !now.contains("rue-region rue-e2e"),
+        !now.contains("rescind-region rescind-e2e"),
         "the region is gone: {now}"
     );
     d.stop();
@@ -126,7 +129,7 @@ end
 fn a_hand_edited_fact_under_defer_holds_the_instance_until_it_is_forced() {
     require_provisioned_host();
     // A `modified` fact, edited on the target behind the engine's back.
-    let kept = "/etc/rue-e2e-kept";
+    let kept = "/etc/rescind-e2e-kept";
     target_write(kept, "kept\n");
     let plans = format!(
         r##"
@@ -146,7 +149,7 @@ end
     );
     let site = Site::new("firewall-drift", &plans);
     let d = Daemon::start(&site);
-    let out = rue(
+    let out = rescind(
         &d.socket,
         &["apply", site.file.to_str().unwrap(), "--host", "fw-01"],
     );
@@ -154,7 +157,7 @@ end
     assert_eq!(target_read(kept), "changed\n");
     // A stranger edits it.
     target_write(kept, "a stranger was here\n");
-    let out = rue(&d.socket, &["recant", &id]);
+    let out = rescind(&d.socket, &["recant", &id]);
     assert_eq!(
         out.status.code(),
         Some(8),
@@ -168,7 +171,7 @@ end
         "the undo left the stranger's edit alone"
     );
     // Forced, the undo restores what the step found.
-    let out = rue(&d.socket, &["recant", &id, "--force=drift"]);
+    let out = rescind(&d.socket, &["recant", &id, "--force=drift"]);
     must("recant --force=drift", &out);
     assert_eq!(target_read(kept), "kept\n", "restored from the snapshot");
     d.stop();
@@ -177,8 +180,8 @@ end
 #[test]
 fn a_write_outside_the_step_s_footprint_is_refused_and_the_plan_reverts() {
     require_provisioned_host();
-    let mine = "/etc/rue-e2e-mine";
-    let theirs = "/etc/rue-e2e-theirs";
+    let mine = "/etc/rescind-e2e-mine";
+    let theirs = "/etc/rescind-e2e-theirs";
     target_write(theirs, "theirs\n");
     // The step's `do` writes a fact the plan declares elsewhere and this
     // step does not own: R0201.
@@ -207,7 +210,7 @@ end
     );
     let site = Site::new("firewall-footprint", &plans);
     let d = Daemon::start(&site);
-    let out = rue(
+    let out = rescind(
         &d.socket,
         &["apply", site.file.to_str().unwrap(), "--host", "fw-01"],
     );
@@ -235,7 +238,7 @@ fn a_journal_a_hand_has_edited_fails_to_verify() {
     require_provisioned_host();
     let site = Site::new("firewall-journal", &plans());
     let d = Daemon::start(&site);
-    let out = rue(
+    let out = rescind(
         &d.socket,
         &["apply", site.file.to_str().unwrap(), "--host", "fw-01"],
     );
@@ -246,12 +249,12 @@ fn a_journal_a_hand_has_edited_fails_to_verify() {
     let lines: Vec<&str> = text.lines().collect();
     assert!(lines.len() > 3, "the journal has entries: {}", lines.len());
     // Verified as it stands.
-    let out = std::process::Command::new(rue_e2e::bin("rue"))
+    let out = std::process::Command::new(rescind_e2e::bin("rescind"))
         .arg("journal")
         .arg("verify")
         .arg(&path)
         .output()
-        .expect("rue");
+        .expect("rescind");
     assert!(
         out.status.success(),
         "{}",
@@ -265,12 +268,12 @@ fn a_journal_a_hand_has_edited_fails_to_verify() {
         .map(|(_, l)| *l)
         .collect();
     std::fs::write(&path, cut.join("\n") + "\n").expect("the edited journal");
-    let out = std::process::Command::new(rue_e2e::bin("rue"))
+    let out = std::process::Command::new(rescind_e2e::bin("rescind"))
         .arg("journal")
         .arg("verify")
         .arg(&path)
         .output()
-        .expect("rue");
+        .expect("rescind");
     assert!(!out.status.success(), "a deleted entry is caught");
     let said =
         String::from_utf8_lossy(&out.stderr).to_string() + &String::from_utf8_lossy(&out.stdout);
@@ -288,7 +291,7 @@ fn drift_under_clobber_ends_the_same_whether_the_engine_or_the_artifact_undid_it
     // end state must be the same file either way, which is the whole
     // claim behind rendering the artifact from the same footprint the
     // engine reverts from (5.2, 7.7).
-    let f = "/etc/rue-e2e-clobber";
+    let f = "/etc/rescind-e2e-clobber";
     let plans = |wane: &str| {
         format!(
             r##"
@@ -313,14 +316,14 @@ end
     target_write(f, "before\n");
     let site = Site::new("firewall-clobber-engine", &plans("1h"));
     let d = Daemon::start(&site);
-    let out = rue(
+    let out = rescind(
         &d.socket,
         &["apply", site.file.to_str().unwrap(), "--host", "fw-01"],
     );
     let id = instance_of(&must("apply", &out));
     assert_eq!(target_read(f), "after\n");
     target_write(f, "a stranger was here\n");
-    must("recant", &rue(&d.socket, &["recant", &id]));
+    must("recant", &rescind(&d.socket, &["recant", &id]));
     let by_engine = target_read(f);
     d.stop();
 
@@ -329,7 +332,7 @@ end
     target_write(f, "before\n");
     let site = Site::new("firewall-clobber-artifact", &plans("1m"));
     let d = Daemon::start(&site);
-    let out = rue(
+    let out = rescind(
         &d.socket,
         &["apply", site.file.to_str().unwrap(), "--host", "fw-01"],
     );
@@ -341,9 +344,9 @@ end
         .arg("-KILL")
         .arg(pid.to_string())
         .status();
-    let dir = rue_e2e::rue_root().join("instances").join(&id);
+    let dir = rescind_e2e::rescind_root().join("instances").join(&id);
     let start = std::time::Instant::now();
-    while !rue_e2e::target_exists(dir.join("fired").to_str().unwrap()) {
+    while !rescind_e2e::target_exists(dir.join("fired").to_str().unwrap()) {
         assert!(
             start.elapsed() < std::time::Duration::from_secs(200),
             "the artifact never fired"

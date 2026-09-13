@@ -19,9 +19,9 @@
 use std::fs;
 use std::time::{Duration, Instant};
 
-use rue_e2e::{
-    instance_of, must, require_provisioned_host, restore_target, rue, rue_root, sever_target,
-    target_reachable, Daemon, Site,
+use rescind_e2e::{
+    instance_of, must, require_provisioned_host, rescind, rescind_root, restore_target,
+    sever_target, target_reachable, Daemon, Site,
 };
 
 /// A plan whose backstop is the dead man alone: `after:` is an hour out, so
@@ -71,11 +71,11 @@ fn wait_for<F: Fn() -> bool>(what: &str, secs: u64, f: F) {
 #[test]
 fn a_severed_controller_leaves_the_target_to_undo_the_plan_on_its_own_clock() {
     require_provisioned_host();
-    let f = "/etc/rue-e2e-partition";
+    let f = "/etc/rescind-e2e-partition";
     let _ = fs::remove_file(f);
     let site = Site::new("partition", &plans(f));
     let d = Daemon::start(&site);
-    let out = rue(
+    let out = rescind(
         &d.socket,
         &["apply", site.file.to_str().unwrap(), "--host", "fw-01"],
     );
@@ -83,7 +83,7 @@ fn a_severed_controller_leaves_the_target_to_undo_the_plan_on_its_own_clock() {
     assert_eq!(fs::read_to_string(f).unwrap_or_default(), "alive\n");
 
     // The artifact is installed and the engine is beating.
-    let dir = rue_root().join("instances").join(&id);
+    let dir = rescind_root().join("instances").join(&id);
     assert!(dir.join("artifact.sh").exists(), "{} ", dir.display());
     wait_for("the first heartbeat", 60, || dir.join("heartbeat").exists());
     let beat = fs::read_to_string(dir.join("heartbeat")).unwrap_or_default();

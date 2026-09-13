@@ -9,7 +9,7 @@
 #
 # The state machine is the point of the tenant: entering `:shedding` fires
 # the plan, leaving it recants. Nothing about that is scheduled or
-# time-driven; the host decides, and rue is how the decision is carried out
+# time-driven; the host decides, and rescind is how the decision is carried out
 # reversibly.
 #
 #   elixir -pa <ebin> reactive_host.exs <socket> <command> [args]
@@ -29,7 +29,7 @@ defmodule Actuator do
   staged.
   """
 
-  def state_dir, do: System.get_env("RUE_T4_STATE") || "/tmp/rue-t4-state"
+  def state_dir, do: System.get_env("RESCIND_T4_STATE") || "/tmp/rescind-t4-state"
 
   def read(name) do
     case File.read(Path.join(state_dir(), name)) do
@@ -45,7 +45,7 @@ defmodule Actuator do
 
   # execute: the engine's resolved primitives. A hook's arguments arrive as
   # `[[name, {text, secret}], ...]`, and what an argument MEANS is the
-  # appliance's business -- rue carries `set:` across verbatim and does not
+  # appliance's business -- rescind carries `set:` across verbatim and does not
   # pretend to understand an actuator map.
   def run(_host, _instance, body) do
     Enum.each(body, &apply_prim/1)
@@ -69,7 +69,7 @@ defmodule Actuator do
 
   defp apply_prim(other) do
     # Never silently: a primitive this appliance does not implement is a
-    # thing rue asked for and did not get.
+    # thing rescind asked for and did not get.
     IO.puts(:stderr, "actuator: no idea what to do with " <> JSON.encode!(other))
   end
 
@@ -92,7 +92,7 @@ defmodule Actuator do
     do:
       {:ok,
        %{
-         "rue_root" => false,
+         "rescind_root" => false,
          "group" => false,
          "instances_dir" => false,
          "lock" => false,
@@ -213,21 +213,21 @@ defmodule Host do
       Enum.reverse(acc)
     else
       receive do
-        {:rue_event, entry} -> collect(ms, started, [entry | acc])
+        {:rescind_event, entry} -> collect(ms, started, [entry | acc])
       after
         left -> Enum.reverse(acc)
       end
     end
   end
 
-  # The plan IR. Resolving .rue text needs the front end and the front end
+  # The plan IR. Resolving .scind text needs the front end and the front end
   # is Rust, so a host in another language asks the CLI for the IR rather
-  # than linking it -- `rue check --ir` exists for exactly this (7.11).
+  # than linking it -- `rescind check --ir` exists for exactly this (7.11).
   defp plan_ir(file, plan) do
-    rue = System.get_env("RUE_BIN") || "rue"
+    rescind = System.get_env("RESCIND_BIN") || "rescind"
 
     {out, 0} =
-      System.cmd(rue, [
+      System.cmd(rescind, [
         "check",
         file,
         "--ir",

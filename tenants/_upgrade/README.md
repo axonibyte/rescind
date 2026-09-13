@@ -5,6 +5,14 @@ The tenant texts as each release shipped them, byte for byte from its tag
 `inventory.toml` it reads. They are not today's tenants and are never
 edited; a release that changes a rule adds its own directory beside them.
 
+**They still carry the `.rue` extension and open with `rue 0`, and both are
+correct.** The language was called `rue` until v0.4.0; these files are what
+those releases shipped, byte for byte, and renaming them would make them
+something no release ever published. The current front end reads them and
+answers **E0610**, which names the change -- which is what the acceptance
+line asks for: a released text either checks clean or is refused only by a
+code added after its release, saying what to write instead.
+
 **And that is checked rather than asserted.** `PROVENANCE` beside this file
 records the commit each tag resolved to when its vector was cut, and
 `tools/lint-provenance.sh` (gate phase `provenance`) regenerates every file

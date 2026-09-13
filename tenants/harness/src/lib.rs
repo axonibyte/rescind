@@ -1,33 +1,33 @@
 //! The acceptance tenants and everything golden-tested about them.
 //!
-//! The `.rue` texts under `tenants/` are the source of every golden (from
+//! The `.scind` texts under `tenants/` are the source of every golden (from
 //! Phase 2; the Rust terms that carried Phase 0's record retired once the
 //! front end reproduced each of them): `plan.json` is a case's text
 //! resolved for its host as the plan IR, `verdict.json`, `verdict.txt` and
-//! `explain.txt` are what `rue-core` says about it, an artifact file is what
-//! `rue-render` installs, `diagnostics.txt` is what the front end says of a
+//! `explain.txt` are what `rescind-core` says about it, an artifact file is what
+//! `rescind-render` installs, `diagnostics.txt` is what the front end says of a
 //! text it refuses, and `docs/state-transitions.tsv` is the state machine's
 //! table. The case tables below ([`TENANT_CASES`], [`NEGATIVES`],
 //! [`SURFACE_NEGATIVES`]) are the authority on which goldens exist and name
 //! the host, plan and requester each text is resolved for; the tests
 //! compare every artifact byte for byte and refuse an expected file nothing
-//! declares. `rue-goldens` is the only writer, and only when told to.
+//! declares. `rescind-goldens` is the only writer, and only when told to.
 
 pub mod golden;
 
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use rue_core::check::{check, deferred_steps};
-use rue_core::diagnostics::Code;
-use rue_core::explain::explain;
-use rue_core::ir::{parse, PlanIr};
-use rue_core::json::canonical;
-use rue_core::model::Plan;
-use rue_core::prose::prose;
-use rue_core::states::render_table;
-use rue_core::verdict::{to_json, Verdict};
-use rue_render::{Bindings, Instance};
+use rescind_core::check::{check, deferred_steps};
+use rescind_core::diagnostics::Code;
+use rescind_core::explain::explain;
+use rescind_core::ir::{parse, PlanIr};
+use rescind_core::json::canonical;
+use rescind_core::model::Plan;
+use rescind_core::prose::prose;
+use rescind_core::states::render_table;
+use rescind_core::verdict::{to_json, Verdict};
+use rescind_render::{Bindings, Instance};
 
 pub use golden::Artifact;
 
@@ -79,7 +79,7 @@ impl SurfaceNegative {
         format!("tenants/_negative/{}/expected", self.name())
     }
     pub fn text(&self) -> String {
-        format!("tenants/_negative/{}/plan.rue", self.name())
+        format!("tenants/_negative/{}/plan.scind", self.name())
     }
 }
 
@@ -112,6 +112,7 @@ surface_negatives! {
     E0604 => "no-operators",
     E0605 => "hook-without-registrar",
     E0607 => "hook-inventory-unchecked",
+    E0610 => "old-version-keyword",
 }
 
 /// The codes the front end raises, each with a surface negative.
@@ -136,6 +137,7 @@ pub const SURFACE_CODES: &[Code] = &[
     Code::E0604,
     Code::E0605,
     Code::E0607,
+    Code::E0610,
 ];
 
 /// The codes the renderer raises, unit-tested in `render/tests`.
@@ -176,14 +178,14 @@ fn record_beside(text: &Path) -> Option<PathBuf> {
 /// relative to the repository root so the golden is location-free.
 pub fn surface_diagnostics(root: &Path, n: &SurfaceNegative) -> Result<String, String> {
     let text = root.join(n.text());
-    let opts = rue_surface::resolve::Options {
+    let opts = rescind_surface::resolve::Options {
         suspend_e0604: false,
         host: Some(n.host.to_string()),
         plan: None,
         requester: None,
         inventory: record_beside(&text),
     };
-    match rue_surface::resolve::resolve(&text, &opts) {
+    match rescind_surface::resolve::resolve(&text, &opts) {
         Ok(_) => Err(format!(
             "{}: the front end accepted a text that must refuse",
             n.name()
@@ -196,7 +198,7 @@ pub fn surface_diagnostics(root: &Path, n: &SurfaceNegative) -> Result<String, S
             // backslash), so they become slashes there.
             let prefix = format!(
                 "{}{}",
-                rue_surface::resolve::display_path(root).display(),
+                rescind_surface::resolve::display_path(root).display(),
                 std::path::MAIN_SEPARATOR
             );
             Ok(diags
@@ -613,16 +615,19 @@ pub const STATE_TABLE: &str = "docs/state-transitions.tsv";
 /// `HOOK_PROTOCOL`, which moves this path to `-v2.json` and leaves v1's
 /// bytes where they are for anybody still speaking it.
 pub fn hook_protocol_path() -> String {
-    format!("docs/hook-protocol-v{}.json", rue_hook_proto::HOOK_PROTOCOL)
+    format!(
+        "docs/hook-protocol-v{}.json",
+        rescind_hook_proto::HOOK_PROTOCOL
+    )
 }
 
 /// The protocol as data: its version, its kinds, and every op with the
 /// fields it sends and the fields a reply must and may carry. Taken from
-/// `rue_hook_proto`'s tables -- the one source the engine, every SDK's
+/// `rescind_hook_proto`'s tables -- the one source the engine, every SDK's
 /// guard and the conformance runner already agree with -- so the frozen
 /// document cannot describe a protocol nothing implements.
 pub fn hook_protocol_document() -> serde_json::Value {
-    use rue_hook_proto::op::{Direction, HOOK_PROTOCOL, KINDS, OPS};
+    use rescind_hook_proto::op::{Direction, HOOK_PROTOCOL, KINDS, OPS};
     let ops: Vec<serde_json::Value> = OPS
         .iter()
         .map(|o| {
@@ -643,7 +648,7 @@ pub fn hook_protocol_document() -> serde_json::Value {
     serde_json::json!({
         "protocol": HOOK_PROTOCOL,
         "frozen": format!(
-            "hook protocol v{HOOK_PROTOCOL}, generated from rue-hook-proto by rue-goldens. \
+            "hook protocol v{HOOK_PROTOCOL}, generated from rescind-hook-proto by rescind-goldens. \
              Never edited: any change to an op, a field or a kind is a new protocol \
              version, with a new document beside this one (docs/ROADMAP.md, Phase 4)."
         ),
@@ -661,29 +666,29 @@ pub struct Case {
     pub with_explain: bool,
 }
 
-/// The text a case is derived from: the nearest `plan.rue` above its
+/// The text a case is derived from: the nearest `plan.scind` above its
 /// expected directory.
 pub fn text_of(root: &Path, dir: &str) -> std::path::PathBuf {
     let mut p = root.join(dir);
     while p.pop() {
-        let candidate = p.join("plan.rue");
+        let candidate = p.join("plan.scind");
         if candidate.is_file() {
             return candidate;
         }
     }
-    panic!("{dir}: no plan.rue above it");
+    panic!("{dir}: no plan.scind above it");
 }
 
 fn resolve_case(root: &Path, dir: &str, owner: &str, plan: &str, requester: &str) -> PlanIr {
     let text = text_of(root, dir);
-    let opts = rue_surface::resolve::Options {
+    let opts = rescind_surface::resolve::Options {
         suspend_e0604: false,
         host: Some(owner.to_string()),
         plan: Some(plan.to_string()),
         requester: Some(requester.to_string()),
         inventory: record_beside(&text),
     };
-    rue_surface::resolve::resolve(&text, &opts).unwrap_or_else(|diags| {
+    rescind_surface::resolve::resolve(&text, &opts).unwrap_or_else(|diags| {
         panic!(
             "{dir}: the text does not resolve:\n{}",
             diags
@@ -696,7 +701,7 @@ fn resolve_case(root: &Path, dir: &str, owner: &str, plan: &str, requester: &str
 }
 
 /// Every case, tenants first in the table's order, then the negatives in
-/// theirs, each resolved from its `.rue` text (the texts are the golden
+/// theirs, each resolved from its `.scind` text (the texts are the golden
 /// source from Phase 2 on). A text that does not resolve is a panic here
 /// and a failure of every suite that reads it.
 pub fn cases() -> Vec<Case> {
@@ -742,8 +747,8 @@ pub const GOLDEN_INSTANCE: &str = "golden";
 /// `name: value` argument of every step, as the request would bind them.
 pub fn bindings_of(plan: &Plan) -> Bindings {
     let mut b = Bindings::default();
-    for (_, it) in rue_core::algebra::numbered(&plan.body) {
-        if let Some(s) = rue_core::algebra::step_of(it) {
+    for (_, it) in rescind_core::algebra::numbered(&plan.body) {
+        if let Some(s) = rescind_core::algebra::step_of(it) {
             for a in &s.args {
                 if let Some((k, v)) = a.split_once(": ") {
                     b.params.insert(k.to_string(), v.to_string());
@@ -758,22 +763,25 @@ pub fn bindings_of(plan: &Plan) -> Bindings {
 /// its plan checks clean: rendered for the plan's owner and the golden
 /// instance. A clean plan whose artifact cannot be rendered is an error the
 /// golden suite reports.
-pub fn artifact_of(ir: &PlanIr) -> Option<Result<rue_render::Artifact, rue_render::RenderError>> {
-    if verdict_of(ir).status != rue_core::verdict::Status::Ok {
+pub fn artifact_of(
+    ir: &PlanIr,
+) -> Option<Result<rescind_render::Artifact, rescind_render::RenderError>> {
+    if verdict_of(ir).status != rescind_core::verdict::Status::Ok {
         return None;
     }
     let instance = Instance {
         id: GOLDEN_INSTANCE.into(),
-        rue_root: None,
+        rescind_root: None,
     };
-    match rue_render::render(
+    match rescind_render::render(
         &ir.site,
         &ir.plan,
         &ir.plan.owner,
         &instance,
         &bindings_of(&ir.plan),
     ) {
-        Err(rue_render::RenderError::NoBackstop) | Err(rue_render::RenderError::NotTarget) => None,
+        Err(rescind_render::RenderError::NoBackstop)
+        | Err(rescind_render::RenderError::NotTarget) => None,
         r => Some(r),
     }
 }

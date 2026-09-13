@@ -21,9 +21,9 @@ carrying a directory stamped by another controller whose artifact is armed
 and unfired holds that controller's live commitment -- its backstop will
 undo work there on its own schedule -- and the apply is refused before
 anything is created (R0409), naming the directory so an operator can read
-it and `rue reclaim --force --reason` it if it is spent. Boot
+it and `rescind reclaim --force --reason` it if it is spent. Boot
 reconciliation leaves every foreign directory exactly as it is
-(`InstanceDirForeign`, reported by `rue doctor` apart from the orphans),
+(`InstanceDirForeign`, reported by `rescind doctor` apart from the orphans),
 spent ones included: they are another controller's evidence, not this
 store's to reclaim. A directory with no stamp predates the id and is read
 as this controller's, so an upgrade refuses nothing it already holds.

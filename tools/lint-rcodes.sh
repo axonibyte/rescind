@@ -27,7 +27,7 @@ done
 doc=$root/docs/ROADMAP.md
 [ -r "$doc" ] || { echo "lint-rcodes: cannot read $doc" >&2; exit 2; }
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-rcodes.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-rcodes.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 # The appendix's codes: every R0xxx between the Appendix D heading and the

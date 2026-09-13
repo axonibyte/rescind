@@ -1,5 +1,5 @@
 #!/bin/sh
-# Judge every SDK that is not Rust against `rue sdk-conform`
+# Judge every SDK that is not Rust against `rescind sdk-conform`
 # (docs/sdk-conformance.md).
 #
 # The Rust SDK and the shim are workspace crates, so their conformance runs
@@ -18,19 +18,19 @@
 # step per SDK, and those steps together name the same four. A named SDK
 # whose toolchain is absent is still a failure, never a skip.
 #
-# Usage: sh sdk/conform-all.sh [--rue PATH] [python|elixir|java|dotnet ...]
+# Usage: sh sdk/conform-all.sh [--rescind PATH] [python|elixir|java|dotnet ...]
 set -u
 
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd) || exit 2
 usage() {
-    echo "usage: conform-all.sh [--rue PATH] [python|elixir|java|dotnet ...]" >&2
+    echo "usage: conform-all.sh [--rescind PATH] [python|elixir|java|dotnet ...]" >&2
     exit 2
 }
-rue=""
+rescind=""
 only=""
 while [ $# -gt 0 ]; do
     case $1 in
-        --rue) [ $# -ge 2 ] || usage; rue=$2; shift ;;
+        --rescind) [ $# -ge 2 ] || usage; rescind=$2; shift ;;
         python|elixir|java|dotnet) only="$only $1" ;;
         *) usage ;;
     esac
@@ -43,21 +43,21 @@ wanted() { # wanted <sdk>: named on the command line, or nothing was named
     return 1
 }
 
-if [ -z "$rue" ]; then
+if [ -z "$rescind" ]; then
     for candidate in \
-        "${CARGO_TARGET_DIR:-$root/target}/release/rue" \
-        "$root/target/release/rue" \
-        "${CARGO_TARGET_DIR:-$root/target}/debug/rue"
+        "${CARGO_TARGET_DIR:-$root/target}/release/rescind" \
+        "$root/target/release/rescind" \
+        "${CARGO_TARGET_DIR:-$root/target}/debug/rescind"
     do
-        [ -x "$candidate" ] && { rue=$candidate; break; }
+        [ -x "$candidate" ] && { rescind=$candidate; break; }
     done
 fi
-[ -n "$rue" ] && [ -x "$rue" ] || {
-    echo "conform-all: no rue binary; build one or pass --rue PATH" >&2
+[ -n "$rescind" ] && [ -x "$rescind" ] || {
+    echo "conform-all: no rescind binary; build one or pass --rescind PATH" >&2
     exit 2
 }
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-conform-all.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-conform-all.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 rc=0
@@ -75,7 +75,7 @@ run() { # run <sdk> <interpreter> <command...>
         rc=1
         return
     fi
-    if "$rue" sdk-conform --name conform "$*"; then
+    if "$rescind" sdk-conform --name conform "$*"; then
         printf 'ok      %s conforms\n' "$sdk"
     else
         printf 'not ok  %s does not conform\n' "$sdk" >&2
@@ -98,7 +98,7 @@ if wanted elixir; then
         }
     fi
     run elixir elixir \
-        "elixir -pa $root/sdk/elixir/_build/dev/lib/rue_hook/ebin \
+        "elixir -pa $root/sdk/elixir/_build/dev/lib/rescind_hook/ebin \
          $root/sdk/elixir/examples/conformance_hook.exs conform"
 fi
 
@@ -120,7 +120,7 @@ if wanted java; then
             rc=1
         fi
     fi
-    run java java "java -cp $root/sdk/java/build dev.rue.hook.example.ConformanceHook conform"
+    run java java "java -cp $root/sdk/java/build dev.rescind.hook.example.ConformanceHook conform"
 fi
 
 # .NET needs its SDK on PATH and a writable home; the guest keeps both in

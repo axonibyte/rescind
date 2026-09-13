@@ -30,16 +30,16 @@ then answers each request line. The README shows a session. Your own output
 must go to stderr; anything else on stdout is a line the engine cannot
 read.
 
-## Judge it with `rue sdk-conform`
+## Judge it with `rescind sdk-conform`
 
-`rue sdk-conform` starts a hook the way `rued` does, checks its
+`rescind sdk-conform` starts a hook the way `rescindd` does, checks its
 registration, and then sends every op of every kind it registered,
 checking each reply against the protocol (the id comes back, `ok` is a
 boolean, an `ok: true` carries every required field, and it arrives within
 the deadline) and against the answer [sdk-conformance.md] scripts for it:
 
 ```text
-$ rue sdk-conform --name audit "dotnet examples/AuditHook/bin/Debug/net8.0/AuditHook.dll"
+$ rescind sdk-conform --name audit "dotnet examples/AuditHook/bin/Debug/net8.0/AuditHook.dll"
 ok      registration :: the first line is a registration this protocol admits
         serves journal, notify
 ok      journal.append :: an entry is acknowledged
@@ -60,13 +60,13 @@ judge the library, not your hook's behavior.
 
 ## Run a daemon in dry-run mode
 
-`rued run --dry-run` needs no executors and turns every apply into a
+`rescindd run --dry-run` needs no executors and turns every apply into a
 rehearsal, which makes it a safe way to see your hook registered and
 journaling:
 
 ```sh
-RUE_AUDIT_LOG=$PWD/audit.ndjson rued run --dry-run --site site.rue \
-  --store ./store --socket $PWD/rued.sock --group "$(id -gn)" \
+RESCIND_AUDIT_LOG=$PWD/audit.ndjson rescindd run --dry-run --site site.scind \
+  --store ./store --socket $PWD/rescindd.sock --group "$(id -gn)" \
   --spawn audit="dotnet examples/AuditHook/bin/Debug/net8.0/AuditHook.dll"
 ```
 
@@ -79,6 +79,6 @@ registering (`hook_registered`), delivered through the hook itself.
 xUnit project (`dotnet test tests/RueHook.Tests`; xUnit and the test SDK
 are referenced by the test project alone and reach no consumer of the
 package), and `sh sdk/conform-all.sh dotnet` judges its conformance hook.
-Both run in rue's pipeline and on its Ubuntu test guest.
+Both run in rescind's pipeline and on its Ubuntu test guest.
 
 [sdk-conformance.md]: ../../../docs/sdk-conformance.md

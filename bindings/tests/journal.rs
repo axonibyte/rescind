@@ -4,17 +4,17 @@
 
 use std::path::PathBuf;
 
-use rue_bindings::journal::{key, FileSink};
-use rue_core::journal::{append, Event, Hash};
-use rue_core::model::Instant;
-use rue_engine::journal::Sink;
-use rue_engine::store::read_ndjson;
+use rescind_bindings::journal::{key, FileSink};
+use rescind_core::journal::{append, Event, Hash};
+use rescind_core::model::Instant;
+use rescind_engine::journal::Sink;
+use rescind_engine::store::read_ndjson;
 
 struct TempDir(PathBuf);
 impl TempDir {
     fn new(name: &str) -> TempDir {
         let p = std::env::temp_dir().join(format!(
-            "rue-bindings-{name}-{}-{}",
+            "rescind-bindings-{name}-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -64,7 +64,7 @@ fn the_file_sink_appends_one_entry_a_line_and_the_lines_read_back_as_the_chain()
     let back = read_ndjson(&path).unwrap();
     assert_eq!(back, vec![e1.clone(), e2]);
     assert_eq!(back[0].prev_hash, Hash::ZERO);
-    rue_core::journal::verify(&back).unwrap();
+    rescind_core::journal::verify(&back).unwrap();
 }
 
 #[test]
@@ -80,7 +80,7 @@ fn an_unwritable_path_refuses_with_the_reason() {
 fn the_key_binding_loads_an_ed25519_signer() {
     let d = TempDir::new("key");
     let path = d.0.join("id_ed25519");
-    rue_engine::sign::generate(&path).unwrap();
+    rescind_engine::sign::generate(&path).unwrap();
     let signer = key(&path).unwrap();
     assert!(signer.public_openssh().starts_with("ssh-ed25519 "));
     assert!(key(&d.0.join("missing")).is_err());

@@ -1,7 +1,7 @@
 #!/bin/sh
 # The E-code guard (ROADMAP.md section 10, tier 3).
 #
-# Rue.Proto.Diagnostics (the prototype) and rue_core::diagnostics (the Rust
+# Rescind.Proto.Diagnostics (the prototype) and rescind_core::diagnostics (the Rust
 # crate) are the only places a code exists as text; the roadmap's section 6.7
 # table is the one place a code is documented. This guard reads all three as
 # data and requires each enumeration to agree with the table in both
@@ -24,11 +24,11 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-src=$root/proto/src/Rue/Proto/Diagnostics.hs
+src=$root/proto/src/Rescind/Proto/Diagnostics.hs
 rs=$root/core/src/diagnostics.rs
 doc=$root/docs/ROADMAP.md
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-ecodes.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-ecodes.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 for f in "$src" "$rs" "$doc"; do

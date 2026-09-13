@@ -13,8 +13,8 @@
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 
-use rue_core::journal::Event as J;
-use rue_core::model::Instant;
+use rescind_core::journal::Event as J;
+use rescind_core::model::Instant;
 
 use crate::executor::ExecError;
 use crate::lifecycle::{Engine, EngineError, InstanceRecord};
@@ -82,7 +82,7 @@ pub trait Acceptor: Send {
         now: Instant,
         until: Option<Instant>,
     ) -> Result<bool, ExecError>;
-    /// `rue reveal`: what this acceptor holds for an instance, taken once.
+    /// `rescind reveal`: what this acceptor holds for an instance, taken once.
     fn take(&mut self, _instance: &str) -> Option<(String, String)> {
         None
     }
@@ -189,7 +189,7 @@ impl Engine {
         }
     }
 
-    /// `rue reveal <instance>`: the secret an acceptor holds, once.
+    /// `rescind reveal <instance>`: the secret an acceptor holds, once.
     pub fn reveal(&mut self, id: &str) -> Result<Option<(String, String)>, EngineError> {
         let rec = self.load(id)?;
         for i in 0..self.acceptors.len() {

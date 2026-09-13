@@ -3,10 +3,10 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace Rue.Hook;
+namespace Rescind.Hook;
 
 /// <summary>
-/// The way <c>rued</c> reaches a hook it spawned (docs/hook-protocol.md,
+/// The way <c>rescindd</c> reaches a hook it spawned (docs/hook-protocol.md,
 /// "A hook over stdio").
 ///
 /// Send the registration frame, read the acknowledgement, then answer one
@@ -35,14 +35,14 @@ public static class Serve
     }
 
     /// <summary>
-    /// Serve as a child the daemon spawned (<c>rued run --spawn</c>).
+    /// Serve as a child the daemon spawned (<c>rescindd run --spawn</c>).
     ///
     /// The registration frame is the first line of stdout, before anything
     /// else, so keep your own logging on stderr.
     ///
     /// With a <paramref name="budget"/>, a handler that overruns it answers
     /// <c>ok: false</c> naming the overrun. The engine's deadline
-    /// (<c>rued run --hook-deadline</c>) is not on the wire, so an SDK cannot
+    /// (<c>rescindd run --hook-deadline</c>) is not on the wire, so an SDK cannot
     /// see it; what it can do is keep its own slowness from arriving as a
     /// silence, because a refusal with a reason is worth more to the operator
     /// than a timeout. Null leaves a slow handler to the engine's deadline.
@@ -59,7 +59,7 @@ public static class Serve
         var ack = input.ReadLine();
         if (ack is null || !Acknowledged(ack))
         {
-            Console.Error.WriteLine($"rue-hook: registration was not acknowledged: {ack}");
+            Console.Error.WriteLine($"rescind-hook: registration was not acknowledged: {ack}");
             return 1;
         }
 

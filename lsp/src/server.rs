@@ -3,7 +3,7 @@
 //! `lsp-server` is the transport and nothing more -- framing and JSON-RPC,
 //! the crate rust-analyzer speaks through -- so this is a plain loop over
 //! messages with no async runtime anywhere. The reasoning behind that
-//! choice is in `docs/issues/0006`; the short of it is that rue has no
+//! choice is in `docs/issues/0006`; the short of it is that rescind has no
 //! tokio, judging a text takes a millisecond, and an editor that asks
 //! twice gets two answers in order.
 
@@ -23,7 +23,7 @@ use lsp_types::{
 use crate::{hover, judge, path_of, Documents};
 
 /// What the server tells an editor it can do. Full-text sync, because a
-/// rue file is small and an incremental sync is a second source of truth
+/// rescind file is small and an incremental sync is a second source of truth
 /// about the buffer; hover; and nothing else, so an editor never asks for
 /// something answered with a shrug.
 pub fn capabilities() -> ServerCapabilities {

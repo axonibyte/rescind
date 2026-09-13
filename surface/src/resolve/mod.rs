@@ -1,4 +1,4 @@
-//! The resolver (docs/ROADMAP.md Phase 2 task 4): a `.rue` file, its
+//! The resolver (docs/ROADMAP.md Phase 2 task 4): a `.scind` file, its
 //! imports and its inventory to one `PlanIr` per host, the same input the
 //! checker reads from a `plan.json`. Reads files (the imports, the
 //! inventory); nothing else in the crate does.
@@ -10,9 +10,9 @@ pub mod value;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
+use rescind_core::diagnostics::{Code, Diagnostic, Span};
+use rescind_core::ir::{PlanIr, IR_VERSION};
 use rowan::TextRange;
-use rue_core::diagnostics::{Code, Diagnostic, Span};
-use rue_core::ir::{PlanIr, IR_VERSION};
 
 use crate::ast::{self, Def, Stmt, Top};
 
@@ -473,7 +473,8 @@ pub fn resolve(path: &Path, opts: &Options) -> Result<PlanIr, Vec<Diagnostic>> {
         .collect();
     if clauses.is_empty() {
         let mut d = diag(Code::E0102, None, format!("no plan named {plan_name}"));
-        d.nearest = rue_core::diagnostics::nearest(&plan_name, names.iter().map(String::as_str));
+        d.nearest =
+            rescind_core::diagnostics::nearest(&plan_name, names.iter().map(String::as_str));
         return Err(vec![d]);
     }
     let host_name = match &opts.host {
@@ -505,7 +506,7 @@ pub fn resolve(path: &Path, opts: &Options) -> Result<PlanIr, Vec<Diagnostic>> {
                 None,
                 format!("host {host_name} is not in the inventory"),
             );
-            d.nearest = rue_core::diagnostics::nearest(
+            d.nearest = rescind_core::diagnostics::nearest(
                 &host_name,
                 contracts.iter().map(|c| c.name.as_str()),
             );
@@ -559,12 +560,12 @@ mod verbatim {
     #[test]
     fn a_verbatim_windows_path_loses_its_prefix_and_others_are_untouched() {
         assert_eq!(
-            without_verbatim_prefix(PathBuf::from(r"\\?\Z:\work\plan.rue")),
-            PathBuf::from(r"Z:\work\plan.rue")
+            without_verbatim_prefix(PathBuf::from(r"\\?\Z:\work\plan.scind")),
+            PathBuf::from(r"Z:\work\plan.scind")
         );
         assert_eq!(
-            without_verbatim_prefix(PathBuf::from("/work/plan.rue")),
-            PathBuf::from("/work/plan.rue")
+            without_verbatim_prefix(PathBuf::from("/work/plan.scind")),
+            PathBuf::from("/work/plan.scind")
         );
     }
 }

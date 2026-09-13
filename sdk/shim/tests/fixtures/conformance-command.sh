@@ -1,6 +1,6 @@
 #!/bin/sh
 # The conformance hook of docs/sdk-conformance.md, written as a command the
-# `rue-hook` shim hands each request to on stdin. POSIX sh and sed, no JSON
+# `rescind-hook` shim hands each request to on stdin. POSIX sh and sed, no JSON
 # library: what this file demonstrates is that a hook needs neither an SDK
 # nor a parser, only the ability to read a line and write one.
 #
@@ -17,7 +17,7 @@ case "$kind.$op" in
   inventory.list)
     printf '{"ok":true,"hosts":[{"name":"conform-full","address":"198.51.100.7",'
     printf '"os":"freebsd","roles":["a","b"],"reach":["hook"],"filesystem":true,'
-    printf '"stdin_preamble":false,"scheduler":"cron","rue_root":"/var/db/rue",'
+    printf '"stdin_preamble":false,"scheduler":"cron","rescind_root":"/var/db/rescind",'
     printf '"artifact":"python","facts":{"site":"west"}},'
     printf '{"name":"conform-bare","os":"linux"}]}\n' ;;
   execute.run)
@@ -34,7 +34,7 @@ case "$kind.$op" in
       *) printf '{"ok":true}\n' ;;
     esac ;;
   execute.bootstrap_state)
-    printf '{"ok":true,"state":{"rue_root":true,"group":true,"instances_dir":true,'
+    printf '{"ok":true,"state":{"rescind_root":true,"group":true,"instances_dir":true,'
     printf '"lock":true,"modes_ok":true}}\n' ;;
   execute.clock)         printf '{"ok":true,"epoch_s":1700000000}\n' ;;
   execute.instance_dir_list)

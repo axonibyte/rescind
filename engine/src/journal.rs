@@ -9,8 +9,8 @@
 use std::fmt;
 use std::sync::{Arc, Mutex};
 
-use rue_core::journal::{append, Entry, Event};
-use rue_core::model::Instant;
+use rescind_core::journal::{append, Entry, Event};
+use rescind_core::model::Instant;
 
 use crate::sign::Signer;
 use crate::store::{Store, StoreError};

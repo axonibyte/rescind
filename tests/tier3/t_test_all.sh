@@ -14,7 +14,7 @@ set -u
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd) || exit 2
 shell=$(command -v sh) || exit 2
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-t-test-all.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-t-test-all.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 rc=0

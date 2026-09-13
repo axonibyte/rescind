@@ -30,11 +30,11 @@ use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use rue_core::ir::PlanIr;
-use rue_core::journal::{Entry, Event as J, Scope};
-use rue_core::ledger::LedgerCode;
-use rue_core::model::{Duration as RDuration, ForceName, Mode};
-use rue_core::states::RCode;
+use rescind_core::ir::PlanIr;
+use rescind_core::journal::{Entry, Event as J, Scope};
+use rescind_core::ledger::LedgerCode;
+use rescind_core::model::{Duration as RDuration, ForceName, Mode};
+use rescind_core::states::RCode;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
@@ -635,7 +635,7 @@ fn engine_error(e: EngineError) -> ControlError {
     match e {
         EngineError::Refused(v) => ControlError {
             code: "refused".into(),
-            message: rue_core::prose::prose(&v),
+            message: rescind_core::prose::prose(&v),
         },
         EngineError::Ledger(LedgerCode::R0101, m) => ControlError::new("R0101", m),
         EngineError::Ledger(LedgerCode::R0203, m) => ControlError::new("R0203", m),
@@ -694,7 +694,7 @@ fn status_json(r: &InstanceRecord) -> Value {
 /// (`ack: n`), a step gate (`step: n`), or the plan gate.
 ///
 /// The ack scope was missing, so nothing could ask for the challenge an
-/// acknowledgement is proved against: `rue ack` could submit a proof but no
+/// acknowledgement is proved against: `rescind ack` could submit a proof but no
 /// person could learn what to prove. Against the fake binding, which takes
 /// any token, that never showed; against any binding that checks a proof
 /// over the digest it rendered -- which is what an approval binding is for --
@@ -1004,7 +1004,7 @@ fn dispatch_inner(
                 json!({ "host": host, "state": state, "ready": state.ready(), "commands": commands }),
             )
         }
-        // `rue approve <instance> [--step N] < token` and `rue ack`
+        // `rescind approve <instance> [--step N] < token` and `rescind ack`
         // (5.11): a proof is bound to the request digest and its scope,
         // and the operator's own identity is the authenticator unless one
         // is named. With no proof the challenge is printed instead.
@@ -1054,7 +1054,7 @@ fn dispatch_inner(
                 .map_err(engine_error)?;
             Ok(outcome_json(&out))
         }
-        // `rue reveal <instance>`: what `hold()` kept, once (5.13).
+        // `rescind reveal <instance>`: what `hold()` kept, once (5.13).
         "reveal" => {
             let id = arg_str(args, "instance")?;
             scoped(daemon, op, id)?;
@@ -1067,7 +1067,7 @@ fn dispatch_inner(
                 )),
             }
         }
-        // `rue reclaim <host> <instance>`: an orphaned instance directory
+        // `rescind reclaim <host> <instance>`: an orphaned instance directory
         // (7.7). Refused while the artifact is armed with its scheduler
         // entry present (R0405) unless forced with a reason.
         "reclaim" => {

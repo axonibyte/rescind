@@ -6,7 +6,7 @@
 - opened: 2026-09-11
 - closed: 2026-09-11
 
-A previous release's `.rue` files and store must still check and migrate
+A previous release's `.scind` files and store must still check and migrate
 under the current one, or fail with a diagnostic that names the change and
 its fix (ROADMAP Phase 5, deliverables and acceptance).
 
@@ -18,7 +18,7 @@ Every release that ships without this makes it harder to add.
 **Done when.** The v0.1.0 and v0.2.0 tenant texts and a store written by
 each are checked-in fixtures; a test checks each text under the current
 build and requires a clean check or diagnostics that name the release and
-the change; `rued migrate` takes each store forward; the acceptance line
+the change; `rescindd migrate` takes each store forward; the acceptance line
 ("v0.1.0 tenant files under v0.3.0 pass or emit a migration diagnostic
 naming the change") holds.
 

@@ -15,17 +15,17 @@ use std::thread;
 use std::time::Duration;
 
 use common::world::{self, World, OWNER};
-use rue_core::journal::Event as J;
-use rue_engine::control::{
+use rescind_core::journal::Event as J;
+use rescind_engine::control::{
     handle, Daemon, Operator, Operators, Peer, RegistrarDecl, SharedWriter, SubscriberSink,
     Subscribers, UserSpec, CONTROL_PROTOCOL,
 };
-use rue_engine::executor::Executor;
-use rue_engine::hook::{HookExecutor, HookRegistry, HOOK_PROTOCOL};
-use rue_engine::journal::{Journal, MemorySink, Sink};
-use rue_engine::lifecycle::Engine;
-use rue_engine::peer::my_account;
-use rue_engine::store::Store;
+use rescind_engine::executor::Executor;
+use rescind_engine::hook::{HookExecutor, HookRegistry, HOOK_PROTOCOL};
+use rescind_engine::journal::{Journal, MemorySink, Sink};
+use rescind_engine::lifecycle::Engine;
+use rescind_engine::peer::my_account;
+use rescind_engine::store::Store;
 use serde_json::{json, Value};
 
 /// A daemon over the test world's engine, with the given operators.
@@ -102,7 +102,7 @@ fn operator(name: &str, user: UserSpec, plans: &[&str], admin: bool) -> Operator
 }
 
 /// A connection to the daemon: the server side handled on its own thread
-/// over a pair of anonymous pipes, which every platform rue runs on has.
+/// over a pair of anonymous pipes, which every platform rescind runs on has.
 /// The transport a real daemon binds is the platform's (a Unix socket, a
 /// Windows named pipe); everything these tests exercise sits above it.
 struct Conn {
@@ -130,7 +130,7 @@ impl Drop for Joined {
 /// wait, that journal write raced the test's own cleanup: it recreated a
 /// file in the store while the temporary directory was being removed, the
 /// removal failed on a directory no longer empty, and /tmp kept one
-/// rue-engine-control-* directory per lost race -- a few hundred of them by
+/// rescind-engine-control-* directory per lost race -- a few hundred of them by
 /// Phase 4's end.
 impl Drop for Conn {
     fn drop(&mut self) {
@@ -149,7 +149,7 @@ impl Conn {
         let d = d.clone();
         let server = thread::spawn(move || {
             let peer = Peer {
-                user: rue_engine::peer::my_account(),
+                user: rescind_engine::peer::my_account(),
                 owner: true,
                 uid: None,
             };
@@ -509,20 +509,20 @@ fn a_hook_registers_by_a_declared_registrar_only_is_journaled_and_serves_execute
         }
     });
     let mut o = world::on(world::op("act"), "api-01");
-    o.pre = vec![world::guard("up", rue_core::model::Tri::Unknown)];
-    o.outputs = vec![rue_core::model::Output {
+    o.pre = vec![world::guard("up", rescind_core::model::Tri::Unknown)];
+    o.outputs = vec![rescind_core::model::Output {
         name: "token".into(),
         secret: false,
     }];
     o.footprint = vec![];
-    o.undo = rue_core::model::Undo::Restore;
+    o.undo = rescind_core::model::Undo::Restore;
     let mut plan = world::temp_plan("h", vec![world::step(o)]);
     plan.owner = "api-01".into();
     let mut site = world::site();
     site.transports.push("api".into());
     site.hosts.push(world::record("api-01", &["api"]));
-    let ir = rue_core::ir::PlanIr {
-        ir_version: rue_core::ir::IR_VERSION,
+    let ir = rescind_core::ir::PlanIr {
+        ir_version: rescind_core::ir::IR_VERSION,
         requester: "ops".into(),
         site,
         plan,
@@ -583,14 +583,14 @@ fn a_hook_that_goes_silent_refuses_the_step_and_its_departure_is_journaled() {
     // The hook never answers.
     let mut o = world::on(world::op("act"), "api-01");
     o.footprint = vec![];
-    o.undo = rue_core::model::Undo::Restore;
+    o.undo = rescind_core::model::Undo::Restore;
     let mut plan = world::temp_plan("h", vec![world::step(o)]);
     plan.owner = "api-01".into();
     let mut site = world::site();
     site.transports.push("api".into());
     site.hosts.push(world::record("api-01", &["api"]));
-    let ir = rue_core::ir::PlanIr {
-        ir_version: rue_core::ir::IR_VERSION,
+    let ir = rescind_core::ir::PlanIr {
+        ir_version: rescind_core::ir::IR_VERSION,
         requester: "ops".into(),
         site,
         plan,
@@ -747,7 +747,7 @@ fn a_registered_hook_connection_may_also_act_as_an_operator() {
 
 #[test]
 fn a_secret_is_dropped_from_every_hook_message_but_the_two_that_may_carry_one() {
-    use rue_engine::hook::{guard_secrets, DROPPED};
+    use rescind_engine::hook::{guard_secrets, DROPPED};
     use serde_json::json;
 
     // `execute.run` carries the resolved body, secrets and all: one of the
@@ -793,13 +793,13 @@ fn a_secret_is_dropped_from_every_hook_message_but_the_two_that_may_carry_one() 
 #[test]
 fn a_host_a_hook_lists_is_the_equal_of_one_a_file_declares() {
     // T4's inventory comes from a hook (7.5, Appendix C). A host it lists
-    // must be able to say everything a `rue_toml()` host says: where its
+    // must be able to say everything a `rescind_toml()` host says: where its
     // instance directory lives, whether it honors the stdin preamble, and
     // what language its backstop is rendered in. A record that loses one
     // of those makes the host quietly less capable than the same host
     // read from a file, and nothing in the plan says why.
-    use rue_core::model::ArtifactLanguage;
-    use rue_engine::hook::{hook_inventory, HookError, HookLink, Registered, Registration};
+    use rescind_core::model::ArtifactLanguage;
+    use rescind_engine::hook::{hook_inventory, HookError, HookLink, Registered, Registration};
 
     struct Listing(Value);
     impl HookLink for Listing {
@@ -819,7 +819,7 @@ fn a_host_a_hook_lists_is_the_equal_of_one_a_file_declares() {
             { "name": "full", "address": "10.0.0.1", "os": "freebsd",
               "roles": ["hv", "fw"], "reach": ["ssh"], "filesystem": true,
               "stdin_preamble": false, "scheduler": "cron",
-              "rue_root": "/var/db/rue", "artifact": "python",
+              "rescind_root": "/var/db/rescind", "artifact": "python",
               "facts": { "site": "west" } },
             { "name": "bare", "os": "linux" }
         ]
@@ -842,7 +842,7 @@ fn a_host_a_hook_lists_is_the_equal_of_one_a_file_declares() {
     assert_eq!(hosts.len(), 2);
 
     let full = &hosts[0];
-    assert_eq!(full.rue_root.as_deref(), Some("/var/db/rue"));
+    assert_eq!(full.rescind_root.as_deref(), Some("/var/db/rescind"));
     assert_eq!(full.record.artifact, Some(ArtifactLanguage::Python));
     assert!(
         !full.record.stdin_preamble,
@@ -855,7 +855,7 @@ fn a_host_a_hook_lists_is_the_equal_of_one_a_file_declares() {
 
     // What a hook may leave out, and what it then gets.
     let bare = &hosts[1];
-    assert_eq!(bare.rue_root, None, "no instance directory anywhere");
+    assert_eq!(bare.rescind_root, None, "no instance directory anywhere");
     assert_eq!(bare.record.artifact, None, "the host's native shell");
     assert!(!bare.record.filesystem && !bare.record.stdin_preamble);
     assert!(bare.facts.is_empty(), "no roles is no roles fact");
@@ -890,7 +890,7 @@ fn a_hook_reply_missing_a_field_the_op_requires_is_r0303() {
     // R0303: a hook that answers `ok: true` without what the op promised
     // has violated the contract, and the step is refused with the code
     // rather than proceeding on a guess.
-    use rue_engine::hook::field;
+    use rescind_engine::hook::field;
     use serde_json::json;
 
     // The reply shape is the contract; `field` is what reads it.
@@ -900,7 +900,7 @@ fn a_hook_reply_missing_a_field_the_op_requires_is_r0303() {
     let err = field(&bad, "output").unwrap_err().to_string();
     assert!(err.contains("output"), "{err}");
     // The executor turns that into a refusal naming R0303.
-    let e = rue_engine::executor::ExecError::Failed(format!("R0303: {err}"));
+    let e = rescind_engine::executor::ExecError::Failed(format!("R0303: {err}"));
     assert!(e.to_string().contains("R0303"), "{e}");
 }
 
@@ -910,7 +910,7 @@ fn an_acknowledgement_over_the_channel_is_proved_by_its_authenticator_not_the_op
     // channel passed the operator's identity as the authenticator, so the
     // proof was recorded against "ops" -- a name the approval binding never
     // published -- and a knell waiting on `oncall` could never open. 8.2's
-    // manual knells were unacknowledgeable through `rue ack`.
+    // manual knells were unacknowledgeable through `rescind ack`.
     let w = World::new("control-ack");
     let (_w, d, sink, _) = daemon(
         w,
@@ -921,7 +921,7 @@ fn an_acknowledgement_over_the_channel_is_proved_by_its_authenticator_not_the_op
         false,
     );
     let approval =
-        rue_engine::gates::FakeApprovalHandle::new(vec![rue_core::model::Authenticator {
+        rescind_engine::gates::FakeApprovalHandle::new(vec![rescind_core::model::Authenticator {
             id: "oncall".into(),
             human: true,
         }]);
@@ -930,12 +930,12 @@ fn an_acknowledgement_over_the_channel_is_proved_by_its_authenticator_not_the_op
         .unwrap()
         .set_approval(Box::new(approval.clone()));
     let mut op = world::op("fence");
-    op.undo = rue_core::model::Undo::NoUndo;
-    op.refusal = rue_core::model::Refusal::Knell {
+    op.undo = rescind_core::model::Undo::NoUndo;
+    op.refusal = rescind_core::model::Refusal::Knell {
         guard: None,
-        cost: rue_core::model::Cost::NoCost("measured elsewhere".into()),
-        ack: rue_core::model::Ack::Gate(rue_core::model::GateExpr::Single(
-            rue_core::model::Factor::Auth {
+        cost: rescind_core::model::Cost::NoCost("measured elsewhere".into()),
+        ack: rescind_core::model::Ack::Gate(rescind_core::model::GateExpr::Single(
+            rescind_core::model::Factor::Auth {
                 id: "oncall".into(),
                 weight: 1,
             },
@@ -943,9 +943,9 @@ fn an_acknowledgement_over_the_channel_is_proved_by_its_authenticator_not_the_op
     };
     let plan = world::temp_plan(
         "p",
-        vec![rue_core::model::Item::Knell(rue_core::model::StepI::new(
-            op,
-        ))],
+        vec![rescind_core::model::Item::Knell(
+            rescind_core::model::StepI::new(op),
+        )],
     );
     let mut c = Conn::open(&d);
     c.hello(None);

@@ -7,19 +7,19 @@
 //! runs is a check that proves nothing, and the reader deserves to know
 //! which those are.
 
-use rue_core::journal::Event as J;
-use rue_core::model::{Kind, UndoLocus};
-use rue_core::states::State;
-use rue_engine::clock::Clock;
+use rescind_core::journal::Event as J;
+use rescind_core::model::{Kind, UndoLocus};
+use rescind_core::states::State;
+use rescind_engine::clock::Clock;
 
 use crate::world::{Sim, INVARIANTS, SECRET, TARGET};
 
 /// Which host an op acts on, by name, as the plans of this world declare
 /// it: the target unless the op names another.
-fn host_of(r: &rue_engine::lifecycle::InstanceRecord, op: &rue_core::model::Op) -> String {
+fn host_of(r: &rescind_engine::lifecycle::InstanceRecord, op: &rescind_core::model::Op) -> String {
     match &op.locus {
-        rue_core::model::Locus::Host(rue_core::model::HostRef::Static(h)) => h.clone(),
-        rue_core::model::Locus::Controller => "controller".to_string(),
+        rescind_core::model::Locus::Host(rescind_core::model::HostRef::Static(h)) => h.clone(),
+        rescind_core::model::Locus::Controller => "controller".to_string(),
         _ => r.plan().owner.clone(),
     }
 }
@@ -31,21 +31,21 @@ fn host_of(r: &rue_engine::lifecycle::InstanceRecord, op: &rue_core::model::Op) 
 /// literally called `/etc/guest-{g}` -- which is how the third plan found
 /// this the first time it ran.
 fn applied_facts(
-    r: &rue_engine::lifecycle::InstanceRecord,
-    a: &rue_engine::lifecycle::AppliedStep,
-) -> Vec<rue_core::model::FootprintEntry> {
+    r: &rescind_engine::lifecycle::InstanceRecord,
+    a: &rescind_engine::lifecycle::AppliedStep,
+) -> Vec<rescind_core::model::FootprintEntry> {
     let Some(op) = r.op_at(a.step) else {
         return Vec::new();
     };
     let mut params = r.params.clone();
     params.extend(a.vars.clone());
-    let env = rue_engine::resolve::Env {
+    let env = rescind_engine::resolve::Env {
         params,
         outputs: r.outputs.clone(),
         ..Default::default()
     };
     let host = crate::world::host_named(&host_of(r, op));
-    rue_engine::resolve::concrete_op(op, &host, &env)
+    rescind_engine::resolve::concrete_op(op, &host, &env)
         .map(|o| o.footprint)
         .unwrap_or_default()
 }
@@ -106,7 +106,7 @@ pub fn check_all(sim: &mut Sim) -> Option<Violation> {
 /// once per iteration, and a closed instance has none left.
 fn i01_applied_steps(sim: &mut Sim) -> Option<Violation> {
     for r in sim.records() {
-        let leaves = rue_core::algebra::numbered(&r.plan().body).len() as u32;
+        let leaves = rescind_core::algebra::numbered(&r.plan().body).len() as u32;
         for a in &r.applied {
             if a.step == 0 || a.step > leaves {
                 return broke(1, format!("{}: step {} is not in the plan", r.id, a.step));
@@ -185,9 +185,9 @@ fn i02_footprints_present(sim: &mut Sim) -> Option<Violation> {
             && !fired_unread
             && !abandoned(sim, &r.id)
         {
-            for (n, _) in rue_core::algebra::numbered(&r.plan().body) {
+            for (n, _) in rescind_core::algebra::numbered(&r.plan().body) {
                 let Some(op) = r.op_at(n) else { continue };
-                if op.undo == rue_core::model::Undo::NoUndo {
+                if op.undo == rescind_core::model::Undo::NoUndo {
                     continue;
                 }
                 let Some(facts) = sim.facts_on(&host_of(&r, op)) else {
@@ -236,7 +236,7 @@ fn i03_stuck_set(sim: &mut Sim) -> Option<Violation> {
 /// (4) The journal chain verifies end to end.
 fn i04_journal_verifies(sim: &mut Sim) -> Option<Violation> {
     let entries = sim.sink.entries();
-    if let Err(e) = rue_core::journal::verify(&entries) {
+    if let Err(e) = rescind_core::journal::verify(&entries) {
         return broke(4, format!("{e:?}"));
     }
     None
@@ -439,7 +439,7 @@ fn i12_no_region_clobbered_under_a_sibling(sim: &mut Sim) -> Option<Violation> {
     let live: Vec<(String, String)> = sim
         .records()
         .into_iter()
-        .filter(|r| !rue_core::states::terminal(r.state))
+        .filter(|r| !rescind_core::states::terminal(r.state))
         .flat_map(|r| {
             let id = r.id.clone();
             r.applied
@@ -460,7 +460,7 @@ fn i12_no_region_clobbered_under_a_sibling(sim: &mut Sim) -> Option<Violation> {
         .map(|b| String::from_utf8_lossy(&b).into_owned())
         .unwrap_or_default();
     for (id, anchor) in live {
-        if !text.contains(&format!("rue-region {anchor} begin")) {
+        if !text.contains(&format!("rescind-region {anchor} begin")) {
             return broke(
                 12,
                 format!("{id}: the region {anchor} it holds is gone from the shared fact"),
@@ -482,7 +482,7 @@ fn i13_ledger_holds_the_reservers(sim: &mut Sim) -> Option<Violation> {
         .map(|h| h.id.split('@').next().unwrap_or_default().to_string())
         .collect();
     for r in sim.records() {
-        let reserves = !rue_core::states::terminal(r.state) && !r.rehearsal;
+        let reserves = !rescind_core::states::terminal(r.state) && !r.rehearsal;
         let held = holding.contains(&r.id);
         if reserves && !held && !r.ledger_ids.is_empty() {
             return broke(13, format!("{} is {} and reserves nothing", r.id, r.state));
@@ -505,7 +505,7 @@ fn i14_a_proof_is_scoped(sim: &mut Sim) -> Option<Violation> {
         let plan_proofs = r
             .proofs
             .iter()
-            .filter(|p| p.scope == rue_core::journal::Scope::Plan)
+            .filter(|p| p.scope == rescind_core::journal::Scope::Plan)
             .count();
         let approved = r.approved_at.is_some();
         // Two authenticators are named; the gate needs both. Approved with

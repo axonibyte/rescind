@@ -45,7 +45,7 @@ impl Resolved {
     }
 }
 
-/// A resolved primitive: `rue_core::body::Prim` with every value a
+/// A resolved primitive: `rescind_core::body::Prim` with every value a
 /// [`Resolved`]. Paths and anchors come from the primitive's fact reference.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

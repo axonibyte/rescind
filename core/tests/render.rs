@@ -6,11 +6,11 @@
 mod common;
 
 use common::*;
-use rue_core::body::*;
-use rue_core::check::check;
-use rue_core::explain::explain;
-use rue_core::model::*;
-use rue_core::prose::prose;
+use rescind_core::body::*;
+use rescind_core::check::check;
+use rescind_core::explain::explain;
+use rescind_core::model::*;
+use rescind_core::prose::prose;
 
 fn site() -> Site {
     Site {
@@ -126,11 +126,11 @@ fn explain_marks_knells_deferred_steps_and_the_region_cost() {
         undo_locus: UndoLocus::Target,
         ..Op::new(
             "pf",
-            vec![FootprintEntry::anchored("file:/etc/pf.conf", "rue")],
+            vec![FootprintEntry::anchored("file:/etc/pf.conf", "rescind")],
         )
     };
     let p = temp(vec![Item::Knell(StepI::new(knell_op())), s(region)]);
-    let expected = " 1. fence   locus=target   refusal=knell   drift=n/a   undo=NO UNDO \u{2014} knell, cost fence_verdict   undo_locus=controller   ack=none (driver verified off)\n 2. pf   locus=target   refusal=revert   drift=clobber   undo=strip anchor rue from file:/etc/pf.conf   undo_locus=target   damaged-marker cost: the whole fact is restored from the do-time snapshot and a stranger's edits outside the region are lost, unless another instance holds a region on it   deferred \u{2192} (handoff command printed at apply)\n";
+    let expected = " 1. fence   locus=target   refusal=knell   drift=n/a   undo=NO UNDO \u{2014} knell, cost fence_verdict   undo_locus=controller   ack=none (driver verified off)\n 2. pf   locus=target   refusal=revert   drift=clobber   undo=strip anchor rescind from file:/etc/pf.conf   undo_locus=target   damaged-marker cost: the whole fact is restored from the do-time snapshot and a stranger's edits outside the region are lost, unless another instance holds a region on it   deferred \u{2192} (handoff command printed at apply)\n";
     assert_eq!(explain(&p, &[2]), expected);
 }
 
@@ -138,7 +138,7 @@ fn explain_marks_knells_deferred_steps_and_the_region_cost() {
 /// and per primitive for a body, and claims no more than the body does.
 #[test]
 fn the_undo_line_is_derived_from_the_undo() {
-    use rue_core::explain::undo_line;
+    use rescind_core::explain::undo_line;
     let restore = Op::new(
         "r",
         vec![
@@ -222,7 +222,7 @@ fn the_undo_line_is_derived_from_the_undo() {
 /// not in the file cannot change what the page says after it was read.
 #[test]
 fn the_html_page_is_self_contained_and_says_what_the_listing_says() {
-    use rue_core::explain::explain_html;
+    use rescind_core::explain::explain_html;
     let p = temp(vec![s(owned("a")), s(knell_op())]);
     let v = check(&site(), "requester", &p);
     let said = prose(&v);
@@ -257,7 +257,7 @@ fn the_html_page_is_self_contained_and_says_what_the_listing_says() {
 /// characters.
 #[test]
 fn markup_in_a_plan_is_escaped_rather_than_rendered() {
-    use rue_core::explain::explain_html;
+    use rescind_core::explain::explain_html;
     let mut op = owned("a");
     op.id = "<script>alert('x')</script>".into();
     let p = temp(vec![s(op)]);

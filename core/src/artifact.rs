@@ -2,7 +2,7 @@
 //! which shell family a host's `os` implies, which language a host's
 //! backstop artifact is rendered in, and which pairs have a template.
 //!
-//! This is OS-family knowledge in core rather than in `rue-render`, the one
+//! This is OS-family knowledge in core rather than in `rescind-render`, the one
 //! exception to section 4.5's "three places": the checker refuses a plan
 //! whose `:target` backstop has no template (E0403) at check time, and core
 //! cannot depend on render. The templates and the quoting stay in render.

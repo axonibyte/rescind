@@ -3,7 +3,7 @@
 #
 # The protocol's ops exist in several places that must never drift: the
 # table in docs/hook-protocol.md, which is what an SDK author reads; `OPS`
-# in hook-proto/src/op.rs, which is what the engine and `rue sdk-conform`
+# in hook-proto/src/op.rs, which is what the engine and `rescind sdk-conform`
 # execute; and one transcription per SDK that cannot share the Rust table,
 # starting with sdk/python. This guard reads them all as data and requires
 # them to agree in every direction.
@@ -39,7 +39,7 @@ code=$root/hook-proto/src/op.rs
 [ -r "$doc" ] || { echo "lint-hook-ops: no $doc" >&2; exit 2; }
 [ -r "$code" ] || { echo "lint-hook-ops: no $code" >&2; exit 2; }
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rue-lint-hook-ops.XXXXXX") || exit 2
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rescind-lint-hook-ops.XXXXXX") || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
 # The document: rows of the ops table, whose first cell is a kind in
@@ -104,17 +104,17 @@ sdk_table() { # sdk_table <name> <dir> <file> <pattern> <sed script>
 }
 
 # python: Op("kind", "op", ...)
-sdk_table python sdk/python sdk/python/rue_hook/proto.py \
+sdk_table python sdk/python sdk/python/rescind_hook/proto.py \
     'Op\( *"[a-z_]+", *"[a-z_]+"' \
     's/Op\( *"([a-z_]+)", *"([a-z_]+)"/\1.\2/'
 
 # elixir: %Op{kind: "kind", op: "op", ...}
-sdk_table elixir sdk/elixir sdk/elixir/lib/rue_hook/proto.ex \
+sdk_table elixir sdk/elixir sdk/elixir/lib/rescind_hook/proto.ex \
     '%Op\{ *kind: *"[a-z_]+", *op: *"[a-z_]+"' \
     's/%Op\{ *kind: *"([a-z_]+)", *op: *"([a-z_]+)"/\1.\2/'
 
 # java: row("kind", "op", ...) and new Op("kind", "op", ...)
-sdk_table java sdk/java sdk/java/src/main/java/dev/rue/hook/Op.java \
+sdk_table java sdk/java sdk/java/src/main/java/dev/rescind/hook/Op.java \
     '(row|new Op)\( *"[a-z_]+", *"[a-z_]+"' \
     's/(row|new Op)\( *"([a-z_]+)", *"([a-z_]+)"/\2.\3/'
 

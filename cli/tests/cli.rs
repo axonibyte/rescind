@@ -5,8 +5,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use rue_tenants::golden::repo_root;
-use rue_tenants::{NegativeCase, TenantCase, NEGATIVES, STATE_TABLE, TENANT_CASES};
+use rescind_tenants::golden::repo_root;
+use rescind_tenants::{NegativeCase, TenantCase, NEGATIVES, STATE_TABLE, TENANT_CASES};
 
 /// A tenant case from the table, by tenant and case directory.
 fn tenant_case(tenant: &str, host: &str) -> TenantCase {
@@ -17,18 +17,18 @@ fn tenant_case(tenant: &str, host: &str) -> TenantCase {
 }
 
 /// A negative from the table, by code and slug.
-fn negative_case(code: rue_core::diagnostics::Code, slug: &str) -> NegativeCase {
+fn negative_case(code: rescind_core::diagnostics::Code, slug: &str) -> NegativeCase {
     *NEGATIVES
         .iter()
         .find(|n| n.code == code && n.slug == slug)
         .unwrap_or_else(|| panic!("no negative {code}-{slug}"))
 }
 
-fn rue(args: &[&str]) -> std::process::Output {
-    Command::new(env!("CARGO_BIN_EXE_rue"))
+fn rescind(args: &[&str]) -> std::process::Output {
+    Command::new(env!("CARGO_BIN_EXE_rescind"))
         .args(args)
         .output()
-        .expect("rue runs")
+        .expect("rescind runs")
 }
 
 fn golden(root: &Path, rel: &str) -> Vec<u8> {
@@ -39,7 +39,7 @@ fn golden(root: &Path, rel: &str) -> Vec<u8> {
 fn check_prints_the_prose_verdict_and_exits_zero_on_a_clean_plan() {
     let root = repo_root().unwrap();
     let case = tenant_case("t1", "db-01");
-    let out = rue(&["check", root.join(case.input()).to_str().unwrap()]);
+    let out = rescind(&["check", root.join(case.input()).to_str().unwrap()]);
     assert!(
         out.status.success(),
         "{}",
@@ -56,7 +56,7 @@ fn check_prints_the_prose_verdict_and_exits_zero_on_a_clean_plan() {
 fn check_json_prints_the_canonical_verdict() {
     let root = repo_root().unwrap();
     let case = tenant_case("t3", "fw-01");
-    let out = rue(&["check", "--json", root.join(case.input()).to_str().unwrap()]);
+    let out = rescind(&["check", "--json", root.join(case.input()).to_str().unwrap()]);
     assert!(out.status.success());
     assert_eq!(
         out.stdout,
@@ -68,7 +68,7 @@ fn check_json_prints_the_canonical_verdict() {
 fn explain_prints_the_listing() {
     let root = repo_root().unwrap();
     let case = tenant_case("t2", "node-b-manual");
-    let out = rue(&["explain", root.join(case.input()).to_str().unwrap()]);
+    let out = rescind(&["explain", root.join(case.input()).to_str().unwrap()]);
     assert!(out.status.success());
     assert_eq!(
         out.stdout,
@@ -83,8 +83,8 @@ fn explain_html_renders_the_same_listing_as_one_self_contained_page() {
     let root = repo_root().unwrap();
     let case = tenant_case("t2", "node-b-manual");
     let input = root.join(case.input());
-    let text = rue(&["explain", input.to_str().unwrap()]);
-    let html = rue(&["explain", input.to_str().unwrap(), "--html"]);
+    let text = rescind(&["explain", input.to_str().unwrap()]);
+    let html = rescind(&["explain", input.to_str().unwrap(), "--html"]);
     assert_eq!(html.status.code(), text.status.code(), "the same verdict");
     let page = String::from_utf8_lossy(&html.stdout).to_string();
     assert!(page.starts_with("<!DOCTYPE html>"), "{page}");
@@ -106,17 +106,17 @@ fn explain_html_renders_the_same_listing_as_one_self_contained_page() {
 fn a_refused_plan_exits_one_with_its_verdict() {
     let root = repo_root().unwrap();
     let neg = negative_case(
-        rue_core::diagnostics::Code::E0401,
+        rescind_core::diagnostics::Code::E0401,
         "backstop-armed-after-reach",
     );
-    let out = rue(&["check", root.join(neg.input()).to_str().unwrap()]);
+    let out = rescind(&["check", root.join(neg.input()).to_str().unwrap()]);
     assert_eq!(out.status.code(), Some(1));
     assert_eq!(
         out.stdout,
         golden(&root, &format!("{}/verdict.txt", neg.dir()))
     );
     // explain still lists the steps, and puts the verdict on stderr.
-    let out = rue(&["explain", root.join(neg.input()).to_str().unwrap()]);
+    let out = rescind(&["explain", root.join(neg.input()).to_str().unwrap()]);
     assert_eq!(out.status.code(), Some(1));
     assert!(!out.stdout.is_empty());
     assert_eq!(
@@ -128,7 +128,7 @@ fn a_refused_plan_exits_one_with_its_verdict() {
 #[test]
 fn a_missing_file_a_wrong_version_and_a_usage_error_exit_two_with_nothing_on_stdout() {
     let root = repo_root().unwrap();
-    let out = rue(&[
+    let out = rescind(&[
         "check",
         root.join("tenants/nope/plan.json").to_str().unwrap(),
     ]);
@@ -137,21 +137,21 @@ fn a_missing_file_a_wrong_version_and_a_usage_error_exit_two_with_nothing_on_std
     assert!(String::from_utf8_lossy(&out.stderr).contains("cannot read"));
 
     let doc = golden(&root, &tenant_case("t4", "site-ctl").input());
-    let current = rue_core::ir::IR_VERSION;
+    let current = rescind_core::ir::IR_VERSION;
     let doctored = String::from_utf8(doc).unwrap().replacen(
         &format!("\"ir_version\": {current},"),
         &format!("\"ir_version\": {},", current + 1),
         1,
     );
-    let tmp = std::env::temp_dir().join(format!("rue-cli-test-{}.json", std::process::id()));
+    let tmp = std::env::temp_dir().join(format!("rescind-cli-test-{}.json", std::process::id()));
     fs::write(&tmp, doctored).unwrap();
-    let out = rue(&["check", tmp.to_str().unwrap()]);
+    let out = rescind(&["check", tmp.to_str().unwrap()]);
     let _ = fs::remove_file(&tmp);
     assert_eq!(out.status.code(), Some(2));
     assert!(out.stdout.is_empty());
     assert!(String::from_utf8_lossy(&out.stderr).contains(&format!("version {}", current + 1)));
 
-    let out = rue(&["frobnicate"]);
+    let out = rescind(&["frobnicate"]);
     assert_eq!(out.status.code(), Some(2));
     assert!(out.stdout.is_empty());
 }
@@ -159,7 +159,7 @@ fn a_missing_file_a_wrong_version_and_a_usage_error_exit_two_with_nothing_on_std
 #[test]
 fn states_prints_the_transition_table() {
     let root = repo_root().unwrap();
-    let out = rue(&["states"]);
+    let out = rescind(&["states"]);
     assert!(out.status.success());
     assert_eq!(out.stdout, golden(&root, STATE_TABLE));
 }
@@ -174,7 +174,7 @@ fn artifact_prints_the_golden_and_reports_refusals_by_exit_code() {
         ("t3", "fw-02", "artifact.py"),
     ] {
         let case = tenant_case(tenant, host);
-        let out = rue(&[
+        let out = rescind(&[
             "artifact",
             root.join(case.input()).to_str().unwrap(),
             "--instance",
@@ -190,36 +190,37 @@ fn artifact_prints_the_golden_and_reports_refusals_by_exit_code() {
         let expected = fs::read(root.join(case.dir()).join(file)).unwrap();
         assert_eq!(out.stdout, expected, "{tenant}/{host}");
     }
-    // --host selects another record of the site; --rue-root is baked.
+    // --host selects another record of the site; --rescind-root is baked.
     let t3 = tenant_case("t3", "fw-01");
-    let out = rue(&[
+    let out = rescind(&[
         "artifact",
         root.join(t3.input()).to_str().unwrap(),
         "--instance",
         "i-9",
         "--host",
         "fw-mac-01",
-        "--rue-root",
-        "/opt/rue",
+        "--rescind-root",
+        "/opt/rescind",
     ]);
     assert!(out.status.success());
     let text = String::from_utf8(out.stdout).unwrap();
     assert!(
-        text.contains("on fw-mac-01 (os macos)") && text.contains("INST='/opt/rue/instances/i-9'")
+        text.contains("on fw-mac-01 (os macos)")
+            && text.contains("INST='/opt/rescind/instances/i-9'")
     );
 
     // A diagnostic (E0403: sh declared on a Windows host) is exit 1.
     let neg = root.join("tenants/_negative/E0403-artifact-language-unsupported/expected/plan.json");
-    let out = rue(&["artifact", neg.to_str().unwrap(), "--instance", "x"]);
+    let out = rescind(&["artifact", neg.to_str().unwrap(), "--instance", "x"]);
     assert_eq!(out.status.code(), Some(1));
     assert!(out.stdout.is_empty());
     assert!(String::from_utf8_lossy(&out.stderr)
-        .contains(&rue_core::diagnostics::Code::E0403.to_string()));
+        .contains(&rescind_core::diagnostics::Code::E0403.to_string()));
 
     // A call that cannot apply (no :target backstop; an unknown host; a bad
     // --set) is exit 2 with nothing on stdout.
     let t4 = tenant_case("t4", "site-ctl");
-    let out = rue(&[
+    let out = rescind(&[
         "artifact",
         root.join(t4.input()).to_str().unwrap(),
         "--instance",
@@ -227,7 +228,7 @@ fn artifact_prints_the_golden_and_reports_refusals_by_exit_code() {
     ]);
     assert_eq!(out.status.code(), Some(2));
     assert!(out.stdout.is_empty());
-    let out = rue(&[
+    let out = rescind(&[
         "artifact",
         root.join(t3.input()).to_str().unwrap(),
         "--instance",
@@ -236,7 +237,7 @@ fn artifact_prints_the_golden_and_reports_refusals_by_exit_code() {
         "nope",
     ]);
     assert_eq!(out.status.code(), Some(2));
-    let out = rue(&[
+    let out = rescind(&[
         "artifact",
         root.join(t3.input()).to_str().unwrap(),
         "--instance",
@@ -251,39 +252,39 @@ fn artifact_prints_the_golden_and_reports_refusals_by_exit_code() {
 #[test]
 fn fmt_prints_the_canonical_text_checks_it_and_refuses_a_file_with_errors() {
     let root = repo_root().unwrap();
-    let t1 = root.join("tenants/t1/plan.rue");
-    let out = rue(&["fmt", t1.to_str().unwrap()]);
+    let t1 = root.join("tenants/t1/plan.scind");
+    let out = rescind(&["fmt", t1.to_str().unwrap()]);
     assert!(out.status.success());
     assert_eq!(
         out.stdout,
         fs::read(&t1).unwrap(),
         "fmt is the identity on a tenant file"
     );
-    let out = rue(&["fmt", "--check", t1.to_str().unwrap()]);
+    let out = rescind(&["fmt", "--check", t1.to_str().unwrap()]);
     assert!(out.status.success() && out.stdout.is_empty());
 
-    let tmp = std::env::temp_dir().join(format!("rue-fmt-{}.rue", std::process::id()));
+    let tmp = std::env::temp_dir().join(format!("rescind-fmt-{}.scind", std::process::id()));
     fs::write(
         &tmp,
-        "rue 0\ndefplan :p,%{name: \"db-01\"} do\n    wane  1h\nend\n",
+        "rescind 0\ndefplan :p,%{name: \"db-01\"} do\n    wane  1h\nend\n",
     )
     .unwrap();
-    let out = rue(&["fmt", "--check", tmp.to_str().unwrap()]);
+    let out = rescind(&["fmt", "--check", tmp.to_str().unwrap()]);
     assert_eq!(out.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&out.stderr).contains("not formatted"));
-    let out = rue(&["fmt", tmp.to_str().unwrap()]);
+    let out = rescind(&["fmt", tmp.to_str().unwrap()]);
     assert!(out.status.success());
     assert_eq!(
         String::from_utf8(out.stdout).unwrap(),
-        "rue 0\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\nend\n"
+        "rescind 0\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\nend\n"
     );
 
     fs::write(
         &tmp,
-        "rue 0\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n",
+        "rescind 0\ndefplan :p, %{name: \"db-01\"} do\n  wane 1h\n",
     )
     .unwrap();
-    let out = rue(&["fmt", tmp.to_str().unwrap()]);
+    let out = rescind(&["fmt", tmp.to_str().unwrap()]);
     let _ = fs::remove_file(&tmp);
     assert_eq!(out.status.code(), Some(1));
     assert!(
@@ -291,14 +292,14 @@ fn fmt_prints_the_canonical_text_checks_it_and_refuses_a_file_with_errors() {
         "a file with errors is never rewritten"
     );
     assert!(String::from_utf8_lossy(&out.stderr)
-        .contains(&rue_core::diagnostics::Code::E0101.to_string()));
+        .contains(&rescind_core::diagnostics::Code::E0101.to_string()));
 }
 
 #[test]
-fn check_explain_and_artifact_read_a_rue_file_for_one_host() {
+fn check_explain_and_artifact_read_a_rescind_file_for_one_host() {
     let root = repo_root().unwrap();
-    let t1 = root.join("tenants/t1/plan.rue");
-    let out = rue(&["check", t1.to_str().unwrap(), "--json", "--host", "db-01"]);
+    let t1 = root.join("tenants/t1/plan.scind");
+    let out = rescind(&["check", t1.to_str().unwrap(), "--json", "--host", "db-01"]);
     assert!(
         out.status.success(),
         "{}",
@@ -310,18 +311,18 @@ fn check_explain_and_artifact_read_a_rue_file_for_one_host() {
     );
     // The plan's pattern names its host, so --host may be omitted; the
     // requester is the first declared operator.
-    let out = rue(&["check", t1.to_str().unwrap()]);
+    let out = rescind(&["check", t1.to_str().unwrap()]);
     assert!(out.status.success());
     assert_eq!(
         out.stdout,
         fs::read(root.join("tenants/t1/expected/db-01/verdict.txt")).unwrap()
     );
-    let out = rue(&["explain", t1.to_str().unwrap()]);
+    let out = rescind(&["explain", t1.to_str().unwrap()]);
     assert_eq!(
         out.stdout,
         fs::read(root.join("tenants/t1/expected/db-01/explain.txt")).unwrap()
     );
-    let out = rue(&["artifact", t1.to_str().unwrap(), "--instance", "golden"]);
+    let out = rescind(&["artifact", t1.to_str().unwrap(), "--instance", "golden"]);
     assert_eq!(
         out.stdout,
         fs::read(root.join("tenants/t1/expected/db-01/artifact.sh")).unwrap()
@@ -329,11 +330,11 @@ fn check_explain_and_artifact_read_a_rue_file_for_one_host() {
 
     // A file with two plans needs --plan-name; a clause-dispatched plan
     // needs --host.
-    let t2 = root.join("tenants/t2/plan.rue");
-    let out = rue(&["check", t2.to_str().unwrap(), "--host", "node-b"]);
+    let t2 = root.join("tenants/t2/plan.scind");
+    let out = rescind(&["check", t2.to_str().unwrap(), "--host", "node-b"]);
     assert_eq!(out.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&out.stderr).contains("--plan"));
-    let out = rue(&[
+    let out = rescind(&[
         "check",
         t2.to_str().unwrap(),
         "--json",
@@ -347,11 +348,11 @@ fn check_explain_and_artifact_read_a_rue_file_for_one_host() {
         out.stdout,
         fs::read(root.join("tenants/t2/expected/node-b-auto/verdict.json")).unwrap()
     );
-    let t3 = root.join("tenants/t3/plan.rue");
-    let out = rue(&["check", t3.to_str().unwrap()]);
+    let t3 = root.join("tenants/t3/plan.scind");
+    let out = rescind(&["check", t3.to_str().unwrap()]);
     assert_eq!(out.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&out.stderr).contains("--host"));
-    let out = rue(&[
+    let out = rescind(&[
         "check",
         t3.to_str().unwrap(),
         "--json",
@@ -365,24 +366,24 @@ fn check_explain_and_artifact_read_a_rue_file_for_one_host() {
 
     // A negative refuses with exit 1 and its verdict; an unknown host is a
     // diagnostic with a suggestion.
-    let neg = root.join("tenants/_negative/E0301-umbra-conflict/plan.rue");
-    let out = rue(&["check", neg.to_str().unwrap()]);
+    let neg = root.join("tenants/_negative/E0301-umbra-conflict/plan.scind");
+    let out = rescind(&["check", neg.to_str().unwrap()]);
     assert_eq!(out.status.code(), Some(1));
     assert_eq!(
         out.stdout,
         fs::read(root.join("tenants/_negative/E0301-umbra-conflict/expected/verdict.txt")).unwrap()
     );
-    let out = rue(&["check", t1.to_str().unwrap(), "--host", "db-1"]);
+    let out = rescind(&["check", t1.to_str().unwrap(), "--host", "db-1"]);
     assert_eq!(out.status.code(), Some(1));
     let err = String::from_utf8_lossy(&out.stderr);
     assert!(
-        err.contains(&rue_core::diagnostics::Code::E0102.to_string())
+        err.contains(&rescind_core::diagnostics::Code::E0102.to_string())
             && err.contains("did you mean db-01"),
         "{err}"
     );
 
     // Selectors on a plan IR are a usage error.
-    let out = rue(&[
+    let out = rescind(&[
         "check",
         root.join("tenants/t1/expected/db-01/plan.json")
             .to_str()
@@ -396,12 +397,12 @@ fn check_explain_and_artifact_read_a_rue_file_for_one_host() {
 #[test]
 fn a_diagnostic_on_stderr_shows_the_code_the_source_line_and_the_suggestion() {
     let root = repo_root().unwrap();
-    let neg = root.join("tenants/_negative/E0102-unknown-op/plan.rue");
-    let out = rue(&["check", neg.to_str().unwrap()]);
+    let neg = root.join("tenants/_negative/E0102-unknown-op/plan.scind");
+    let out = rescind(&["check", neg.to_str().unwrap()]);
     assert_eq!(out.status.code(), Some(1));
     let err = String::from_utf8_lossy(&out.stderr);
     assert!(
-        err.contains(&rue_core::diagnostics::Code::E0102.to_string()),
+        err.contains(&rescind_core::diagnostics::Code::E0102.to_string()),
         "{err}"
     );
     assert!(err.contains("postrue()"), "the source line is shown: {err}");
@@ -410,17 +411,17 @@ fn a_diagnostic_on_stderr_shows_the_code_the_source_line_and_the_suggestion() {
     assert!(
         err.contains(&format!(
             "{}-unknown-op",
-            rue_core::diagnostics::Code::E0102
-        )) && err.contains("plan.rue:22:3"),
+            rescind_core::diagnostics::Code::E0102
+        )) && err.contains("plan.scind:22:3"),
         "{err}"
     );
 }
 
-// --- rue journal verify ------------------------------------------------------
+// --- rescind journal verify ------------------------------------------------------
 
 fn journal_dir(name: &str) -> PathBuf {
     let p = std::env::temp_dir().join(format!(
-        "rue-cli-journal-{name}-{}-{}",
+        "rescind-cli-journal-{name}-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -431,7 +432,7 @@ fn journal_dir(name: &str) -> PathBuf {
     p
 }
 
-fn write_chain(path: &std::path::Path, entries: &[rue_core::journal::Entry]) {
+fn write_chain(path: &std::path::Path, entries: &[rescind_core::journal::Entry]) {
     let mut text = String::new();
     for e in entries {
         text.push_str(&serde_json::to_string(e).unwrap());
@@ -442,8 +443,8 @@ fn write_chain(path: &std::path::Path, entries: &[rue_core::journal::Entry]) {
 
 #[test]
 fn journal_verify_accepts_a_chain_names_a_broken_link_and_refuses_an_empty_file() {
-    use rue_core::journal::{append, Event};
-    use rue_core::model::Instant;
+    use rescind_core::journal::{append, Event};
+    use rescind_core::model::Instant;
     let d = journal_dir("chain");
     let e1 = append(&[], Instant::new(1), "p", "i", "h", Event::Checked, vec![]);
     let e2 = append(
@@ -457,7 +458,7 @@ fn journal_verify_accepts_a_chain_names_a_broken_link_and_refuses_an_empty_file(
     );
     let file = d.join("journal.ndjson");
     write_chain(&file, &[e1.clone(), e2.clone()]);
-    let out = rue(&["journal", "verify", file.to_str().unwrap()]);
+    let out = rescind(&["journal", "verify", file.to_str().unwrap()]);
     assert_eq!(
         out.status.code(),
         Some(0),
@@ -468,9 +469,9 @@ fn journal_verify_accepts_a_chain_names_a_broken_link_and_refuses_an_empty_file(
     assert!(text.contains("2 entries, chain verified"), "{text}");
 
     let mut broken = e2.clone();
-    broken.prev_hash = rue_core::journal::Hash::ZERO;
+    broken.prev_hash = rescind_core::journal::Hash::ZERO;
     write_chain(&file, &[e1, broken]);
-    let out = rue(&["journal", "verify", file.to_str().unwrap()]);
+    let out = rescind(&["journal", "verify", file.to_str().unwrap()]);
     assert_eq!(out.status.code(), Some(1));
     let err = String::from_utf8_lossy(&out.stderr);
     assert!(
@@ -480,11 +481,11 @@ fn journal_verify_accepts_a_chain_names_a_broken_link_and_refuses_an_empty_file(
     assert!(out.stdout.is_empty());
 
     fs::write(&file, "").unwrap();
-    let out = rue(&["journal", "verify", file.to_str().unwrap()]);
+    let out = rescind(&["journal", "verify", file.to_str().unwrap()]);
     assert_eq!(out.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&out.stderr).contains("no entries"));
 
-    let out = rue(&["journal", "verify", d.join("missing").to_str().unwrap()]);
+    let out = rescind(&["journal", "verify", d.join("missing").to_str().unwrap()]);
     assert_eq!(
         out.status.code(),
         Some(1),
@@ -495,11 +496,11 @@ fn journal_verify_accepts_a_chain_names_a_broken_link_and_refuses_an_empty_file(
 
 #[test]
 fn journal_verify_with_a_key_checks_every_signature_and_refuses_an_unsigned_entry() {
-    use rue_core::journal::{append, Event};
-    use rue_core::model::Instant;
+    use rescind_core::journal::{append, Event};
+    use rescind_core::model::Instant;
     let d = journal_dir("signed");
     let key = d.join("id_ed25519");
-    let signer = rue_engine::sign::generate(&key).unwrap();
+    let signer = rescind_engine::sign::generate(&key).unwrap();
     let mut e1 = append(&[], Instant::new(1), "p", "i", "h", Event::Checked, vec![]);
     e1.sig = Some(signer.sign(&e1).unwrap());
     let mut e2 = append(
@@ -515,7 +516,7 @@ fn journal_verify_with_a_key_checks_every_signature_and_refuses_an_unsigned_entr
     let file = d.join("journal.ndjson");
     write_chain(&file, &[e1.clone(), e2.clone()]);
     let pub_key = key.with_extension("pub");
-    let out = rue(&[
+    let out = rescind(&[
         "journal",
         "verify",
         file.to_str().unwrap(),
@@ -533,13 +534,13 @@ fn journal_verify_with_a_key_checks_every_signature_and_refuses_an_unsigned_entr
     let mut unsigned = e2.clone();
     unsigned.sig = None;
     write_chain(&file, &[e1, unsigned]);
-    let out = rue(&["journal", "verify", file.to_str().unwrap()]);
+    let out = rescind(&["journal", "verify", file.to_str().unwrap()]);
     assert_eq!(
         out.status.code(),
         Some(0),
         "without a key the chain is what is checked"
     );
-    let out = rue(&[
+    let out = rescind(&[
         "journal",
         "verify",
         file.to_str().unwrap(),
@@ -554,10 +555,10 @@ fn journal_verify_with_a_key_checks_every_signature_and_refuses_an_unsigned_entr
 #[test]
 fn every_text_checks_identically_standalone_and_embedded() {
     // Phase 4's acceptance line, for every case the project holds. The
-    // verdict a person gets from `rue check` on the text is the case's
+    // verdict a person gets from `rescind check` on the text is the case's
     // verdict.json golden (tier 2 holds it equal to check(resolve(text))).
     // The verdict an embedder's daemon reaches is check() of the IR
-    // `rue check --ir` handed the host, deserialized the way the control
+    // `rescind check --ir` handed the host, deserialized the way the control
     // channel's `apply` deserializes it. They must be the same bytes. T4's
     // stage proves this for one host over a real channel, on one guest;
     // this is every tenant case and every negative, on every machine, and
@@ -568,14 +569,17 @@ fn every_text_checks_identically_standalone_and_embedded() {
         .iter()
         .map(|c| (c.dir(), c.owner, c.plan, c.requester))
         .collect();
-    cases.extend(
-        NEGATIVES
-            .iter()
-            .map(|n| (n.dir(), n.owner, n.plan, rue_tenants::NEGATIVE_REQUESTER)),
-    );
+    cases.extend(NEGATIVES.iter().map(|n| {
+        (
+            n.dir(),
+            n.owner,
+            n.plan,
+            rescind_tenants::NEGATIVE_REQUESTER,
+        )
+    }));
     assert!(cases.len() > 20, "the case table is where it was");
     for (dir, owner, plan, requester) in cases {
-        let text = rue_tenants::text_of(&root, &dir);
+        let text = rescind_tenants::text_of(&root, &dir);
         let record = text.parent().unwrap().join("inventory.toml");
         let mut args = vec![
             "check".to_string(),
@@ -593,16 +597,18 @@ fn every_text_checks_identically_standalone_and_embedded() {
             args.push(record.to_string_lossy().into_owned());
         }
         let args: Vec<&str> = args.iter().map(String::as_str).collect();
-        let out = rue(&args);
+        let out = rescind(&args);
         assert!(
             out.status.success(),
-            "{dir}: rue check --ir: {}",
+            "{dir}: rescind check --ir: {}",
             String::from_utf8_lossy(&out.stderr)
         );
         let sent: serde_json::Value = serde_json::from_slice(&out.stdout).expect("the IR is JSON");
-        let ir: rue_core::ir::PlanIr = serde_json::from_value(sent).expect("the IR deserializes");
-        let v = rue_core::check::check(&ir.site, &ir.requester, &ir.plan);
-        let embedded = rue_core::json::canonical::encode(&rue_core::verdict::to_json(&v)).unwrap();
+        let ir: rescind_core::ir::PlanIr =
+            serde_json::from_value(sent).expect("the IR deserializes");
+        let v = rescind_core::check::check(&ir.site, &ir.requester, &ir.plan);
+        let embedded =
+            rescind_core::json::canonical::encode(&rescind_core::verdict::to_json(&v)).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&embedded),
             String::from_utf8_lossy(&golden(&root, &format!("{dir}/verdict.json"))),
@@ -617,12 +623,12 @@ fn every_text_checks_identically_standalone_and_embedded() {
 /// around it is worth, so a broken chain prints none at all.
 #[test]
 fn journal_verify_attestations_prints_the_drills_and_refuses_a_chain_with_none() {
-    use rue_core::journal::{append, Event};
-    use rue_core::model::Instant;
+    use rescind_core::journal::{append, Event};
+    use rescind_core::model::Instant;
     let d = journal_dir("attestations");
     let file = d.join("journal.ndjson");
 
-    let drilled = |restored: bool, prev: &[rue_core::journal::Entry]| {
+    let drilled = |restored: bool, prev: &[rescind_core::journal::Entry]| {
         append(
             prev,
             Instant::new(2),
@@ -642,7 +648,7 @@ fn journal_verify_attestations_prints_the_drills_and_refuses_a_chain_with_none()
     let e1 = append(&[], Instant::new(1), "p", "i", "h", Event::Checked, vec![]);
     let e2 = drilled(true, std::slice::from_ref(&e1));
     write_chain(&file, &[e1.clone(), e2.clone()]);
-    let out = rue(&[
+    let out = rescind(&[
         "journal",
         "verify",
         file.to_str().unwrap(),
@@ -661,7 +667,7 @@ fn journal_verify_attestations_prints_the_drills_and_refuses_a_chain_with_none()
     // A drill that attested nothing is a failure, not a line in a listing.
     let e2 = drilled(false, std::slice::from_ref(&e1));
     write_chain(&file, &[e1.clone(), e2]);
-    let out = rue(&[
+    let out = rescind(&[
         "journal",
         "verify",
         file.to_str().unwrap(),
@@ -673,7 +679,7 @@ fn journal_verify_attestations_prints_the_drills_and_refuses_a_chain_with_none()
 
     // And a chain with no drill in it attests nothing either.
     write_chain(&file, &[e1]);
-    let out = rue(&[
+    let out = rescind(&[
         "journal",
         "verify",
         file.to_str().unwrap(),

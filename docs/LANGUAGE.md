@@ -1,6 +1,6 @@
-# The rue language
+# The rescind language
 
-What a `.rue` file may say, as the front end reads it. The rules of record
+What a `.scind` file may say, as the front end reads it. The rules of record
 are `ROADMAP.md` section 6; this document is the reader's guide to them
 and grows with the front end (Phase 2). Where it states a rule, section 6
 states it too; where they differ, section 6 wins and this document is
@@ -12,10 +12,10 @@ A file is UTF-8 with `\n` line endings and begins with the version marker
 on its first line:
 
 ```
-rue 0
+rescind 0
 ```
 
-`rue` and the language version this compiler reads (`0`). A file without
+`rescind` and the language version this compiler reads (`0`). A file without
 the marker, or with a newer version, is refused (E0105). After the marker
 come definitions in any order: a `site do ... end` block, `import` lines,
 and `defprobe`, `defprim`, `defop`, `defplan`, `defrole`, `defprotocol`
@@ -110,8 +110,8 @@ defprobe :sshd_posture do
 end
 
 defop :service_posture, %{os: :freebsd} do
-  footprint owned: file("/etc/ssh/sshd_config.d/rue-breakglass.conf"), derived: sshd_posture
-  do: [write(file("/etc/ssh/sshd_config.d/rue-breakglass.conf"), content: posture), run("service sshd reload")]
+  footprint owned: file("/etc/ssh/sshd_config.d/rescind-breakglass.conf"), derived: sshd_posture
+  do: [write(file("/etc/ssh/sshd_config.d/rescind-breakglass.conf"), content: posture), run("service sshd reload")]
   undo: :restore
   post sshd_posture_applied
   undo_locus: :target
@@ -196,13 +196,13 @@ end
 A file's site is its own block when it has one, else the site of the one
 file it imports; a path in a site resolves relative to the file that
 declares it. The block is validated before anything is read from it: every binding is
-a kind its line admits (E0601; `inventory from:` takes `rue_toml`, `file`
+a kind its line admits (E0601; `inventory from:` takes `rescind_toml`, `file`
 or `hook`; `journal to:` `file`, `stdout`, `local` or `hook`; `approval
 via:` `always` or `hook`; `secrets from:` `file` or `hook`; `secrets
 deliver_to:` `requester`, `hold` or `hook`; `notify via:` `stdout` or
 `hook`; `execute via:` `local`, `ssh` or `hook`; `backstop scheduler:`
 `cron`, `task_scheduler`, `launchd` or `hook`), each with the argument
-its contract asks (E0602: a path string for `file`, `rue_toml` and `key`,
+its contract asks (E0602: a path string for `file`, `rescind_toml` and `key`,
 the hook's atom for `hook`, `until:` for `hold`, none for the rest,
 `transport:` on an execute hook, and `identity:` and `known_hosts:` on
 `ssh()`, which reads nothing under the daemon user's `~/.ssh`: `ssh(identity:
@@ -214,7 +214,7 @@ registrar whose `may_register` names it (E0605).
 `inventory from: hook(:name)` has no hosts until the hook is asked, which
 happens when a daemon starts, and checking needs them now. So a text with a
 hook inventory is checked against a record the operator names
-(`rue check --inventory FILE`) and refused with E0607 when they name none;
+(`rescind check --inventory FILE`) and refused with E0607 when they name none;
 a verdict is then a statement about the record you named, which is the
 point of naming it. `--inventory` overrides a `file()` inventory too, so one
 text can be checked against the site it is going to.
@@ -238,13 +238,13 @@ names that shape:
 
 ```
 defprobe :guest_state do
-  run "jls -j rue-#{g} jid"
+  run "jls -j rescind-#{g} jid"
   reads guest.state(g)
 end
 ```
 
 The names in the shape are bound to the fact's instance whenever the engine
-reads it -- `guest.state("g1")` runs `jls -j rue-g1 jid` -- and the run line
+reads it -- `guest.state("g1")` runs `jls -j rescind-g1 jid` -- and the run line
 sees them as it sees a repeat's variable. Exit 0 is present, with the
 probe's output as the fact's value; exit 1 is absent; anything else is a
 read that failed (R0205), never an absence. A probe `reads` one shape, and
@@ -262,16 +262,16 @@ inside an op imported from that file. Two different probes with one bare
 name are E0103, because the engine finds a probe by that name alone and
 could not tell them apart.
 
-`rue check --ir` prints the plan IR the text resolves to instead of a
+`rescind check --ir` prints the plan IR the text resolves to instead of a
 verdict. That is what an embedded host sends over the control channel to
-apply a plan: resolving `.rue` needs the front end, the front end is Rust,
+apply a plan: resolving `.scind` needs the front end, the front end is Rust,
 and a host written in another language asks for the IR here rather than
 linking it. The bytes are the canonical encoding the channel carries, and
-`rue check` reads one back, so the artifact has both halves.
+`rescind check` reads one back, so the artifact has both halves.
 
 At runtime a probe's `run` answers a guard by its exit status (0 is yes, 1
 is no, anything else is unknown) and its stdout is the fact's value; a
-`run` in an op binds a declared output with a line `rue-output NAME=VALUE`
+`run` in an op binds a declared output with a line `rescind-output NAME=VALUE`
 on its stdout, which the executor removes from the run's text.
 
 A site takes one line per slot, and a second line for the same slot
@@ -282,12 +282,12 @@ deliver_to:` line.
 `approval via:` names the binding that publishes the authenticators a
 gate may name, renders a challenge over a request digest, and verifies the
 proofs that come back. `always()` opens every gate without a proof and
-`rued` builds it only with `--dry-run`; everything else is `hook(:name)`.
+`rescindd` builds it only with `--dry-run`; everything else is `hook(:name)`.
 `secrets deliver_to:` is a list, tried in order at the moment a producing
 step completes: `requester()` takes the value only while a client is
 attached and hands it to that client's reply, `hold(until: :wane |
 DURATION)` keeps it in the daemon's memory until its bound and gives it up
-once to `rue reveal`, and `hook(:name)` is anything else. A list every
+once to `rescind reveal`, and `hook(:name)` is anything else. A list every
 acceptor declines is `applied; secret undelivered` and exit 7; a
 `hold(until: :wane)` on a permanent plan resolves to the site's `max_wait`
 and is R0104 where the site declares none. `notify via: stdout()` writes
@@ -330,14 +330,14 @@ guarantees of a one-sink one while its text still read correctly.
 `journal to: file("j.ndjson"), sign:
 key("journal_ed25519")` names the Ed25519 key (OpenSSH format) the daemon
 signs every entry with, and rides in the same declaration without being a
-sink; `rue journal verify --key` checks the public half. The checker's site is
+sink; `rescind journal verify --key` checks the public half. The checker's site is
 derived from the block and the inventory it names (a TOML file of `[[host]]` records and an
 `[authenticators]` table, Appendix C):
 
 | Site field | From |
 |---|---|
 | each host's name, os, reach, filesystem, artifact | the inventory record; `artifact` absent is the host's native shell (`sh`; `powershell` on Windows) |
-| a host's `rue_root` | the inventory record's `rue_root`, else the family's default (`/var/db/rue`, `C:\ProgramData\rue`) |
+| a host's `rescind_root` | the inventory record's `rescind_root`, else the family's default (`/var/db/rescind`, `C:\ProgramData\rescind`) |
 | a host's stdin preamble | the record's `stdin_preamble`, else its `filesystem` |
 | transports | the `execute via:` bindings: `ssh()` is `ssh`, `local()` is `local`, `hook(:x, transport: :t)` is `t`; with no line, `ssh` alone |
 | authenticators | the inventory's `[authenticators]` table, in its order |
@@ -348,8 +348,8 @@ derived from the block and the inventory it names (a TOML file of `[[host]]` rec
 
 ## Resolution
 
-`rue check file.rue --host H [--plan-name P] [--as ID]` (and `explain`,
-`artifact`) resolves the file for one host into the same plan IR `rue
+`rescind check file.scind --host H [--plan-name P] [--as ID]` (and `explain`,
+`artifact`) resolves the file for one host into the same plan IR `rescind
 check` reads from a `plan.json`. `--host` names an inventory host; it may
 be omitted when the plan has one clause whose pattern names the host
 (`%{name: "db-01"}`). `--plan-name` names the plan when the file defines
@@ -397,9 +397,9 @@ E0113). A comparison against `:unknown` is E0108; ask `defined?()` or
 nearest name suggested; an import that cannot be read or that cycles is
 E0104.
 
-## `rue fmt`
+## `rescind fmt`
 
-`rue fmt <file>` prints the file in the canonical layout; `--check` prints
+`rescind fmt <file>` prints the file in the canonical layout; `--check` prints
 nothing and exits 1 if the file is not already in it. The layout: two
 spaces per block depth; one space after a comma and after a keyword's
 colon; none inside brackets or around a dot; a call's parenthesis touches
@@ -420,7 +420,12 @@ kind, or a plan option of the wrong kind), E0108, E0110, E0111, E0112,
 E0113, E0114 (the arms of a `when` binding one alias to outputs of
 different kinds), E0204 for a knell without a cost, and E0601 to E0605 and
 E0607 for the site. E0608 and E0609 are the checker's, since they need the
-whole plan and the site together, and so they reach the verdict. A code
+whole plan and the site together, and so they reach the verdict. **E0610** is
+the front end's and arrives before anything else can: a text whose version
+line reads `rue` was written for this language under the name it carried
+before v0.4.0, and it is told that rather than told its version marker is
+missing. The line is still consumed, so the rest of the text is parsed and
+whatever else is wrong with it is reported in the same pass. A code
 added after v0.1.0, the first release, ends its message with the release
 it came in and what a text written before changes to meet it -- `(new in
 v0.3.0: declare a probe that `reads` the fact, or undo it with
@@ -436,7 +441,7 @@ alone. A site with an inventory of two firewalls, a journal, an approval
 hook with its registrar, a scheduler, and an operator:
 
 ```
-rue 0
+rescind 0
 
 site do
   inventory from: file("inventory.toml")
@@ -469,19 +474,19 @@ ssh and undo on the target, so a severed session still reverts:
 
 ```
 defop :pf_allow, %{os: :freebsd} do
-  footprint region: file("/etc/pf.conf", anchor: "rue-mgmt")
+  footprint region: file("/etc/pf.conf", anchor: "rescind-mgmt")
   reach ssh(host)
-  do: [region_set(file("/etc/pf.conf", anchor: "rue-mgmt"), content: "pass in proto tcp to port #{port}"), run("pfctl -f /etc/pf.conf")]
+  do: [region_set(file("/etc/pf.conf", anchor: "rescind-mgmt"), content: "pass in proto tcp to port #{port}"), run("pfctl -f /etc/pf.conf")]
   undo: :restore
   undo_locus: :target
 end
 
 defop :winfw_allow, %{os: :windows} do
-  footprint owned: winfw.rule("rue-mgmt")
+  footprint owned: winfw.rule("rescind-mgmt")
   reach ssh(host)
-  do: run("New-NetFirewallRule -Name rue-mgmt -Direction Inbound -Protocol TCP -LocalPort #{port} -Action Allow")
-  undo: run("Remove-NetFirewallRule -Name rue-mgmt", idempotent: true)
-  undo_pre winfw.rule("rue-mgmt")
+  do: run("New-NetFirewallRule -Name rescind-mgmt -Direction Inbound -Protocol TCP -LocalPort #{port} -Action Allow")
+  undo: run("Remove-NetFirewallRule -Name rescind-mgmt", idempotent: true)
+  undo_pre winfw.rule("rescind-mgmt")
   undo_locus: :target
 end
 ```
@@ -507,7 +512,7 @@ defplan :open_mgmt_port, %{os: :windows} do
 end
 ```
 
-`rue check plan.rue --host fw-01` then says: permanent; commits at step 4;
+`rescind check plan.scind --host fw-01` then says: permanent; commits at step 4;
 reversible through step 1; the backstop covers step 1 on the target, armed
-before it; step 1 reverts unaided. `tenants/t3/plan.rue` is this file with
+before it; step 1 reverts unaided. `tenants/t3/plan.scind` is this file with
 three more hosts.

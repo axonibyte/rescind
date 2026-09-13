@@ -11,7 +11,7 @@ pub struct TempDir(pub PathBuf);
 impl TempDir {
     pub fn new(name: &str) -> TempDir {
         let p = std::env::temp_dir().join(format!(
-            "rue-engine-{name}-{}-{}",
+            "rescind-engine-{name}-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -50,7 +50,7 @@ impl Drop for TempDir {
 /// ssh-keygen, nothing of the user's read); the path of the private key.
 pub fn keypair(dir: &Path, name: &str) -> PathBuf {
     let key = dir.join(name);
-    rue_engine::sign::generate(&key).expect("generate");
+    rescind_engine::sign::generate(&key).expect("generate");
     key
 }
 

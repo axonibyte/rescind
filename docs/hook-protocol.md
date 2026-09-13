@@ -1,6 +1,6 @@
 # The hook protocol, version 1
 
-How `rued` talks to a hook (docs/ROADMAP.md 7.5): newline-delimited JSON,
+How `rescindd` talks to a hook (docs/ROADMAP.md 7.5): newline-delimited JSON,
 on the control socket after `hello` and `register`
 (docs/control-protocol.md), or on the stdio of a child the daemon spawned.
 The engine sends requests; the hook answers each by id. A hook serves the
@@ -9,7 +9,7 @@ kinds it registered.
 **Version 1 is frozen.** `docs/hook-protocol-v1.json` is this protocol as
 data -- every kind, every op, the fields each request sends and each reply
 must and may carry, and which four messages may carry a secret -- generated
-from `rue-hook-proto`'s tables, the same ones the engine, every SDK's guard
+from `rescind-hook-proto`'s tables, the same ones the engine, every SDK's guard
 and the conformance runner read. Its digest is pinned in
 `tools/lint-hook-proto-frozen.sh`, so the document cannot be regenerated in
 place: a change to an op, a field or a kind is a new protocol version, with
@@ -24,7 +24,7 @@ hook → engine: {"id": 7, "ok": true, ...}
 hook → engine: {"id": 7, "ok": false, "error": "why"}
 ```
 
-Every request has a deadline (`rued run --hook-deadline`, 30 s by default).
+Every request has a deadline (`rescindd run --hook-deadline`, 30 s by default).
 A hook that misses it is **Silent**, which the engine treats as a refusal
 of the step it was serving. A reply with `ok: true` that lacks a field the
 op requires is R0303, a contract violation, also a refusal. A reply with no
@@ -35,10 +35,10 @@ boolean `ok` is R0303.
 | kind | op | request fields | reply fields |
 |---|---|---|---|
 | `journal` | `append` | `entry` (a journal entry) | |
-| `inventory` | `list` | | `hosts`: `[{name, address, os, roles, reach, filesystem, stdin_preamble, scheduler, rue_root, artifact, facts}]` (Appendix C) |
+| `inventory` | `list` | | `hosts`: `[{name, address, os, roles, reach, filesystem, stdin_preamble, scheduler, rescind_root, artifact, facts}]` (Appendix C) |
 | `execute` | `run` | `host`, `instance`, `body` (resolved primitives), `env`, `secrets` | `output: {stdout, outputs: {name: value}}`, `facts` |
 | `execute` | `read_fact` | `host`, `shape` | `content` (the file's text, or absent) |
-| `execute` | `bootstrap_state` | `host` | `state: {rue_root, group, instances_dir, lock, modes_ok}` |
+| `execute` | `bootstrap_state` | `host` | `state: {rescind_root, group, instances_dir, lock, modes_ok}` |
 | `execute` | `clock` | `host` | `epoch_s` (the host's own clock, for the arm-time skew probe, R0403) |
 | `execute` | `instance_dir_create`, `instance_dir_remove` | `host`, `instance` | |
 | `execute` | `instance_dir_list` | `host` | `dirs: [{instance, armed, fired, modes_ok}]` |
@@ -66,17 +66,17 @@ the first at reconciliation and the second when it arms (R0406).
 The engine asks `inventory.list` **once**, as it starts: after the hook has
 registered and before boot recovery, which needs the hosts to reconcile
 against. So a hook that lists a site's hosts must be a spawned child
-(`rued run --spawn`), since nothing has registered over the socket before
+(`rescindd run --spawn`), since nothing has registered over the socket before
 the daemon serves it, and a host added later needs a restart. A daemon
 whose inventory hook does not answer refuses to start and says which hook:
 booting with no hosts would report every plan unreachable, which reads as a
-broken site rather than a missing hook. `rued run --inventory FILE` takes
+broken site rather than a missing hook. `rescindd run --inventory FILE` takes
 the hosts from a record instead, which is how dry-run mode rehearses a
 hook-inventoried site with no hook to ask.
 
-A host a hook lists carries everything a `rue_toml()` inventory declares,
+A host a hook lists carries everything a `rescind_toml()` inventory declares,
 so an embedded site is not quietly less capable than a file-backed one.
-`name` and `os` are required; the rest default. `rue_root` is where the
+`name` and `os` are required; the rest default. `rescind_root` is where the
 instance directory lives (7.7) and a run-capable host without one can hold
 none; `stdin_preamble` defaults to `filesystem`; `artifact` is the language
 a `:target` backstop is rendered in and defaults to the host's native
@@ -126,7 +126,7 @@ acknowledge (R0304) for a journal sink.
 
 ## A hook over stdio
 
-A child (`rued run --spawn actuate="./my-hook"`) writes its `register`
+A child (`rescindd run --spawn actuate="./my-hook"`) writes its `register`
 frame as the first line of its stdout, reads the acknowledgement on its
 stdin, then reads requests on stdin and writes replies on stdout, one line
 each. It is the socket owner by construction and must still be a declared

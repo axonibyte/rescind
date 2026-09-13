@@ -1,0 +1,31 @@
+rescind 0
+# Negative case E0305: the same anchor declared twice on one fact
+# A minimal plan on the lab site (tenants/harness/src/tenants/negative.rs,
+# `lab`). The checker must refuse with exactly E0305.
+
+site do
+  inventory from: file("../lab-inventory.toml")
+  journal to: local()
+  backstop scheduler: cron()
+  operators do
+    identity :requester, user: "ops", operator_for: :all, admin: true
+  end
+end
+
+defop :r1, _ do
+  footprint region: file("/etc/keys", anchor: "rescind")
+  do: region_set(file("/etc/keys", anchor: "rescind"), content: "a")
+  undo: :restore
+end
+
+defop :r2, _ do
+  footprint region: file("/etc/keys", anchor: "rescind")
+  do: region_set(file("/etc/keys", anchor: "rescind"), content: "b")
+  undo: :restore
+end
+
+defplan :regions, %{name: "db-01"} do
+  wane 1h
+  r1()
+  r2()
+end

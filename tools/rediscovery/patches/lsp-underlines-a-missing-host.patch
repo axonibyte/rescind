@@ -8,7 +8,7 @@
      };
 -    let needs_a_host = first
 -        .iter()
--        .all(|d| matches!(d.code, rue_core::diagnostics::Code::E0112));
+-        .all(|d| matches!(d.code, rescind_core::diagnostics::Code::E0112));
 +    let needs_a_host = false;
      if !needs_a_host || first.is_empty() {
          return Err(first);

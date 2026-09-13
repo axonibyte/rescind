@@ -72,7 +72,7 @@
       "conditional": "foreign region in file:/etc/pf.conf",
       "drift": "clobber",
       "footprint": [
-        "region: file:/etc/pf.conf anchor rue-mgmt"
+        "region: file:/etc/pf.conf anchor rescind-mgmt"
       ],
       "gate": null,
       "knell": null,
@@ -80,7 +80,7 @@
       "n": 1,
       "op": "pf_allow",
       "refusal": "revert",
-      "undo": "strip anchor rue-mgmt from file:/etc/pf.conf",
+      "undo": "strip anchor rescind-mgmt from file:/etc/pf.conf",
       "undo_locus": "target"
     },
     {

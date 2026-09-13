@@ -1,4 +1,4 @@
-//! rue-engine: the runtime of docs/ROADMAP.md section 7.
+//! rescind-engine: the runtime of docs/ROADMAP.md section 7.
 //!
 //! Core reasons over declared facts and takes every `now` as an input; the
 //! engine is where the clock, the store, the executors and the world live.

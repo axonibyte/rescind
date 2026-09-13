@@ -2,7 +2,7 @@
 """The reference conformance hook for the Python SDK.
 
 docs/sdk-conformance.md's fixed world, served over stdio: what
-`rue sdk-conform` is pointed at to judge this SDK, and the worked example
+`rescind sdk-conform` is pointed at to judge this SDK, and the worked example
 an embedder copies.
 
 The exception is the four provocations of the `probe` kind, which
@@ -19,7 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from rue_hook import (  # noqa: E402
+from rescind_hook import (  # noqa: E402
     Approval,
     Authenticator,
     ChallengeRequest,
@@ -37,8 +37,8 @@ from rue_hook import (  # noqa: E402
     Secrets,
     Verdict,
 )
-from rue_hook.proto import Resolved  # noqa: E402
-from rue_hook.serve import registration  # noqa: E402
+from rescind_hook.proto import Resolved  # noqa: E402
+from rescind_hook.serve import registration  # noqa: E402
 
 
 class World(Journal, Inventory, Execute, Probe, Approval, Secrets, Notify, Scheduler):
@@ -61,7 +61,7 @@ class World(Journal, Inventory, Execute, Probe, Approval, Secrets, Notify, Sched
                 "filesystem": True,
                 "stdin_preamble": False,
                 "scheduler": "cron",
-                "rue_root": "/var/db/rue",
+                "rescind_root": "/var/db/rescind",
                 "artifact": "python",
                 "facts": {"site": "west"},
             },
@@ -90,7 +90,7 @@ class World(Journal, Inventory, Execute, Probe, Approval, Secrets, Notify, Sched
 
     def bootstrap_state(self, host):
         return {
-            "rue_root": True,
+            "rescind_root": True,
             "group": True,
             "instances_dir": True,
             "lock": True,

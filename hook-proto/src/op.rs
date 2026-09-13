@@ -5,13 +5,13 @@
 //! must carry for the engine to accept it (R0303 otherwise), the fields it
 //! may carry, and whether the op is one of the four messages a secret
 //! travels in. The engine's R0305 guard, the SDKs' dispatch tables,
-//! `rue sdk-conform`'s cases and the frozen-protocol golden all read this
+//! `rescind sdk-conform`'s cases and the frozen-protocol golden all read this
 //! table rather than repeating it, so a change to the wire is a change to
 //! one array.
 
 /// The shell a hook's command is run through, and the flag that hands it
 /// one command: the host's own, since `--spawn NAME=COMMAND` is written in
-/// whatever the operator's machine speaks. `rued` runs on all three
+/// whatever the operator's machine speaks. `rescindd` runs on all three
 /// families (7.4), so hard-coding `sh` made a spawned hook a thing only
 /// two of them could have.
 pub fn host_shell() -> (&'static str, &'static str) {
@@ -326,7 +326,7 @@ pub const OPS: &[Op] = &[
 mod tests {
     use super::*;
 
-    /// `rued --spawn`, `rue sdk-conform` and the `rue-hook` shim all hand
+    /// `rescindd --spawn`, `rescind sdk-conform` and the `rescind-hook` shim all hand
     /// one string to a shell, and which shell that is follows the host. A
     /// hook spawned on Windows was unreachable while this said `sh`
     /// everywhere, and the failure it produced -- a hook that will not

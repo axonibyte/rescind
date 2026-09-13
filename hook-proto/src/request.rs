@@ -7,7 +7,7 @@
 //! on a mistake rather than the only thing standing between a secret and
 //! the wire.
 
-use rue_core::journal::Entry;
+use rescind_core::journal::Entry;
 use serde_json::{json, Value};
 
 use crate::body::RPrim;

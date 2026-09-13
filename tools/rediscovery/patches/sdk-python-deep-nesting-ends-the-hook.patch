@@ -1,7 +1,7 @@
 # Reverts: a line nested too deep for json is skipped like any other unparseable line; json raises RecursionError, which is not a ValueError, and it ended the serve loop
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/sdk/python/rue_hook/serve.py
-+++ b/sdk/python/rue_hook/serve.py
+--- a/sdk/python/rescind_hook/serve.py
++++ b/sdk/python/rescind_hook/serve.py
 @@ -58,7 +58,7 @@
              continue
          try:

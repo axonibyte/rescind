@@ -1,4 +1,4 @@
-//! `rued run`: the site to a daemon.
+//! `rescindd run`: the site to a daemon.
 //!
 //! From the site block (7.3): the journal sinks (`local()` is the store's
 //! own copy; `file(path)` relative to the site file; `stdout()`;
@@ -22,26 +22,26 @@ use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use rue_bindings::secrets::{FileSource, Hold, Requester};
-use rue_engine::clock::SystemClock;
-use rue_engine::control::{
+use rescind_bindings::secrets::{FileSource, Hold, Requester};
+use rescind_engine::clock::SystemClock;
+use rescind_engine::control::{
     self, Daemon, Operator, Operators, RegistrarDecl, SubscriberSink, Subscribers, UserSpec,
 };
-use rue_engine::executor::Executor;
-use rue_engine::gates::Approval;
-use rue_engine::hook::{
+use rescind_engine::executor::Executor;
+use rescind_engine::gates::Approval;
+use rescind_engine::hook::{
     hook_inventory, spawn_stdio_hook, HookAcceptor, HookApproval, HookExecutor, HookNotify,
     HookRegistry, HookScheduler, HookSink, HookSource, Registered,
 };
-use rue_engine::host::Host;
-use rue_engine::journal::{Journal, Sink};
-use rue_engine::lifecycle::Engine;
-use rue_engine::notify::Notify;
+use rescind_engine::host::Host;
+use rescind_engine::journal::{Journal, Sink};
+use rescind_engine::lifecycle::Engine;
+use rescind_engine::notify::Notify;
 /// The numeric uid where the platform has one, for the journal's account
 /// line; Windows names an account and has none.
 #[cfg(unix)]
 fn my_uid_opt() -> Option<u32> {
-    Some(rue_engine::peer::my_uid())
+    Some(rescind_engine::peer::my_uid())
 }
 
 #[cfg(windows)]
@@ -49,12 +49,12 @@ fn my_uid_opt() -> Option<u32> {
     None
 }
 
-use rue_engine::scheduler::Scheduler;
-use rue_engine::secrets::{Acceptor, Mailbox, Source};
-use rue_engine::sign::Signer;
-use rue_engine::store::{schema_of, SchemaError, Store};
-use rue_surface::resolve::site::SiteDecl;
-use rue_surface::resolve::{site_bindings_opts, SiteBindings};
+use rescind_engine::scheduler::Scheduler;
+use rescind_engine::secrets::{Acceptor, Mailbox, Source};
+use rescind_engine::sign::Signer;
+use rescind_engine::store::{schema_of, SchemaError, Store};
+use rescind_surface::resolve::site::SiteDecl;
+use rescind_surface::resolve::{site_bindings_opts, SiteBindings};
 
 pub struct Config {
     pub site: PathBuf,
@@ -87,17 +87,19 @@ fn refused(m: impl Into<String>) -> Refusal {
 /// access-control list.
 #[cfg(unix)]
 fn check_group(spec: &str) -> Result<(), Refusal> {
-    match rue_engine::peer::gid_for(spec) {
+    match rescind_engine::peer::gid_for(spec) {
         Some(_) => Ok(()),
         None => Err(refused(format!(
-            "group {spec} does not exist; the control socket belongs to group rue (7.4), or name another with --group"
+            "group {spec} does not exist; the control socket belongs to group rescind (7.4), or name another with --group"
         ))),
     }
 }
 
 #[cfg(windows)]
 fn check_group(spec: &str) -> Result<(), Refusal> {
-    rue_engine::pipe::sddl(spec).map(|_| ()).map_err(refused)
+    rescind_engine::pipe::sddl(spec)
+        .map(|_| ())
+        .map_err(refused)
 }
 
 fn sinks_of(
@@ -113,9 +115,9 @@ fn sinks_of(
             "local" => {}
             "file" => {
                 let p = dir.join(b.arg.clone().unwrap_or_default());
-                sinks.push(Box::new(rue_bindings::journal::FileSink::new(&p)));
+                sinks.push(Box::new(rescind_bindings::journal::FileSink::new(&p)));
             }
-            "stdout" => sinks.push(Box::new(rue_bindings::journal::StdoutSink)),
+            "stdout" => sinks.push(Box::new(rescind_bindings::journal::StdoutSink)),
             "hook" => sinks.push(Box::new(HookSink {
                 name: b.arg.clone().unwrap_or_default(),
                 registry: hooks.clone(),
@@ -158,7 +160,7 @@ fn hosts_of(sb: &SiteBindings) -> Vec<Host> {
                 } else {
                     None
                 },
-                rue_root: c.and_then(|c| c.rue_root.clone()),
+                rescind_root: c.and_then(|c| c.rescind_root.clone()),
                 facts,
             }
         })
@@ -180,9 +182,9 @@ fn approval_of(
     };
     match b.kind.as_str() {
         "always" if !dry_run => Err(refused(
-            "approval via: always() opens every gate without a proof; rued admits it only with --dry-run",
+            "approval via: always() opens every gate without a proof; rescindd admits it only with --dry-run",
         )),
-        "always" => Ok(Some(Box::new(rue_bindings::approval::Always))),
+        "always" => Ok(Some(Box::new(rescind_bindings::approval::Always))),
         "hook" => Ok(Some(Box::new(HookApproval {
             name: b.arg.clone().unwrap_or_default(),
             registry: hooks.clone(),
@@ -217,7 +219,7 @@ fn acceptors_of(
                     .iter()
                     .find(|(k, _)| k == "until")
                     .and_then(|(_, val)| val.trim_end_matches('s').parse::<u64>().ok())
-                    .map(rue_core::model::Duration::new);
+                    .map(rescind_core::model::Duration::new);
                 v.push(Box::new(Hold::new(d)));
             }
             "hook" => v.push(Box::new(HookAcceptor {
@@ -316,7 +318,7 @@ fn notify_of(
         return Ok(None);
     };
     match b.kind.as_str() {
-        "stdout" => Ok(Some(Box::new(rue_bindings::notify::Stdout))),
+        "stdout" => Ok(Some(Box::new(rescind_bindings::notify::Stdout))),
         "hook" => Ok(Some(Box::new(HookNotify {
             name: b.arg.clone().unwrap_or_default(),
             registry: hooks.clone(),
@@ -345,9 +347,9 @@ fn schedulers_of(
         return Ok(v);
     };
     match b.kind.as_str() {
-        "cron" => v.push(Box::new(rue_bindings::cron::Cron)),
-        "task_scheduler" => v.push(Box::new(rue_bindings::task_scheduler::TaskScheduler)),
-        "launchd" => v.push(Box::new(rue_bindings::launchd::Launchd)),
+        "cron" => v.push(Box::new(rescind_bindings::cron::Cron)),
+        "task_scheduler" => v.push(Box::new(rescind_bindings::task_scheduler::TaskScheduler)),
+        "launchd" => v.push(Box::new(rescind_bindings::launchd::Launchd)),
         "hook" => v.push(Box::new(HookScheduler {
             name: b.arg.clone().unwrap_or_default(),
             registry: hooks.clone(),
@@ -386,7 +388,7 @@ fn executors_of(
     }
     let mut v: Vec<Box<dyn Executor>> = Vec::new();
     // The controller's own executor is always present for :controller steps.
-    v.push(Box::new(rue_bindings::local::LocalExecutor::default()));
+    v.push(Box::new(rescind_bindings::local::LocalExecutor::default()));
     for b in &decl.execute {
         let kw = |name: &str| {
             b.kws
@@ -413,7 +415,7 @@ fn executors_of(
                     )));
                 }
                 let user = kw("user").unwrap_or_else(|| "root".into());
-                v.push(Box::new(rue_bindings::ssh::SshExecutor::open_ssh(
+                v.push(Box::new(rescind_bindings::ssh::SshExecutor::open_ssh(
                     identity,
                     known_hosts,
                     &user,
@@ -463,7 +465,7 @@ fn spawn_child(spec: &str, daemon: &Arc<Daemon>) -> Result<(), Refusal> {
         .split_once('=')
         .ok_or_else(|| Refusal::Usage(format!("--spawn takes NAME=COMMAND, not {spec}")))?;
     // The spawn and the registration frame are the protocol's, and
-    // `rue sdk-conform` performs the identical handshake; what is the
+    // `rescind sdk-conform` performs the identical handshake; what is the
     // daemon's alone is who may register (R0505) and the journal.
     let mut hook = spawn_stdio_hook(name, command).map_err(|e| refused(e.to_string()))?;
     let reg = hook.registration.clone();
@@ -471,7 +473,7 @@ fn spawn_child(spec: &str, daemon: &Arc<Daemon>) -> Result<(), Refusal> {
     // The child is the socket owner by construction; it must still be a
     // declared registrar's hook (R0505).
     let peer = control::Peer {
-        user: rue_engine::peer::my_account(),
+        user: rescind_engine::peer::my_account(),
         owner: true,
         uid: my_uid_opt(),
     };
@@ -513,7 +515,7 @@ fn spawn_child(spec: &str, daemon: &Arc<Daemon>) -> Result<(), Refusal> {
     std::thread::spawn(move || {
         pumping.pump(reader);
         d.hooks.deregister(&hook_name);
-        let _ = d.journal_site(rue_core::journal::Event::HookDeregistered {
+        let _ = d.journal_site(rescind_core::journal::Event::HookDeregistered {
             name: hook_name,
             registrar: registrar_name,
             reason: "child exited".into(),
@@ -524,7 +526,7 @@ fn spawn_child(spec: &str, daemon: &Arc<Daemon>) -> Result<(), Refusal> {
 
     // Journalled last, and undone if the journal refuses: a registered hook
     // and a journaled registration stay the same set (R0304).
-    if let Err(e) = daemon.journal_site(rue_core::journal::Event::HookRegistered {
+    if let Err(e) = daemon.journal_site(rescind_core::journal::Event::HookRegistered {
         name: reg.name.clone(),
         registrar: registrar.name.clone(),
         connection: format!("child pid {pid} (stdio, socket owner)"),
@@ -542,14 +544,14 @@ pub fn run(cfg: Config) -> Result<(), Refusal> {
     run_until(cfg, Arc::new(AtomicBool::new(false)))
 }
 
-/// The daemon, stopping when `stop` is set. `rued run` never sets it; a
+/// The daemon, stopping when `stop` is set. `rescindd run` never sets it; a
 /// Windows service sets it from its control handler.
 pub fn run_until(cfg: Config, stop: Arc<AtomicBool>) -> Result<(), Refusal> {
     let sb = match site_bindings_opts(&cfg.site, cfg.dry_run, cfg.inventory.as_deref()) {
         Ok(sb) => sb,
         Err(diags) => {
             for d in &diags {
-                eprintln!("rued: {}", d.render());
+                eprintln!("rescindd: {}", d.render());
             }
             return Err(refused(format!(
                 "the site block of {} does not validate",
@@ -670,9 +672,12 @@ pub fn run_until(cfg: Config, stop: Arc<AtomicBool>) -> Result<(), Refusal> {
                  --inventory"
             ))
         })?;
-        eprintln!("rued: inventory from hook {name}: {} hosts", hosts.len());
+        eprintln!(
+            "rescindd: inventory from hook {name}: {} hosts",
+            hosts.len()
+        );
         let mut e = daemon.engine.lock().unwrap_or_else(|e| e.into_inner());
-        e.journal_site_event(rue_core::journal::Event::InventoryListed {
+        e.journal_site_event(rescind_core::journal::Event::InventoryListed {
             hook: name.clone(),
             hosts: hosts.iter().map(|h| h.name().to_string()).collect(),
         })
@@ -684,7 +689,7 @@ pub fn run_until(cfg: Config, stop: Arc<AtomicBool>) -> Result<(), Refusal> {
         e.boot().map_err(|e| refused(e.to_string()))?
     };
     eprintln!(
-        "rued: booted: {} demoted, {} reestablished, {} lost{}",
+        "rescindd: booted: {} demoted, {} reestablished, {} lost{}",
         boot.demoted.len(),
         boot.reestablished.len(),
         boot.lost.len(),
@@ -694,7 +699,7 @@ pub fn run_until(cfg: Config, stop: Arc<AtomicBool>) -> Result<(), Refusal> {
     );
     if !boot.orphaned.is_empty() || !boot.reclaimed.is_empty() || !boot.foreign.is_empty() {
         eprintln!(
-            "rued: reconciled: {} armed instance directories left in place, {} reclaimed, \
+            "rescindd: reconciled: {} armed instance directories left in place, {} reclaimed, \
              {} held by another controller",
             boot.orphaned.len(),
             boot.reclaimed.len(),
@@ -714,13 +719,13 @@ pub fn run_until(cfg: Config, stop: Arc<AtomicBool>) -> Result<(), Refusal> {
             match report {
                 Ok(r) => {
                     for a in r.actions {
-                        eprintln!("rued: reap: {a}");
+                        eprintln!("rescindd: reap: {a}");
                     }
                     for (id, state) in r.notify {
-                        eprintln!("rued: notify: {id} is {state}");
+                        eprintln!("rescindd: notify: {id} is {state}");
                     }
                 }
-                Err(e) => eprintln!("rued: reap: {e}"),
+                Err(e) => eprintln!("rescindd: reap: {e}"),
             }
         });
     }
@@ -736,12 +741,12 @@ pub fn run_until(cfg: Config, stop: Arc<AtomicBool>) -> Result<(), Refusal> {
                 e.heartbeat()
             };
             if let Err(e) = r {
-                eprintln!("rued: heartbeat: {e}");
+                eprintln!("rescindd: heartbeat: {e}");
             }
         });
     }
     eprintln!(
-        "rued: serving {} for site {} (store {}, {}{} hooks may register)",
+        "rescindd: serving {} for site {} (store {}, {}{} hooks may register)",
         cfg.socket.display(),
         cfg.site.display(),
         cfg.store.display(),

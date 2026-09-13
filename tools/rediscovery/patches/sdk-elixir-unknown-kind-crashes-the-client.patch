@@ -1,7 +1,7 @@
 # Reverts: a request of a kind that was never an atom is refused as unserved; String.to_existing_atom raised on it and ended the Client GenServer and the host's connection
 # Rediscovered by the selector named in tools/rediscovery/table.tsv.
---- a/sdk/elixir/lib/rue_hook/client.ex
-+++ b/sdk/elixir/lib/rue_hook/client.ex
+--- a/sdk/elixir/lib/rescind_hook/client.ex
++++ b/sdk/elixir/lib/rescind_hook/client.ex
 @@ -211,10 +211,8 @@
    atom, and that ended this GenServer and the host's connection with it.
    """

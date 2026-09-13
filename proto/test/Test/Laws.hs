@@ -3,8 +3,8 @@
 module Test.Laws (tests, genKnellFree, genItem) where
 
 import qualified Data.Text as T
-import Rue.Proto.Algebra
-import Rue.Proto.Model
+import Rescind.Proto.Algebra
+import Rescind.Proto.Model
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
 import Test.Tasty.QuickCheck

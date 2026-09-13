@@ -5,11 +5,11 @@
 
 mod common;
 
-use rue_core::journal::{Event, Hash};
-use rue_core::model::Instant;
-use rue_engine::journal::{About, Journal, JournalError, MemorySink, Sink};
-use rue_engine::sign::{load_public, verify_chain, verify_entry, Signer};
-use rue_engine::store::Store;
+use rescind_core::journal::{Event, Hash};
+use rescind_core::model::Instant;
+use rescind_engine::journal::{About, Journal, JournalError, MemorySink, Sink};
+use rescind_engine::sign::{load_public, verify_chain, verify_entry, Signer};
+use rescind_engine::store::Store;
 
 fn about() -> About {
     About {
@@ -117,9 +117,9 @@ fn signed_entries_verify_with_the_public_key_and_with_nothing_else() {
     assert!(verify_chain(&tampered, Some(&pk))
         .unwrap_err()
         .contains("hash"));
-    tampered[1].hash = rue_core::journal::hash_of(&tampered[1].prev_hash, &tampered[1]);
+    tampered[1].hash = rescind_core::journal::hash_of(&tampered[1].prev_hash, &tampered[1]);
     tampered[2].prev_hash = tampered[1].hash;
-    tampered[2].hash = rue_core::journal::hash_of(&tampered[2].prev_hash, &tampered[2]);
+    tampered[2].hash = rescind_core::journal::hash_of(&tampered[2].prev_hash, &tampered[2]);
     let err = verify_chain(&tampered, Some(&pk)).unwrap_err();
     assert!(err.contains("entry 2") || err.contains("entry 1"), "{err}");
     assert!(err.contains("does not verify"), "{err}");
@@ -151,7 +151,7 @@ fn the_signer_refuses_a_key_that_is_not_an_unencrypted_ed25519_key() {
     let err = Signer::load(&d.join("ecdsa")).unwrap_err();
     assert!(err.contains("not Ed25519"), "{err}");
     // And a generated key round-trips through the file it wrote.
-    let made = rue_engine::sign::generate(&d.join("made")).unwrap();
+    let made = rescind_engine::sign::generate(&d.join("made")).unwrap();
     assert_eq!(
         Signer::load(&d.join("made")).unwrap().public_openssh(),
         made.public_openssh()

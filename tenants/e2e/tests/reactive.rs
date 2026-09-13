@@ -1,4 +1,4 @@
-//! T4 end to end (docs/ROADMAP.md 8.4): a reactive host that embeds rue.
+//! T4 end to end (docs/ROADMAP.md 8.4): a reactive host that embeds rescind.
 //!
 //! This is the stage the whole phase is for. A single Elixir process holds
 //! one control-channel connection and is three things at once on it: the
@@ -8,7 +8,7 @@
 //! child, because `inventory.list` is asked at boot before the socket
 //! serves and nothing registered over the socket could answer it.
 //!
-//! What is proven here that no unit test can prove: the same `.rue` text
+//! What is proven here that no unit test can prove: the same `.scind` text
 //! yields the same verdict whether a person checks it at a terminal or a
 //! host applies it over a channel, and a temporary plan an embedded host
 //! fired really does revert.
@@ -26,9 +26,9 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-use rue_e2e::{repo_root, rue, Daemon, Site};
+use rescind_e2e::{repo_root, rescind, Daemon, Site};
 
-const INVENTORY: &str = r#"# What hook(:host_world) reports, kept beside the text so `rue check
+const INVENTORY: &str = r#"# What hook(:host_world) reports, kept beside the text so `rescind check
 # --inventory` has a record to check against (E0607).
 [[host]]
 name = "site-ctl"
@@ -46,7 +46,7 @@ site_operator = { human = true }
 /// needs to see its own plan's entries.
 fn site_text(me: &str) -> String {
     format!(
-        r#"rue 0
+        r#"rescind 0
 site do
   inventory from: hook(:host_world)
   journal to: hook(:host_log)
@@ -93,15 +93,15 @@ fn fixture(name: &str) -> PathBuf {
 
 /// The reactive host, run for one command, with the SDK on its code path.
 fn host(socket: &std::path::Path, state: &std::path::Path, args: &[&str]) -> std::process::Output {
-    let mut c = Command::new(&rue_e2e::elixir_with_sdk()[0]);
-    for a in &rue_e2e::elixir_with_sdk()[1..] {
+    let mut c = Command::new(&rescind_e2e::elixir_with_sdk()[0]);
+    for a in &rescind_e2e::elixir_with_sdk()[1..] {
         c.arg(a);
     }
     c.arg(fixture("reactive_host.exs"))
         .arg(socket)
         .args(args)
-        .env("RUE_T4_STATE", state)
-        .env("RUE_BIN", rue_e2e::bin("rue"))
+        .env("RESCIND_T4_STATE", state)
+        .env("RESCIND_BIN", rescind_e2e::bin("rescind"))
         .output()
         .expect("the reactive host runs")
 }
@@ -131,7 +131,7 @@ fn actuator(state: &std::path::Path, name: &str) -> String {
 
 #[test]
 fn a_reactive_host_fires_a_plan_and_recants_it_over_its_own_connection() {
-    let me = rue_e2e::me();
+    let me = rescind_e2e::me();
     let site = Site::raw("t4", &site_text(&me), INVENTORY);
     let state = site.dir.join("state");
     std::fs::create_dir_all(&state).unwrap();
@@ -141,15 +141,15 @@ fn a_reactive_host_fires_a_plan_and_recants_it_over_its_own_connection() {
     // The spawned children inherit the daemon's environment, and the
     // daemon inherits this process's, so the state directory is set here
     // rather than on each invocation.
-    std::env::set_var("RUE_T4_STATE", &state);
-    let sdk = rue_e2e::elixir_with_sdk().join(" ");
+    std::env::set_var("RESCIND_T4_STATE", &state);
+    let sdk = rescind_e2e::elixir_with_sdk().join(" ");
     let spawn = spawned_children(&sdk);
     let d = Daemon::start_with(&site, &spawn);
 
     // 1. The verdict a person gets at a terminal.
-    // Not through the harness's `rue()`: that adds `--socket`, which is
+    // Not through the harness's `rescind()`: that adds `--socket`, which is
     // for the verbs that talk to a daemon, and `check` talks to nobody.
-    let standalone = Command::new(rue_e2e::bin("rue"))
+    let standalone = Command::new(rescind_e2e::bin("rescind"))
         .args([
             "check",
             site.file.to_str().unwrap(),
@@ -162,7 +162,7 @@ fn a_reactive_host_fires_a_plan_and_recants_it_over_its_own_connection() {
             "--json",
         ])
         .output()
-        .expect("rue check");
+        .expect("rescind check");
     assert_eq!(
         standalone.status.code(),
         Some(0),
@@ -199,9 +199,9 @@ fn a_reactive_host_fires_a_plan_and_recants_it_over_its_own_connection() {
         "{journal}"
     );
 
-    // 3. The acceptance line of the phase: the same `.rue` text checks
-    // identically standalone and embedded. The person ran `rue check` on
-    // the text; the host asked `rue check --ir` for the same text and sent
+    // 3. The acceptance line of the phase: the same `.scind` text checks
+    // identically standalone and embedded. The person ran `rescind check` on
+    // the text; the host asked `rescind check --ir` for the same text and sent
     // that IR, which the daemon checked again before admitting it. So the
     // two checks are of one document, and what is asserted here is that
     // they agree about the plan, not merely that both succeeded.
@@ -223,7 +223,7 @@ fn a_reactive_host_fires_a_plan_and_recants_it_over_its_own_connection() {
 
     // And the daemon, which checked the IR rather than the text, admitted
     // the same plan on the same host.
-    let embedded = rue(&d.socket, &["status", &id, "--identity", "reactive_host"]);
+    let embedded = rescind(&d.socket, &["status", &id, "--identity", "reactive_host"]);
     assert_eq!(embedded.status.code(), Some(0));
     let status = String::from_utf8_lossy(&embedded.stdout).into_owned();
     assert!(
@@ -248,12 +248,12 @@ fn a_reactive_host_fires_a_plan_and_recants_it_over_its_own_connection() {
 
 #[test]
 fn the_host_is_refused_outside_its_registrar_and_outside_its_scope() {
-    let me = rue_e2e::me();
+    let me = rescind_e2e::me();
     let site = Site::raw("t4-refusals", &site_text(&me), INVENTORY);
     let state = site.dir.join("state");
     std::fs::create_dir_all(&state).unwrap();
-    std::env::set_var("RUE_T4_STATE", &state);
-    let sdk = rue_e2e::elixir_with_sdk().join(" ");
+    std::env::set_var("RESCIND_T4_STATE", &state);
+    let sdk = rescind_e2e::elixir_with_sdk().join(" ");
     let d = Daemon::start_with(&site, &spawned_children(&sdk));
 
     // R0505: a name outside `may_register`. The registrar declaration is
@@ -301,12 +301,12 @@ fn journal(state: &std::path::Path) -> String {
 /// The world every case in this file starts from: a site, a state
 /// directory, the two spawned children and a daemon.
 fn world(name: &str) -> (Site, PathBuf, Daemon) {
-    let me = rue_e2e::me();
+    let me = rescind_e2e::me();
     let site = Site::raw(name, &site_text(&me), INVENTORY);
     let state = site.dir.join("state");
     std::fs::create_dir_all(&state).unwrap();
-    std::env::set_var("RUE_T4_STATE", &state);
-    let sdk = rue_e2e::elixir_with_sdk().join(" ");
+    std::env::set_var("RESCIND_T4_STATE", &state);
+    let sdk = rescind_e2e::elixir_with_sdk().join(" ");
     let d = Daemon::start_with(&site, &spawned_children(&sdk));
     (site, state, d)
 }
@@ -507,12 +507,12 @@ fn two_sink_text(me: &str) -> String {
 
 #[test]
 fn a_sink_that_refuses_stops_the_plan_and_the_refusal_reaches_the_other_sink() {
-    let me = rue_e2e::me();
+    let me = rescind_e2e::me();
     let site = Site::raw("t4-two-sinks", &two_sink_text(&me), INVENTORY);
     let state = site.dir.join("state");
     std::fs::create_dir_all(&state).unwrap();
-    std::env::set_var("RUE_T4_STATE", &state);
-    let sdk = rue_e2e::elixir_with_sdk().join(" ");
+    std::env::set_var("RESCIND_T4_STATE", &state);
+    let sdk = rescind_e2e::elixir_with_sdk().join(" ");
     // The refusing hook stands in for the ordinary journal child, and is
     // spawned before the inventory for the reason `boot_time_hooks` gives:
     // a registration is journaled, so a sink must be there to take it.

@@ -5,8 +5,8 @@ mod common;
 
 use common::gen::*;
 use common::{knell_op, owned, s};
-use rue_core::algebra::*;
-use rue_core::model::*;
+use rescind_core::algebra::*;
+use rescind_core::model::*;
 
 const ROUNDS: u32 = 300;
 

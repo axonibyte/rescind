@@ -4,12 +4,12 @@
 //! It exists for daemon dry-run mode (7.9): a rehearsal evaluates and
 //! journals its gates, reserves nothing and calls no executor, and a site
 //! whose real approval binding is a hook cannot be asked for a human's
-//! proof in a rehearsal. `rued` refuses to build it outside `--dry-run`,
+//! proof in a rehearsal. `rescindd` refuses to build it outside `--dry-run`,
 //! so no live daemon can be talked into opening a gate with it.
 
-use rue_core::model::Authenticator;
-use rue_engine::executor::ExecError;
-use rue_engine::gates::{Approval, ProofRequest, Verified};
+use rescind_core::model::Authenticator;
+use rescind_engine::executor::ExecError;
+use rescind_engine::gates::{Approval, ProofRequest, Verified};
 
 #[derive(Debug, Default)]
 pub struct Always;

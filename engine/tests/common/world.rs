@@ -7,19 +7,19 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use rue_core::body::{Body, Part, Prim, Run};
-use rue_core::ir::{PlanIr, IR_VERSION};
-use rue_core::model::{
+use rescind_core::body::{Body, Part, Prim, Run};
+use rescind_core::ir::{PlanIr, IR_VERSION};
+use rescind_core::model::{
     Duration, FootprintEntry, Guard, HostRecord, Item, Kind, Locus, Op, Plan, ProbeDecl, Refusal,
     Site, StepI, Tri, Undo,
 };
-use rue_engine::clock::FakeClock;
-use rue_engine::executor::{Executor, FakeExecutor, FakeHandle, LocusKind};
-use rue_engine::host::Host;
-use rue_engine::journal::{Journal, MemorySink, Sink};
-use rue_engine::lifecycle::Engine;
-use rue_engine::scheduler::FakeSchedulerHandle;
-use rue_engine::store::Store;
+use rescind_engine::clock::FakeClock;
+use rescind_engine::executor::{Executor, FakeExecutor, FakeHandle, LocusKind};
+use rescind_engine::host::Host;
+use rescind_engine::journal::{Journal, MemorySink, Sink};
+use rescind_engine::lifecycle::Engine;
+use rescind_engine::scheduler::FakeSchedulerHandle;
+use rescind_engine::store::Store;
 
 use super::TempDir;
 
@@ -50,7 +50,7 @@ pub fn host(name: &str, reach: &[&str]) -> Host {
         record: record(name, reach),
         address: format!("10.0.0.{}", name.len()),
         scheduler: Some("cron".into()),
-        rue_root: None,
+        rescind_root: None,
         facts: BTreeMap::new(),
     }
 }
@@ -62,15 +62,15 @@ pub fn site() -> Site {
         hosts: vec![record(OWNER, &["ssh"]), record(FAR, &["carrier-pigeon"])],
         transports: vec!["ssh".into()],
         authenticators: vec![
-            rue_core::model::Authenticator {
+            rescind_core::model::Authenticator {
                 id: "oncall".into(),
                 human: true,
             },
-            rue_core::model::Authenticator {
+            rescind_core::model::Authenticator {
                 id: "alice".into(),
                 human: true,
             },
-            rue_core::model::Authenticator {
+            rescind_core::model::Authenticator {
                 id: "driver".into(),
                 human: false,
             },
@@ -111,15 +111,15 @@ pub fn covered(id: &str) -> Op {
         id,
         vec![FootprintEntry::entry(Kind::Owned, &format!("file:/{id}"))],
     );
-    o.do_ = vec![Prim::Write(rue_core::body::Write {
-        fact: rue_core::body::FactRef {
+    o.do_ = vec![Prim::Write(rescind_core::body::Write {
+        fact: rescind_core::body::FactRef {
             shape: format!("file:/{id}"),
             anchor: None,
         },
-        content: rue_core::body::lit("x"),
+        content: rescind_core::body::lit("x"),
     })];
     o.undo = Undo::Restore;
-    o.undo_locus = rue_core::model::UndoLocus::Target;
+    o.undo_locus = rescind_core::model::UndoLocus::Target;
     o
 }
 
@@ -166,8 +166,8 @@ pub fn probe(name: &str) -> ProbeDecl {
     ProbeDecl {
         name: name.to_string(),
         locus: Locus::Target,
-        body: vec![rue_core::body::Prim::Run(rue_core::body::Run {
-            cmd: vec![rue_core::body::Part::Lit(format!("probe {name}"))],
+        body: vec![rescind_core::body::Prim::Run(rescind_core::body::Run {
+            cmd: vec![rescind_core::body::Part::Lit(format!("probe {name}"))],
             env: Vec::new(),
             stdin: None,
         })],
@@ -184,7 +184,7 @@ pub fn hold(mut o: Op) -> Op {
 }
 
 pub fn on(mut o: Op, host: &str) -> Op {
-    o.locus = Locus::Host(rue_core::model::HostRef::Static(host.into()));
+    o.locus = Locus::Host(rescind_core::model::HostRef::Static(host.into()));
     o
 }
 
@@ -210,7 +210,7 @@ impl World {
         let sink = MemorySink::new("mem");
         let sinks: Vec<Box<dyn Sink>> = vec![Box::new(sink.clone())];
         let journal = Journal::open(&store, sinks, None).unwrap();
-        let clock = Arc::new(FakeClock::at(rue_core::model::Instant::new(T0)));
+        let clock = Arc::new(FakeClock::at(rescind_core::model::Instant::new(T0)));
         let ssh = FakeExecutor::new(LocusKind::Ssh).shared();
         let local = FakeExecutor::new(LocusKind::Local).shared();
         let execs: Vec<Box<dyn Executor>> = vec![Box::new(ssh.clone()), Box::new(local.clone())];
@@ -242,7 +242,7 @@ impl World {
         let sink = MemorySink::new("mem");
         let sinks: Vec<Box<dyn Sink>> = vec![Box::new(sink.clone())];
         let journal = Journal::open(&store, sinks, None).unwrap();
-        let clock = Arc::new(FakeClock::at(rue_core::model::Instant::new(T0)));
+        let clock = Arc::new(FakeClock::at(rescind_core::model::Instant::new(T0)));
         let ssh = FakeExecutor::new(LocusKind::Ssh).shared();
         let local = FakeExecutor::new(LocusKind::Local).shared();
         let execs: Vec<Box<dyn Executor>> = vec![Box::new(ssh.clone()), Box::new(local.clone())];
@@ -315,7 +315,7 @@ impl World {
             .iter()
             .flat_map(|c| {
                 c.body.iter().map(|p| match p {
-                    rue_engine::executor::RPrim::Run { cmd, .. } => cmd.text.clone(),
+                    rescind_engine::executor::RPrim::Run { cmd, .. } => cmd.text.clone(),
                     other => format!("{other:?}"),
                 })
             })

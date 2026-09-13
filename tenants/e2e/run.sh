@@ -3,7 +3,7 @@
 # harness's tests against the guest itself. Never a gate phase; the guest's
 # [run] in .reaper.toml is the only caller (docs/TESTING.md, "Under reaper").
 #
-# Refuses anywhere that is not a reaper guest unless RUE_E2E_DISPOSABLE=1:
+# Refuses anywhere that is not a reaper guest unless RESCIND_E2E_DISPOSABLE=1:
 # provisioning rewrites sshd's drop-ins, the firewall and the loopback
 # configuration of the machine it runs on.
 set -u
@@ -11,8 +11,8 @@ set -u
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd) || exit 2
 cd "$root" || exit 2
 
-if [ -z "${REAPER_WORK:-}" ] && [ "${RUE_E2E_DISPOSABLE:-}" != 1 ]; then
-    echo "run.sh: not a reaper guest (REAPER_WORK unset) and RUE_E2E_DISPOSABLE is not 1; refusing to provision this machine" >&2
+if [ -z "${REAPER_WORK:-}" ] && [ "${RESCIND_E2E_DISPOSABLE:-}" != 1 ]; then
+    echo "run.sh: not a reaper guest (REAPER_WORK unset) and RESCIND_E2E_DISPOSABLE is not 1; refusing to provision this machine" >&2
     exit 2
 fi
 command -v cargo > /dev/null 2>&1 || { echo "run.sh: cargo is not on PATH; the guest's build installs a pinned toolchain into its cache" >&2; exit 2; }
@@ -32,7 +32,7 @@ find . -name '*.toml' -not -path './target/*' -exec touch {} + 2> /dev/null
 # The harness drives the real binaries; the Ubuntu guest's run phase has a
 # cache of its own where the gate never built them.
 echo "== binaries"
-cargo build --release --locked -p rue -p rued || exit 1
+cargo build --release --locked -p rescind -p rescindd || exit 1
 
 # Which stages this guest can run. Every file in tenants/e2e/tests runs by
 # default, so a new stage needs no edit here to be picked up; a stage may
@@ -88,7 +88,7 @@ for name in $stages; do
     select="$select --test $name"
 done
 
-# One test at a time: the host's state is global. RUE_E2E=1 is what the
+# One test at a time: the host's state is global. RESCIND_E2E=1 is what the
 # harness's tests demand, and is set here and nowhere else.
 # shellcheck disable=SC2086
-RUE_E2E=1 cargo test -p rue-e2e --release --locked $select -- --test-threads=1
+RESCIND_E2E=1 cargo test -p rescind-e2e --release --locked $select -- --test-threads=1
