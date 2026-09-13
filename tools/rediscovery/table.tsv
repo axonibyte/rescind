@@ -206,3 +206,4 @@ sim-skips-a-plant-in-silence.patch	1	-	cargo	every_invariant_catches_a_planted_v
 explain-html-renders-a-plans-markup.patch	1	-	cargo	markup_in_a_plan_is_escaped_rather_than_rendered	-
 grammar-edited-without-regenerating.patch	1	-	cargo	the_checked_in_parser_matches_the_grammar	-
 lsp-underlines-a-missing-host.patch	1	-	cargo	a_clean_tenant_opens_with_no_diagnostics	-
+rearm-keeps-a-stale-firing.patch	1	-	cargo	arming_clears_a_firing_left_by_an_earlier_instance_of_the_same_id	-

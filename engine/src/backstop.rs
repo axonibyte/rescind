@@ -244,6 +244,30 @@ impl Engine {
             return Ok(Err(format!("no transport reaches {}", host.name())));
         };
         let ex = &mut self.executors[i];
+        // A STALE `fired` DISARMS THE BACKSTOP WE ARE ABOUT TO INSTALL.
+        //
+        // Instance ids are deterministic -- plan, host, and the site's digest
+        // -- so applying the same text to the same host twice reuses the
+        // directory. Every artifact opens with `[ -e "$INST/fired" ] && exit 0`
+        // so that a backstop fires once; a marker left by a PREVIOUS instance
+        // of the same id makes the new artifact exit at its first line, every
+        // tick, forever. The scheduler entry is there, the file is there, the
+        // engine reports it armed, and it will never undo anything.
+        //
+        // Found on 2026-09-13 by the partition stage, which passed on freshly
+        // created guests and then failed on every later run against the same
+        // ones. It was invisible before because the id carries the site's
+        // digest and the text kept changing; the moment the text settled, the
+        // id repeated and the protection went silently dead.
+        if let Err(e) = ex.remove_file(&host, &id, "fired") {
+            // Absent is the normal case and is not an error; anything else is.
+            if !e.to_string().contains("No such file") && !e.to_string().contains("not found") {
+                return Ok(Err(format!(
+                    "clearing a previous firing on {}: {e}",
+                    host.name()
+                )));
+            }
+        }
         if let Err(e) = ex.put_file(&host, &id, file_name, text.as_bytes(), 0o750) {
             return Ok(Err(format!(
                 "the backstop artifact on {}: {e}",
@@ -965,6 +989,10 @@ impl Engine {
         self.executors[i]
             .instance_dir_create(host, &id)
             .map_err(|e| format!("the canary's directory: {e}"))?;
+        // The canary's artifact short-circuits on `fired` exactly as a plan's
+        // does, so a reused canary id is disarmed by its own previous proof.
+        // See the note in the plan arm path above.
+        let _ = self.executors[i].remove_file(host, &id, "fired");
         self.executors[i]
             .put_file(host, &id, "artifact.sh", text.as_bytes(), 0o750)
             .map_err(|e| format!("the canary's artifact: {e}"))?;

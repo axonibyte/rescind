@@ -1,0 +1,18 @@
+--- a/engine/src/backstop.rs
++++ b/engine/src/backstop.rs
+@@ -259,15 +259,6 @@
+         // ones. It was invisible before because the id carries the site's
+         // digest and the text kept changing; the moment the text settled, the
+         // id repeated and the protection went silently dead.
+-        if let Err(e) = ex.remove_file(&host, &id, "fired") {
+-            // Absent is the normal case and is not an error; anything else is.
+-            if !e.to_string().contains("No such file") && !e.to_string().contains("not found") {
+-                return Ok(Err(format!(
+-                    "clearing a previous firing on {}: {e}",
+-                    host.name()
+-                )));
+-            }
+-        }
+         if let Err(e) = ex.put_file(&host, &id, file_name, text.as_bytes(), 0o750) {
+             return Ok(Err(format!(
+                 "the backstop artifact on {}: {e}",

@@ -643,3 +643,61 @@ fn boot_leaves_another_controllers_directory_exactly_as_it_is() {
     );
     assert!(r.orphans.is_empty(), "{r:?}");
 }
+
+/// A previous instance of the same id fired; arming must clear its marker.
+///
+/// Instance ids are deterministic (plan, host, the site's digest), so the
+/// same text applied twice to the same host reuses the directory. Every
+/// artifact opens with `[ -e "$INST/fired" ] && exit 0`, so a marker left
+/// behind by an earlier instance makes the NEW artifact exit at its first
+/// line on every tick -- while the scheduler entry exists, the file exists,
+/// and the engine reports the backstop armed. A protection that is present,
+/// reported healthy, and silently does not apply.
+///
+/// Found on 2026-09-13 by the e2e partition stage: it passed on freshly
+/// created guests and failed on every later run against the same ones. The
+/// id carries the site's digest, so while the plan text kept changing every
+/// run got a clean directory; the moment the text settled, the id repeated.
+#[test]
+fn arming_clears_a_firing_left_by_an_earlier_instance_of_the_same_id() {
+    let mut w = World::new("bs-refire");
+    let plan = temp_with_backstop("p", 2, 1);
+
+    // What the host looks like when an earlier instance of this id fired.
+    let id = {
+        let mut probe = World::new("bs-refire");
+        let out = probe
+            .engine
+            .apply(
+                world::ir(temp_with_backstop("p", 2, 1)),
+                BTreeMap::new(),
+                opts(),
+            )
+            .unwrap();
+        out.id
+    };
+    w.ssh.with(|f| {
+        f.files
+            .insert((OWNER.into(), id.clone(), "fired".into()), Vec::new());
+    });
+
+    let out = w
+        .engine
+        .apply(world::ir(plan), BTreeMap::new(), opts())
+        .unwrap();
+    assert_eq!(out.state, State::Applied, "{}", out.line);
+    assert_eq!(
+        out.id, id,
+        "the id is deterministic, so the directory repeats"
+    );
+
+    let stale = w.ssh.with(|f| {
+        f.files
+            .contains_key(&(OWNER.into(), out.id.clone(), "fired".into()))
+    });
+    assert!(
+        !stale,
+        "arming left an earlier instance's `fired` in place, which disarms the \
+         artifact it just installed"
+    );
+}
