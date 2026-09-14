@@ -1330,6 +1330,74 @@ Each phase has deliverables, tasks, tests, acceptance, exit criteria, a "not pro
 
 ---
 
+## 9a. v0.4.0, the rename release (2026-09-13)
+
+Not a phase. A name change forced by the sweep Phase 5 required, plus the one
+defect the rename exposed.
+
+**The name.** `rue` was taken for a programming language twice over, and by
+fourteen crates of one of them — its whole toolchain, `rue-parser` through
+`rue-formatter`, holding `rue`, `rue-cli` and `rue-lsp`. The project is
+**`rescind`**: to annul an order, restoring what it disturbed. Its file
+extension is the root of that word — `.scind`, from *scindere*, to cut; a
+`.scind` file describes the cut and `rescind` takes it back. The sweep for
+the new name, and the two defects in the old sweep's method, are in
+`docs/prior-art.md`.
+
+**What moved, and what did not.** 572 files; crates `rescind-*`, binaries
+`rescind` and `rescindd`, `dev.rescind`, `RESCIND_*`, `# rescind-region`,
+`tree-sitter-rescind`, `Rescind.Proto.*`. Four things deliberately kept the
+old name, each recorded where it lives: the journal and request **domain
+separators**, which are hashed into every signature ever written; the frozen
+**upgrade vectors**, which are what v0.1.0 and v0.2.0 shipped byte for byte;
+the two closed issues and the name-sweep half of `prior-art.md`, which record
+a sweep of a name and would describe a search nobody ran if substituted; and
+hook protocol **v1**, still v1, its pin moved only because one provenance
+sentence inside it names the generating crate.
+
+**E0610** is the migration. A text whose version line reads `rue` is told
+exactly that, with the release and the replacement, and the line is
+**consumed** so the rest of the text still parses and its other faults are
+reported in the same pass. That is what keeps the upgrade acceptance line
+true: v0.1.0 tenant files check under this build or are refused only by a
+code added since, naming the change.
+
+**The defect the rename exposed.** Instance ids are deterministic — plan,
+host, site digest — so the same text applied twice to a host reuses the
+instance directory. Every backstop artifact opens with `[ -e "$INST/fired" ]
+&& exit 0`. Nothing cleared that marker when arming, so a firing left by an
+earlier instance of the same id made the newly installed artifact exit at its
+first line, on every tick, forever — while the scheduler entry existed and the
+engine reported the backstop **armed**. It was invisible for as long as the
+plan text kept changing, because the digest changed with it; the rename was
+the last text change. Found by the e2e partition stage passing on freshly
+created guests and failing on every later run against the same ones. **Row
+added:** `rearm-keeps-a-stale-firing`.
+
+**Also:** shellcheck pinned where it is installed, and `.reaper.toml`'s
+version-parity claim scoped to the tools it was ever true of — the pipeline's
+0.9.0 is the strictest of three and is the authority for that phase.
+
+**Exit criteria.** Tag v0.4.0; both guests green; the pipeline green on the
+renamed remote.
+
+**Acceptance, as met (2026-09-14).** Local gate green at 22 phases with no
+skip declared anywhere; both reaper guests green through build, gate and the
+tier 5–6 harness; pipeline #54 successful on `axonibyte/rescind`, which is
+what proves the full-depth clone still gives the `provenance` guard its
+history under the new name. The partition stage passes on the same guests
+where it twice failed.
+
+**Not proven at the exit.** Everything Phase 5 left unproven is unchanged:
+no editor has driven the grammar or the server; two controllers on one host
+with nothing armed between them stays undecided; the partition is a filter on
+a shared loopback path, not a routed one; Phase 3W and macOS as a controller
+are still `docs/issues/0014` and `0015`, and the darwin binaries still ship
+cross-built, unexecuted and unsigned. Nothing has been published to any
+registry, and the name is now clear on all of them.
+
+---
+
 ## 10. Testing portfolio
 
 ### 10.1 Tiers

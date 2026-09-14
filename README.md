@@ -19,7 +19,19 @@ reviewable surface.
 The plan of record is [`docs/ROADMAP.md`](docs/ROADMAP.md). Every rule is
 stated once, in the section that governs it.
 
-## Status: Phase 5 complete; v0.3.0 tagged
+## Status: v0.4.0 -- the rename release
+
+**This project was called `rue` until 2026-09-13.** The name sweep its own
+roadmap required found `rue` taken by two other programming languages, one of
+them holding fourteen crates of its own toolchain. It is `rescind` now: to
+annul an order, restoring what it disturbed. Its files are `.scind`, from
+*scindere*, to cut -- the file describes the cut and `rescind` takes it back.
+A text written for an earlier release still checks: its `rue 0` version line
+is answered by **E0610**, which names the change and says what to write.
+`docs/ROADMAP.md` §9a is the release record; `docs/prior-art.md` carries the
+sweep, including the two defects in the method of the sweep that preceded it.
+
+Phase 5 is complete and everything it delivered is below, unchanged.
 
 Rescind has tools now, and drills. A plan is highlighted by a tree-sitter
 grammar that parses every tenant text the front end accepts and refuses
