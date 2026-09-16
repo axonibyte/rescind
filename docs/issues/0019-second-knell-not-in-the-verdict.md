@@ -49,6 +49,14 @@ of no return -- the fence, which is a power cut, and a conditional
 `when` was ruled out as the cause by re-checking with both knells
 unconditional: same output, `to: 8` across a knell at 9.
 
+It then reproduced without being looked for. seance's failback
+(`seance/rescind/failback.scind`, epic 2, written from a different source
+file) has two knells with no `when` over either -- the reverse `zfs recv -F`
+at step 6 and the interim lineage prune at step 10 -- and its verdict says
+"step 11 reversible back to step 6". Two real procedures out of two have more
+than one point of no return, which is the argument that this is not an edge
+case: a plan with one knell is the special case, not the general one.
+
 **Done when.** `reversible_back_to` names the last knell at or before
 `last_step`, and the verdict reports every knell rather than one. The prose
 for a plan with several says so. `core/tests/check.rs:762` covers a single
