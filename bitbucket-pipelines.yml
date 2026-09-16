@@ -276,12 +276,31 @@ pipelines:
       - step: *doCheck
       - step: *doFetchAndTest
       - step: *doTestWindows
-      - parallel: &buildAll
+      # SEVEN TARGETS IN TWO GROUPS OF FOUR AND THREE, not one group of seven.
+      #
+      # Every target is still built and none is dropped. What changed is how
+      # many runners the pipeline asks for at the same instant: four, not
+      # seven.
+      #
+      # Why: from build 58 onward a step of this block began failing with
+      # "Step exceeded processing limits and has timed out" -- at ZERO seconds,
+      # with no log, and on a DIFFERENT target each run (58 freebsd-amd64, 59
+      # windows-amd64, 61 linux-amd64). A step that never started and never
+      # logged did not fail; it was never scheduled. The four SDK conformance
+      # steps behind it are then NOT_RUN and the whole pipeline is red, while
+      # the gate, the test suite, wine and the other six builds are green.
+      #
+      # It began on a docs-only commit, so nothing in the tree caused it. The
+      # cost is wall clock -- the two groups run in sequence, about five to
+      # seven minutes more on main and on a tag.
+      - parallel: &buildUnix
           steps:
             - step: *buildLinuxAmd64
             - step: *buildLinuxArm64
             - step: *buildFreebsdAmd64
             - step: *buildFreebsdArm64
+      - parallel: &buildDesktop
+          steps:
             - step: *buildDarwinAmd64
             - step: *buildDarwinArm64
             - step: *buildWindowsAmd64
@@ -307,6 +326,7 @@ pipelines:
       - step: *doCheck
       - step: *doFetchAndTest
       - step: *doTestWindows
-      - parallel: *buildAll
+      - parallel: *buildUnix
+      - parallel: *buildDesktop
       - parallel: *conformAll
       - step: *doDeploy
