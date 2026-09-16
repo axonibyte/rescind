@@ -69,3 +69,4 @@ with the title, kind and status the issue itself gives.
 | 0016 | A public README | feature | closed |
 | 0017 | The upgrade vectors assert their provenance and nothing checks it | defect | closed |
 | 0018 | `check` passes a plan whose knell can never be acknowledged | defect | open |
+| 0019 | A plan's second knell is missing from its verdict | defect | open |
