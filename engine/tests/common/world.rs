@@ -78,6 +78,7 @@ pub fn site() -> Site {
         max_wait: Some(Duration::new(600)),
         scheduler_present: vec![OWNER.into()],
         secrets_deliver_to: vec!["requester".into(), "hold".into()],
+        approval: Some("hook:authority".into()),
     }
 }
 

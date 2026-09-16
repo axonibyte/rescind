@@ -62,7 +62,45 @@ fn site0() -> Site {
         max_wait: None,
         scheduler_present: vec!["db-01".into()],
         secrets_deliver_to: vec![],
+        approval: Some("hook:authority".into()),
     }
+}
+
+/// E0611 (issue 0018): a knell whose ack needs a proof, on a site that binds
+/// no approval. The checker read the authenticators a gate may name off the
+/// inventory and never asked whether anything could verify a proof, so this
+/// text checked CLEAN and then stopped for good at the knell.
+#[test]
+fn a_knell_needing_a_proof_with_no_approval_binding_is_refused() {
+    let site = Site {
+        approval: None,
+        ..site0()
+    };
+    let p = temp(vec![Item::Knell(StepI::new(Op {
+        refusal: Refusal::Knell {
+            guard: Some(Guard::new("verified_off", Tri::Yes)),
+            cost: Cost::Probe("fence_verdict".into()),
+            ack: Ack::Gate(GateExpr::Single(Factor::Humans { weight: 1 })),
+        },
+        ..knell_op()
+    }))]);
+    assert!(
+        codes_with(&site, &p).contains(&Code::E0611),
+        "a knell whose ack needs a proof, with nothing that can verify one"
+    );
+
+    // The same plan on the same site WITH a binding is not refused for this.
+    assert!(
+        !codes_with(&site0(), &p).contains(&Code::E0611),
+        "a bound approval answers it"
+    );
+
+    // And a knell that asks nobody needs no binding.
+    let none = temp(vec![Item::Knell(StepI::new(knell_op()))]);
+    assert!(
+        !codes_with(&site, &none).contains(&Code::E0611),
+        "ack: :none needs no approval binding"
+    );
 }
 
 fn codes_with(site: &Site, p: &Plan) -> Vec<Code> {
@@ -1046,6 +1084,7 @@ fn secret_rules() {
     let string_secret = || run(vec![text("login "), interp(secret("pw"))]);
     let delivering = Site {
         secrets_deliver_to: vec!["requester".into()],
+        approval: Some("hook:authority".into()),
         ..site0()
     };
 

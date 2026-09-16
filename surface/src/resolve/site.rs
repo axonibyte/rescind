@@ -665,6 +665,10 @@ pub fn derive(
             other => other.to_string(),
         })
         .collect();
+    let approval = decl.approval.as_ref().map(|b| match b.kind.as_str() {
+        "hook" => format!("hook:{}", b.arg.clone().unwrap_or_default()),
+        other => other.to_string(),
+    });
     let _ = artifact::default_language;
     Site {
         hosts,
@@ -673,5 +677,6 @@ pub fn derive(
         max_wait: decl.max_wait,
         scheduler_present: scheduled,
         secrets_deliver_to,
+        approval,
     }
 }

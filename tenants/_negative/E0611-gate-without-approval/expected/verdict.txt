@@ -1,0 +1,1 @@
+burn on db-01: refused; E0611 at step 1: step 1 is a knell whose ack: is not :none and the site declares no approval via: binding (new in v0.5.0: declare `approval via: hook(:name)` in the site block).

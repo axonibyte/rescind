@@ -1,5 +1,5 @@
 {
-  "ir_version": 5,
+  "ir_version": 6,
   "plan": {
     "backstop": null,
     "body": [
@@ -662,6 +662,7 @@
   },
   "requester": "operator",
   "site": {
+    "approval": "hook:authority",
     "authenticators": [
       {
         "human": true,

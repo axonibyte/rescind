@@ -129,6 +129,7 @@ fn site() -> Site {
         max_wait: Some(Duration::new(7_200)),
         scheduler_present: vec![TARGET.into()],
         secrets_deliver_to: vec!["hold".into()],
+        approval: Some("hook:authority".into()),
     }
 }
 

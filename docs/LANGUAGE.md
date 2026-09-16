@@ -283,6 +283,12 @@ deliver_to:` line.
 gate may name, renders a challenge over a request digest, and verifies the
 proofs that come back. `always()` opens every gate without a proof and
 `rescindd` builds it only with `--dry-run`; everything else is `hook(:name)`.
+A plan carrying a gate, or a knell whose `ack:` is not `:none`, needs one:
+without it nothing can verify a proof and the plan would stop for good at
+that step, which is **E0611**. The inventory's `[authenticators]` table and
+this binding answer different questions -- who a gate MAY name, and what can
+actually be asked -- and a plan needs both; until v0.5.0 the checker read
+only the first and a text with no approval binding checked clean.
 `secrets deliver_to:` is a list, tried in order at the moment a producing
 step completes: `requester()` takes the value only while a client is
 attached and hands it to that client's reply, `hold(until: :wane |

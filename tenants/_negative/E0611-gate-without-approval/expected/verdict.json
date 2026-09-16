@@ -1,0 +1,86 @@
+{
+  "backstop": null,
+  "commit_step": 2,
+  "controller_only_undos": [],
+  "deferred": [],
+  "diagnostics": [
+    {
+      "code": "E0611",
+      "message": "step 1 is a knell whose ack: is not :none and the site declares no approval via: binding (new in v0.5.0: declare `approval via: hook(:name)` in the site block)",
+      "step": 1
+    }
+  ],
+  "dispatch": {
+    "host_contract_hash": "-",
+    "source": "inventory"
+  },
+  "fires_by_construction": false,
+  "gate": null,
+  "held_indefinitely": [],
+  "holds_at": [],
+  "host": "db-01",
+  "hosts_touched": {
+    "1": [
+      {
+        "directory": "target",
+        "host": "db-01"
+      }
+    ]
+  },
+  "induced_defer": [],
+  "intent": "permanent",
+  "may_conflicts": [],
+  "mode": "manual",
+  "plan": "burn",
+  "point_of_no_return": {
+    "ack": "humans()",
+    "cost": "none",
+    "gate": null,
+    "guard": "verified_off",
+    "step": 1
+  },
+  "rehearsal": false,
+  "reversible_back_to": {
+    "from": 2,
+    "to": 1
+  },
+  "reversible_through": 0,
+  "status": "refused",
+  "steps": [
+    {
+      "conditional": null,
+      "drift": "defer",
+      "footprint": [
+        "modified: file:/etc/a"
+      ],
+      "gate": null,
+      "knell": {
+        "ack": "humans()",
+        "cost": "none",
+        "guard": "verified_off"
+      },
+      "locus": "target",
+      "n": 1,
+      "op": "burn",
+      "refusal": "knell",
+      "undo": null,
+      "undo_locus": "none"
+    },
+    {
+      "conditional": null,
+      "drift": null,
+      "footprint": [],
+      "gate": null,
+      "knell": null,
+      "locus": "controller",
+      "n": 2,
+      "op": "commit()",
+      "refusal": "n/a",
+      "undo": null,
+      "undo_locus": "none"
+    }
+  ],
+  "unresolved_bindings": [],
+  "verdict_version": 1,
+  "wane_s": null
+}

@@ -108,6 +108,9 @@ pub fn gen_site(rng: &mut Rng) -> Site {
         max_wait: rng.maybe(duration),
         scheduler_present,
         secrets_deliver_to: subset(rng, &["requester", "hook:escrow"]),
+        // Varied, so the property suite explores a site that binds no
+        // approval (E0611) as well as one that does.
+        approval: rng.chance(3, 4).then(|| "hook:authority".to_string()),
     }
 }
 
@@ -499,6 +502,7 @@ pub fn law_site() -> Site {
         max_wait: None,
         scheduler_present: vec![],
         secrets_deliver_to: vec![],
+        approval: Some("hook:authority".into()),
     }
 }
 

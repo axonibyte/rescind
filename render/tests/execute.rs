@@ -161,6 +161,7 @@ impl World {
             max_wait: None,
             scheduler_present: vec!["h".into()],
             secrets_deliver_to: vec![],
+            approval: Some("hook:authority".into()),
         };
         let instance = Instance {
             id: "i-1".into(),
@@ -527,6 +528,7 @@ fn a_quoted_value_survives_the_shell_intact() {
             max_wait: None,
             scheduler_present: vec!["h".into()],
             secrets_deliver_to: vec![],
+            approval: Some("hook:authority".into()),
         };
         let mut b = Bindings::default();
         b.params.insert("v".into(), hostile.into());

@@ -925,6 +925,7 @@ Golden-tested text with `file:line:col`, expected/found, nearest-name suggestion
 | E0608 | An action the host's executor cannot perform: a `hook(...)` action, or a probe with no `run` body, on a host reached by `local()` or `ssh()` |
 | E0609 | A computed undo on a fact the host's executor cannot read: a fact that is no file, on a host reached by `local()` or `ssh()`, that no probe `reads` |
 | E0610 | The version line says `rue`, the name this language had before v0.4.0; write `rescind` |
+| E0611 | A gate or a knell's `ack:` needs a proof and the site declares no `approval via:` binding |
 
 ### 6.8 CLI and exit codes
 

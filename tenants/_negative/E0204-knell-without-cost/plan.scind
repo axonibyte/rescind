@@ -5,9 +5,15 @@ rescind 0
 site do
   inventory from: file("../lab-inventory.toml")
   journal to: local()
+  # So the case is wrong only in the way it is named for: a knell whose ack
+  # names humans needs something that can verify a proof, or it is also E0611.
+  approval via: hook(:authority)
   backstop scheduler: cron()
   operators do
     identity :requester, user: "ops", operator_for: :all, admin: true
+  end
+  hooks do
+    registrar :requester, user: "ops", may_register: [:authority]
   end
 end
 

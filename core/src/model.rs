@@ -647,6 +647,13 @@ pub struct Site {
     /// The `secrets deliver_to:` acceptors, in order (E0606 when empty and a
     /// plan has a secret output).
     pub secrets_deliver_to: Vec<String>,
+    /// The `approval via:` binding's kind, `None` when the site binds none
+    /// (E0611 when a gate or a knell's ack needs a proof). The checker's
+    /// authenticator list above says who a gate MAY name; this says whether
+    /// anything can render a challenge and verify a proof at all, and a plan
+    /// needs both -- the two were read from different places until v0.5.0,
+    /// which is issue 0018.
+    pub approval: Option<String>,
 }
 
 /// The names a probe's `reads` pattern binds when it matches a concrete

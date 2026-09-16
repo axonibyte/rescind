@@ -30,6 +30,7 @@ fn site() -> Site {
         max_wait: None,
         scheduler_present: vec!["db-01".into()],
         secrets_deliver_to: vec![],
+        approval: Some("hook:authority".into()),
     }
 }
 

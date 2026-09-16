@@ -1,9 +1,10 @@
 # 0018: `check` passes a plan whose knell can never be acknowledged
 
-- status: open
+- status: closed
 - kind: defect
 - phase: 6
 - opened: 2026-09-15
+- closed: 2026-09-16
 
 `rescind check` and the engine read the authenticator list from two
 different places, and nothing compares them.
@@ -54,3 +55,38 @@ hook, so the honest answer may be that the inventory table is a declaration
 the binding is checked against at boot rather than at check.
 
 A rediscovery row belongs with the fix: `knell-unacknowledgeable-checks-clean`.
+
+**Closed 2026-09-16.** **E0611** refuses at check a plan carrying a gate, or a
+knell whose `ack:` is not `:none`, on a site that binds no `approval via:`.
+
+The resolved `Site` gains `approval`, beside the `secrets_deliver_to` that
+exists for E0606 -- the same shape of question, and the precedent that decided
+where this belongs. It is reported **per step** rather than once for the plan,
+so a text learns about this and its other gate problems in one pass. The IR is
+version 6 for the field.
+
+**It was first written at resolve time and that was wrong.** Raising it there
+was cheaper -- no IR field, no golden churn -- but it PREEMPTED the check-time
+gate diagnostics: `tenants/_negative/E0509-zero-human-step-gate` stopped
+reporting E0509 and reported this instead. A diagnostic that masks the one the
+text is really about makes an operator fix things one at a time, and it made a
+fixture stop testing its own subject. The cheap placement was optimizing for
+the golden count and it cost correctness.
+
+Two negative fixtures were completed rather than changed: E0204 and
+E0509-zero-human-step-gate bound no approval and now do, so each is "wrong only
+in the way it is named for" -- the rule the second of them already states in
+its own comment about a hook binding it needed for the same reason. The three
+others that looked affected import T1/T2/T3's site, which binds one already.
+
+`tenants/_negative/E0611-gate-without-approval` is the negative case. The unit
+test in `core/tests/check.rs` is mutation-checked and covers all three arms: no
+binding and an ack needing a proof refuses, a bound approval does not, and
+`ack: :none` needs no binding.
+
+**Not done, and deliberately.** The question the issue raised last -- whether
+check should also require the inventory's `[authenticators]` table and the
+binding's published list to AGREE -- is untouched. The binding's list is not
+knowable at check time without calling the hook, so the honest answer may be
+that the table is a declaration the binding is checked against at boot. Nothing
+here decides it.

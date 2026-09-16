@@ -82,6 +82,7 @@ data Code
   | E0608 -- an action the host's executor cannot perform (a hook action, or a probe with no run body, on local() or ssh())
   | E0609 -- a computed undo on a fact the host's executor cannot read (no file, local() or ssh(), no probe reads it)
   | E0610 -- the version line says `rue`, this language's name before v0.4.0
+  | E0611 -- a gate or a knell's ack needs a proof and no approval via: is bound
   deriving (Eq, Ord, Show, Enum, Bounded)
 
 -- | The code as it appears in a verdict and in the roadmap's table.
@@ -155,3 +156,4 @@ meaning c = case c of
   E0608 -> "an action the host's executor cannot perform: a hook() action, or a probe with no run body, on a host reached by local() or ssh()"
   E0609 -> "a computed undo on a fact the host's executor cannot read: a fact that is no file, on a host reached by local() or ssh(), with no probe that reads it"
   E0610 -> "the version line says `rue`, the name this language had before v0.4.0; write `rescind`"
+  E0611 -> "a gate or a knell's ack needs a proof and the site declares no approval via: binding"

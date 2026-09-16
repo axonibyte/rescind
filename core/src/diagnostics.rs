@@ -109,6 +109,7 @@ codes! {
     E0608 => "an action the host's executor cannot perform: a hook() action, or a probe with no run body, on a host reached by local() or ssh()",
     E0609 => "a computed undo on a fact the host's executor cannot read: a fact that is no file, on a host reached by local() or ssh(), with no probe that reads it",
     E0610 => "the version line says `rue`, the name this language had before v0.4.0; write `rescind`",
+    E0611 => "a gate or a knell's ack needs a proof and the site declares no approval via: binding",
 }
 
 impl Code {
@@ -121,6 +122,7 @@ impl Code {
             Code::E0607 | Code::E0608 => Some("v0.2.0"),
             Code::E0609 => Some("v0.3.0"),
             Code::E0610 => Some("v0.4.0"),
+            Code::E0611 => Some("v0.5.0"),
             _ => None,
         }
     }
@@ -142,6 +144,12 @@ impl Code {
             // its first word, so it is told exactly that rather than left to
             // read "language version marker missing" and wonder.
             Code::E0610 => Some("write `rescind` where the version line says `rue`"),
+            // A text written before v0.5.0 could declare a gate or a knell's
+            // ack and bind no approval, and check clean: the checker read the
+            // authenticators a gate may name off the inventory while the
+            // engine read them off the binding, so the plan applied and then
+            // stopped at a step no proof could open (issue 0018).
+            Code::E0611 => Some("declare `approval via: hook(:name)` in the site block"),
             _ => None,
         }
     }

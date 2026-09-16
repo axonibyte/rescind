@@ -1,5 +1,5 @@
 {
-  "ir_version": 5,
+  "ir_version": 6,
   "plan": {
     "backstop": {
       "arm_before": 1,
@@ -128,6 +128,7 @@
   },
   "requester": "requester",
   "site": {
+    "approval": null,
     "authenticators": [
       {
         "human": true,

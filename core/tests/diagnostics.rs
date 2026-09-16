@@ -28,8 +28,8 @@ fn codes_are_distinct_and_ascending() {
 }
 
 #[test]
-fn there_are_sixty_codes_with_meanings() {
-    assert_eq!(Code::ALL.len(), 60);
+fn there_are_sixty_one_codes_with_meanings() {
+    assert_eq!(Code::ALL.len(), 61);
     for c in Code::ALL {
         assert!(!c.meaning().is_empty(), "{c} has no meaning");
     }

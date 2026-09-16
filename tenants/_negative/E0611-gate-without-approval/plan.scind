@@ -1,0 +1,37 @@
+rescind 0
+# Negative case E0611: a knell whose ack: is a gate, and no approval binding.
+# The front end must refuse with exactly E0611.
+#
+# This is issue 0018's shape. The inventory publishes a human authenticator,
+# so the ack is satisfiable as far as the checker's own list goes -- and there
+# is still nothing that could render a challenge or verify the proof, because
+# `approval via:` is what does that and the site binds none. Before v0.5.0 this
+# text checked clean and then stopped for good at the knell.
+
+site do
+  inventory from: file("../lab-inventory.toml")
+  journal to: local()
+  # Bounds the wait the ack implies, so the case is wrong only in the way it
+  # is named for and not also E0506.
+  max_wait 30m
+  operators do
+    identity :requester, user: "ops", operator_for: :all, admin: true
+  end
+end
+
+defprobe :verified_off do
+  run "test -f /var/db/off"
+  reads file("/var/db/off")
+end
+
+defop :burn, _ do
+  footprint modified: file("/etc/a")
+  do: write(file("/etc/a"), content: "x")
+  refusal: knell, guard: verified_off, cost: :none, ack: humans()
+  undo_locus: :none
+end
+
+defplan :burn, %{name: "db-01"} do
+  knell burn()
+  commit()
+end

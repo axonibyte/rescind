@@ -9,7 +9,7 @@ use rescind_core::model::*;
 // A small plan in canonical form: one step with a knell ack gate, a wait
 // factor, a bound-host locus, a heartbeat backstop, and every item kind.
 const DOC: &str = r#"{
-  "ir_version": 5,
+  "ir_version": 6,
   "plan": {
     "backstop": {
       "arm_before": 1,
@@ -499,6 +499,7 @@ const DOC: &str = r#"{
   },
   "requester": "req",
   "site": {
+    "approval": "hook:authority",
     "authenticators": [
       {
         "human": true,

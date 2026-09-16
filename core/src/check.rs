@@ -1072,6 +1072,58 @@ pub fn check(site: &Site, requester: &str, p: &Plan) -> Verdict {
             diagnostics.extend(gate_checks(Some(*n), g, false));
         }
     }
+    // E0611: something here needs a PROOF and nothing can verify one.
+    //
+    // `approval via:` names the binding that renders a challenge over a
+    // request digest and verifies the proofs that come back. Without it
+    // `rescind approve` refuses outright -- "the site declares no approval
+    // binding" (engine/src/gates.rs) -- so a plan carrying a gate, or a knell
+    // whose `ack:` is a gate rather than `:none`, applies and then stops for
+    // good at a step no proof can open.
+    //
+    // It checked clean until v0.5.0 because the two halves read the
+    // authenticator list from different places: here, off the inventory's
+    // `[authenticators]` table, and in the engine off the binding (issue
+    // 0018). The inventory says who a gate MAY name; the binding is what can
+    // be asked. Reported per step, so a text learns about this and its other
+    // gate problems in one pass rather than one at a time.
+    if site.approval.is_none() {
+        if let Some(pg) = &p.gate {
+            let _ = pg;
+            diagnostics.push(d(
+                Code::E0611,
+                None,
+                "the plan has a gate and the site declares no approval via: binding".to_string(),
+            ));
+        }
+        for (n, it) in &steps {
+            let gated = step_of(it).is_some_and(|s| s.gate.is_some());
+            let acked = op_of(it).is_some_and(|o| {
+                matches!(
+                    &o.refusal,
+                    Refusal::Knell {
+                        ack: Ack::Gate(_),
+                        ..
+                    }
+                )
+            });
+            if gated || acked {
+                diagnostics.push(d(
+                    Code::E0611,
+                    Some(*n),
+                    format!(
+                        "step {n} {} and the site declares no approval via: binding",
+                        if gated {
+                            "has a gate"
+                        } else {
+                            "is a knell whose ack: is not :none"
+                        }
+                    ),
+                ));
+            }
+        }
+    }
+
     for (n, o) in &step_ops {
         if let Refusal::Knell {
             ack: Ack::Gate(g), ..
