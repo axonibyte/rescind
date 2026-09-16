@@ -71,3 +71,30 @@ rather than one number. The unconditional case is wrong today either way and
 does not wait on that question.
 
 A rediscovery row belongs with the fix: `second-knell-not-in-the-span`.
+
+## Fixed in part, 2026-09-16
+
+**The false claim is gone.** `reversible_back_to` now names the LAST knell at
+or before the last step, because an undo walks backwards and stops at the first
+knell it meets, which going backwards is the last one in the plan.
+`reversible_through` still names the FIRST knell and that was always right --
+it answers where forward reversibility ends, a different question.
+
+`core/tests/check.rs` gains a two-knell case, mutation-checked: it fails
+against the old expression with "a revert stops at the LAST knell, not the
+first". `tenants/t2/expected/node-b-manual`'s `verdict.json` and `verdict.txt`
+are corrected to `to: 5`; the only delta in the whole golden was that field,
+which is what says this was a correction and not a change. `node-b-auto` holds
+one knell and is untouched.
+
+**The issue stays open for two things that did not land.**
+
+1. **The verdict still reports one knell rather than every knell.** That adds
+   a field, which bumps `VERDICT_VERSION` and regenerates all 50 golden
+   verdicts. The span fix removes the untrue sentence on its own, so the
+   enumeration should ride with the next schema bump rather than force one.
+2. **The conditional case is unresolved.** A knell inside a `when` may not run,
+   so the truthful span depends on a guard no one can evaluate at check time.
+   The fix reports the pessimistic answer -- the knell might run, so the span
+   stops there -- which is the safe direction and not obviously the right one.
+   The honest verdict may be two spans with the condition named.

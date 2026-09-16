@@ -762,6 +762,35 @@ fn verdict_shape() {
     assert_eq!(v.reversible_back_to, Some((3, 2)));
     assert_eq!(v.holds_at, vec![3]);
 
+    // TWO KNELLS (issue 0019). An undo walks backwards and stops at the first
+    // knell it meets, which going backwards is the LAST one in the plan. Naming
+    // the first said this plan was revertible back across step 3, which is the
+    // one claim a point of no return exists to stop anybody making.
+    let v = check(
+        &site0(),
+        "requester",
+        &temp(vec![
+            s(owned("a")),
+            Item::Knell(StepI::new(knell_op())),
+            Item::Knell(StepI::new(knell_op())),
+            s(owned("b")),
+        ]),
+    );
+    assert_eq!(
+        v.reversible_back_to,
+        Some((4, 3)),
+        "a revert stops at the LAST knell, not the first"
+    );
+    assert_eq!(
+        v.reversible_through, 1,
+        "forward reversibility still ends at the FIRST knell"
+    );
+    assert_eq!(
+        v.point_of_no_return.as_ref().map(|p| p.step),
+        Some(2),
+        "the point of no return is where irreversibility begins"
+    );
+
     let island = Op {
         locus: Locus::Host(HostRef::Static("island".into())),
         ..owned("a")

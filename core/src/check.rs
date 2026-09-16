@@ -347,7 +347,17 @@ pub fn check(site: &Site, requester: &str, p: &Plan) -> Verdict {
             _ => None,
         }
     });
-    let back_to = match first_knell {
+    // THE LAST KNELL, NOT THE FIRST (issue 0019). An undo walks backwards and
+    // stops at the first knell it meets, which going backwards is the LAST one
+    // in the plan: a knell carries `undo_locus: :none` and there is nothing to
+    // run for it. Naming the first knell here said a plan with two of them was
+    // revertible back across the second, which is the one claim a point of no
+    // return exists to stop anybody making.
+    //
+    // `reversible_through` above is a different question with a different
+    // answer -- where forward reversibility ENDS -- and the first knell is
+    // right for it.
+    let back_to = match knell_steps.last().copied() {
         Some(n) if n < last_step => Some((last_step, n)),
         _ => None,
     };

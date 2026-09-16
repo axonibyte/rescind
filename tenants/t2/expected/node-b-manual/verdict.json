@@ -79,7 +79,7 @@
   "rehearsal": false,
   "reversible_back_to": {
     "from": 10,
-    "to": 4
+    "to": 5
   },
   "reversible_through": 3,
   "status": "ok",
