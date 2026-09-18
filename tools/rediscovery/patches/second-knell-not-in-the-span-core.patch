@@ -1,0 +1,17 @@
+# Reverts: `reversible_back_to` names the LAST knell at or before the last step (issue 0019).
+# An undo walks backwards and stops at the first knell it meets, which going backwards is the
+# last one in the plan. Naming the FIRST said a plan with two knells was revertible back across
+# the second -- the one claim a point of no return exists to stop anybody making. The project
+# had this frozen in its own acceptance golden until 2026-09-16.
+# Rediscovered by the selector named in tools/rediscovery/table.tsv.
+--- a/core/src/check.rs
++++ b/core/src/check.rs
+@@ -357,7 +357,7 @@
+     // `reversible_through` above is a different question with a different
+     // answer -- where forward reversibility ENDS -- and the first knell is
+     // right for it.
+-    let back_to = match knell_steps.last().copied() {
++    let back_to = match first_knell {
+         Some(n) if n < last_step => Some((last_step, n)),
+         _ => None,
+     };

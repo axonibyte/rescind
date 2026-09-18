@@ -57,6 +57,7 @@ secret-in-explain-core.patch	1	-	cargo	marks_every_secret_ref	-
 secret-in-run-string-core.patch	1	-	cargo	secret_rules	-
 secret-in-target-undo-core.patch	1	-	cargo	secret_rules	-
 knell-reverse-allowed-core.patch	1	-	cargo	refuses_to_reverse	-
+second-knell-not-in-the-span-core.patch	1	-	cargo	verdict_shape	-
 reach-defer-drift-accepted-core.patch	1	-	cargo	op_rules	-
 temporary-after-not-wane-core.patch	1	-	cargo	backstop_rules	-
 wait-unbounded-core.patch	1	-	cargo	wait_rules	-

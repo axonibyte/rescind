@@ -87,6 +87,21 @@ are corrected to `to: 5`; the only delta in the whole golden was that field,
 which is what says this was a correction and not a change. `node-b-auto` holds
 one knell and is untouched.
 
+**The rediscovery row landed 2026-09-18, two days late.** The issue asked for
+it in the same breath as the fix -- "a rediscovery row belongs with the fix" --
+and a65f693 shipped the fix without one, so for two days the project held a
+protection it could not prove it had. `second-knell-not-in-the-span-core.patch`
+restores `first_knell` in `core/src/check.rs:360`; `verdict_shape` then fails
+with "a revert stops at the LAST knell, not the first". Verified by
+`sh tools/rediscovery/run.sh --tier 1 --row second-knell-not-in-the-span-core`:
+1 rediscovered, 0 not.
+
+That it was forgotten is the interesting part rather than an apology. The table
+exists because "a protection whose removal changes nothing is a comment with an
+if statement around it" -- and nothing in the gate asks whether a *new* check
+has a row, only that existing rows still apply. A fix can land with its test and
+without its proof that the test bites, which is exactly what happened here.
+
 **The issue stays open for two things that did not land.**
 
 1. **The verdict still reports one knell rather than every knell.** That adds
